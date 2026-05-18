@@ -1,0 +1,393 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Git Workflows — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html" class="active">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">ADVANCED 1 / 3</div>
+<h1 data-zh="Git 工作流程 (Git Workflows)" data-en="Git Workflows">Git 工作流程 (Git Workflows)</h1>
+<p class="subtitle" data-lang="zh">同樣的 Git 指令，可以編出完全不同的舞步——選對工作流程，整個團隊都會輕鬆。</p>
+<p class="subtitle" data-lang="en">The same Git commands can be choreographed in very different ways — picking the right workflow saves arguments and reduces merge pain.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="什麼是「工作流程」？" data-en="What is a “workflow”?">什麼是「工作流程」？</h2>
+<div data-lang="zh">
+<p>「工作流程」其實是<strong>一種團隊約定</strong>——大家如何使用分支、什麼時候 merge、怎麼發 release。底層的 Git 指令都一樣（<code>branch</code> / <code>merge</code> / <code>tag</code>），差別在<em>編舞</em>：分支怎麼命名？誰能 push 到 main？release 從哪條分支切？</p>
+<p>選對工作流程，可以省下無數次「為什麼你直接 push 到 main？」的爭執，並大幅降低 merge 衝突。本頁介紹三種主流模式、語意化版本與 conventional commits，再給你一個「工作流程推薦器」。</p>
+</div>
+<div data-lang="en">
+<p>A “workflow” is really a <strong>team convention</strong> — how you all agree to use branches, when to merge, how to ship releases. The underlying Git commands (<code>branch</code> / <code>merge</code> / <code>tag</code>) are identical across workflows; what differs is the <em>choreography</em>: branch naming, who can push to main, where releases get cut.</p>
+<p>Picking the right one saves countless “why did you push straight to main?” arguments and reduces merge pain. This page covers three mainstream models, semantic versioning, and conventional commits — plus an interactive recommender at the end.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心提醒：</strong>對 95% 的生資實驗室專案來說，<strong>GitHub Flow + semantic versioning</strong> 已經夠用。不要過度工程。</span>
+<span data-lang="en"><strong>Key takeaway:</strong> for 95% of bioinformatics lab projects, <strong>GitHub Flow + semantic versioning</strong> is enough. Don’t over-engineer.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: GitHub Flow ===== -->
+<section class="section">
+<div class="section-label" data-zh="GITHUB FLOW" data-en="GITHUB FLOW">GITHUB FLOW</div>
+<h2 data-zh="一、GitHub Flow（最簡單）" data-en="I. GitHub Flow (the simplest)">一、GitHub Flow（最簡單）</h2>
+<div data-lang="zh">
+<p>只有一條長期分支 <code>main</code>，永遠保持可部署狀態。每個改動都是<strong>短命分支</strong>：從 main 切 → commit → push → 開 PR → review → merge → 刪分支。</p>
+<ul>
+<li><strong>優點：</strong>簡單、易懂、適合持續部署。</li>
+<li><strong>缺點：</strong>無法同時維護多個已釋出版本。</li>
+<li><strong>最適合：</strong>網頁 app、單一版本工具、絕大多數的實驗室專案。</li>
+</ul>
+</div>
+<div data-lang="en">
+<p>One long-lived branch — <code>main</code> — always deployable. Every change is a <strong>short-lived branch</strong>: branch from main → commit → push → open PR → review → merge → delete the branch.</p>
+<ul>
+<li><strong>Pros:</strong> simple, easy to teach, great for continuous deployment.</li>
+<li><strong>Cons:</strong> can’t maintain multiple released versions in parallel.</li>
+<li><strong>Best for:</strong> web apps, single-version tools, and most lab projects.</li>
+</ul>
+</div>
+<pre><span class="comment"># GitHub Flow 典型循環 / Typical GitHub Flow cycle</span>
+$ git switch -c feature/sctransform-v2 main
+$ <span class="comment"># ... 編輯、測試 ...</span>
+$ git commit -am <span class="str">"feat: add SCTransform v2 option"</span>
+$ git push -u origin feature/sctransform-v2
+<span class="comment"># 在 GitHub 開 PR → review → squash &amp; merge → delete branch</span>
+</pre>
+</section>
+
+<!-- ===== Section 3: Git Flow ===== -->
+<section class="section">
+<div class="section-label" data-zh="GIT FLOW" data-en="GIT FLOW">GIT FLOW</div>
+<h2 data-zh="二、Git Flow（重量級）" data-en="II. Git Flow (heavyweight)">二、Git Flow（重量級）</h2>
+<div data-lang="zh">
+<p>由 Vincent Driessen 在 2010 年提出。兩條長期分支：</p>
+<ul>
+<li><code>main</code>——只放<strong>已釋出</strong>的正式版（每個 commit 都對應一個 tag）。</li>
+<li><code>develop</code>——日常開發整合分支。</li>
+</ul>
+<p>加上三類短命分支：<code>feature/*</code>（從 develop 切）、<code>release/*</code>（準備發版）、<code>hotfix/*</code>（修 production bug，從 main 切）。</p>
+<ul>
+<li><strong>優點：</strong>支援多版本平行維護。</li>
+<li><strong>缺點：</strong>複雜，2025 年多數團隊覺得殺雞用牛刀。</li>
+</ul>
+<p>有趣的是，連 Driessen 本人現在都建議：網頁/SaaS 類專案改用 GitHub Flow 就好。</p>
+</div>
+<div data-lang="en">
+<p>Popularized by Vincent Driessen in 2010. Two long-lived branches:</p>
+<ul>
+<li><code>main</code> — only tagged <strong>production releases</strong> live here.</li>
+<li><code>develop</code> — daily integration branch.</li>
+</ul>
+<p>Plus three short-lived branch types: <code>feature/*</code> (cut from develop), <code>release/*</code> (preparing a version), <code>hotfix/*</code> (fixing a production bug, cut from main).</p>
+<ul>
+<li><strong>Pros:</strong> supports maintaining multiple released versions in parallel.</li>
+<li><strong>Cons:</strong> complex; in 2025 many teams find it overkill.</li>
+</ul>
+<p>Notably, even Driessen now recommends GitHub Flow for web / SaaS projects.</p>
+</div>
+</section>
+
+<!-- ===== Section 4: Trunk-based ===== -->
+<section class="section">
+<div class="section-label" data-zh="TRUNK-BASED" data-en="TRUNK-BASED">TRUNK-BASED</div>
+<h2 data-zh="三、Trunk-based 開發" data-en="III. Trunk-based development">三、Trunk-based 開發</h2>
+<div data-lang="zh">
+<p>所有人直接 commit 到 <code>main</code>（用 feature flags 隱藏未完成功能），或只開<strong>不到一天</strong>的超短命分支。需要重度 CI 把關。</p>
+<ul>
+<li><strong>優點：</strong>速度最快、沒有累積的「整合債」。</li>
+<li><strong>缺點：</strong>需要紀律 + 完整自動化測試；對 ad-hoc 科研工作不適合。</li>
+</ul>
+</div>
+<div data-lang="en">
+<p>Everyone commits to <code>main</code> directly (using feature flags to hide unfinished work), or via branches that live less than a day. Requires heavy CI.</p>
+<ul>
+<li><strong>Pros:</strong> highest velocity, no accumulated integration debt.</li>
+<li><strong>Cons:</strong> demands discipline plus full test automation; not ideal for ad-hoc science work.</li>
+</ul>
+</div>
+</section>
+
+<!-- ===== Section 5: Comparison ===== -->
+<section class="section">
+<div class="section-label" data-zh="比較" data-en="COMPARISON">比較</div>
+<h2 data-zh="四、四種主要工作流程比較" data-en="IV. Four major workflows compared">四、四種主要工作流程比較</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="工作流程" data-en="Workflow">工作流程</th>
+<th data-zh="長期分支" data-en="Long-lived branches">長期分支</th>
+<th data-zh="最適合" data-en="Best for">最適合</th>
+<th data-zh="實驗室適用度" data-en="Lab fit">實驗室適用度</th>
+</tr></thead>
+<tbody>
+<tr><td><strong>GitHub Flow</strong></td><td><code>main</code></td><td data-lang="zh">小團隊、單一版本</td><td data-lang="en">small teams, single version</td><td><strong style="color:var(--c-accent-dark)">EXCELLENT</strong></td></tr>
+<tr><td><strong>Git Flow</strong></td><td><code>main</code> + <code>develop</code></td><td data-lang="zh">多版本產品</td><td data-lang="en">multi-version products</td><td data-lang="zh">寫一篇 paper 用不到</td><td data-lang="en">overkill for one paper</td></tr>
+<tr><td><strong>Trunk-based</strong></td><td><code>main</code></td><td data-lang="zh">有完整 CI 的成熟團隊</td><td data-lang="en">mature teams w/ heavy CI</td><td data-lang="zh">有 CI 才考慮</td><td data-lang="en">OK if you have CI</td></tr>
+<tr><td><strong>Forking</strong></td><td data-lang="zh">每位貢獻者一個 fork</td><td data-lang="en">per-contributor fork</td><td data-lang="zh">開源專案</td><td data-lang="en">open-source</td><td data-lang="zh">維護社群工具時</td><td data-lang="en">for community tools</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 6: Semver ===== -->
+<section class="section">
+<div class="section-label" data-zh="SEMVER" data-en="SEMVER">SEMVER</div>
+<h2 data-zh="五、語意化版本與 tag" data-en="V. Semantic versioning &amp; tags">五、語意化版本與 tag</h2>
+<div data-lang="zh">
+<p>軟體版本長得像 <code>v1.4.2</code>，格式為 <strong>MAJOR.MINOR.PATCH</strong>：</p>
+<ul>
+<li><strong>MAJOR：</strong>破壞性更新（API 不相容）</li>
+<li><strong>MINOR：</strong>新增功能、向下相容</li>
+<li><strong>PATCH：</strong>bug fix</li>
+</ul>
+</div>
+<div data-lang="en">
+<p>Versions look like <code>v1.4.2</code> in the form <strong>MAJOR.MINOR.PATCH</strong>:</p>
+<ul>
+<li><strong>MAJOR:</strong> breaking change (API incompatible)</li>
+<li><strong>MINOR:</strong> new feature, backwards-compatible</li>
+<li><strong>PATCH:</strong> bug fix</li>
+</ul>
+</div>
+<pre><span class="comment"># 建立 annotated tag / Create an annotated tag</span>
+$ git tag -a v1.4.2 -m <span class="str">"Release 1.4.2 — fix NA handling in QC"</span>
+$ git push --tags
+
+<span class="comment"># 直接在 GitHub 建 release（含 release notes + binaries）</span>
+$ gh release create v1.4.2 --notes-from-tag
+</pre>
+<div data-lang="zh"><p>GitHub Releases 把 tag + release notes + 附件（binaries / 範例資料）綁在一起，使用者可以 pin 到特定版本，paper 也能引用「v1.4.2」這個確切的快照。</p></div>
+<div data-lang="en"><p>A GitHub Release bundles a tag + release notes + attached assets (binaries, example data). Users can pin to a specific version, and papers can cite the exact snapshot “v1.4.2.”</p></div>
+</section>
+
+<!-- ===== Section 7: Lab case studies ===== -->
+<section class="section">
+<div class="section-label" data-zh="LAB CASE STUDIES" data-en="LAB CASE STUDIES">LAB CASE STUDIES</div>
+<h2 data-zh="六、實驗室常見場景該選哪個" data-en="VI. Which workflow for each lab scenario">六、實驗室常見場景該選哪個</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>📄 <span data-zh="一次性論文專案" data-en="One-shot paper">一次性論文專案</span></h4>
+<div data-lang="zh"><p>GitHub Flow。投稿時切一個 <code>release/manuscript-v1</code> 凍結快照；被接受後在 <code>main</code> 打 tag <code>manuscript-submitted</code>。後續 revision 直接回 <code>main</code> 開 PR。</p></div>
+<div data-lang="en"><p>GitHub Flow. Cut a <code>release/manuscript-v1</code> snapshot at submission, then tag <code>main</code> as <code>manuscript-submitted</code> upon acceptance. Future revisions land on <code>main</code> via PR.</p></div>
+</div>
+<div class="card"><h4>🧪 <span data-zh="實驗室核心 pipeline" data-en="Lab core pipeline">實驗室核心 pipeline</span></h4>
+<div data-lang="zh"><p>GitHub Flow + semver tag。每個版本 tag 一個 <code>v1.x.x</code>，組員可以 pin 到指定版本跑分析，避免 main 改動造成「重跑結果不一致」。</p></div>
+<div data-lang="en"><p>GitHub Flow with semver tags. Tag each version (<code>v1.x.x</code>) so lab members can pin to a specific release and avoid “the result changed because main moved.”</p></div>
+</div>
+<div class="card"><h4>🤝 <span data-zh="維護開源工具" data-en="Open-source tool you maintain">維護開源工具</span></h4>
+<div data-lang="zh"><p>Forking workflow + semver + release notes + <code>CHANGELOG.md</code>。外部貢獻者 fork 後開 PR；維護者控制 main，定期打 tag。</p></div>
+<div data-lang="en"><p>Forking workflow + semver + release notes + <code>CHANGELOG.md</code>. External contributors fork and open PRs; maintainers gate <code>main</code> and tag releases periodically.</p></div>
+</div>
+<div class="card"><h4>👤 <span data-zh="單兵作戰的博班生" data-en="Solo PhD student">單兵作戰的博班生</span></h4>
+<div data-lang="zh"><p>最簡單：直接 commit 到 <code>main</code>，投稿時打一個 tag。沒必要開分支，除非要做高風險實驗（這時再開 <code>experiment/*</code> 分支）。</p></div>
+<div data-lang="en"><p>Simplest: commit straight to <code>main</code> and tag at submission. No need for branches unless you’re running a risky experiment — then a one-off <code>experiment/*</code> branch is fine.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 8: Interactive — Workflow recommender ===== -->
+<section class="section">
+<div class="section-label" data-zh="INTERACTIVE" data-en="INTERACTIVE">INTERACTIVE</div>
+<h2 data-zh="七、工作流程推薦器" data-en="VII. Workflow recommender">七、工作流程推薦器</h2>
+<div data-lang="zh"><p>回答 4 個問題，告訴你最該採用哪一種工作流程。</p></div>
+<div data-lang="en"><p>Answer 4 quick questions and get a workflow recommendation.</p></div>
+<div id="wfRecommender" class="interactive-panel">
+  <div class="wf-q" data-q="q1"><div class="wf-qtext" data-zh="Q1. 這個 repo 有多人協作嗎？" data-en="Q1. Are multiple people working on this repo?">Q1. 這個 repo 有多人協作嗎？</div>
+    <button class="wf-opt" data-v="y" data-zh="是" data-en="Yes">是</button><button class="wf-opt" data-v="n" data-zh="否" data-en="No">否</button></div>
+  <div class="wf-q" data-q="q2"><div class="wf-qtext" data-zh="Q2. 你需要同時維護多個已釋出版本嗎？" data-en="Q2. Do you support multiple released versions in parallel?">Q2. 你需要同時維護多個已釋出版本嗎？</div>
+    <button class="wf-opt" data-v="y" data-zh="是" data-en="Yes">是</button><button class="wf-opt" data-v="n" data-zh="否" data-en="No">否</button></div>
+  <div class="wf-q" data-q="q3"><div class="wf-qtext" data-zh="Q3. 每次 commit 都有 CI 自動跑測試嗎？" data-en="Q3. Do you have a CI pipeline running tests on every commit?">Q3. 每次 commit 都有 CI 自動跑測試嗎？</div>
+    <button class="wf-opt" data-v="y" data-zh="是" data-en="Yes">是</button><button class="wf-opt" data-v="n" data-zh="否" data-en="No">否</button></div>
+  <div class="wf-q" data-q="q4"><div class="wf-qtext" data-zh="Q4. 你是單兵作戰的 one-shot paper 嗎？" data-en="Q4. Are you working alone for a one-shot paper?">Q4. 你是單兵作戰的 one-shot paper 嗎？</div>
+    <button class="wf-opt" data-v="y" data-zh="是" data-en="Yes">是</button><button class="wf-opt" data-v="n" data-zh="否" data-en="No">否</button></div>
+  <div id="wfResult" class="wf-result"></div>
+</div>
+</section>
+
+<!-- ===== Section 9: Decision tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="DECISION TREE" data-en="DECISION TREE">DECISION TREE</div>
+<h2 data-zh="八、「我該從哪條分支切？」決策樹" data-en="VIII. “Which branch should I branch from?”">八、「我該從哪條分支切？」決策樹</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="分支起點決策樹" data-en="Branch source decision tree">分支起點決策樹</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>要做<strong>新功能</strong>？<span class="dt-arrow">→</span> 從 <code>main</code>（GitHub Flow）或 <code>develop</code>（Git Flow）切。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>要<strong>修 production bug</strong>？<span class="dt-arrow">→</span> 從 <code>main</code> 切 <code>hotfix/*</code> 分支，修完合回 main 並打 tag。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>要<strong>準備發版</strong>？<span class="dt-arrow">→</span> 僅 Git Flow：從 <code>develop</code> 切 <code>release/vX.Y.Z</code>，凍結功能、修最後 bug 後合進 main + develop。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Building a <strong>new feature</strong>? <span class="dt-arrow">→</span> Branch from <code>main</code> (GitHub Flow) or <code>develop</code> (Git Flow).</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Fixing a <strong>production bug</strong>? <span class="dt-arrow">→</span> Cut a <code>hotfix/*</code> branch from <code>main</code>, fix, merge back, and tag.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div><strong>Preparing a release</strong>? <span class="dt-arrow">→</span> Git Flow only: cut <code>release/vX.Y.Z</code> from <code>develop</code>, freeze features, polish, then merge into both <code>main</code> and <code>develop</code>.</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 10: Conventional commits ===== -->
+<section class="section">
+<div class="section-label" data-zh="COMMIT MSG" data-en="COMMIT MSG">COMMIT MSG</div>
+<h2 data-zh="九、Commit message 慣例（Conventional Commits）" data-en="IX. Commit message conventions">九、Commit message 慣例</h2>
+<div data-lang="zh"><p><strong>Conventional Commits</strong> 是一種社群約定的訊息格式：<code>&lt;type&gt;: &lt;summary&gt;</code>。常見 type：</p></div>
+<div data-lang="en"><p><strong>Conventional Commits</strong> is a community message format: <code>&lt;type&gt;: &lt;summary&gt;</code>. Common types:</p></div>
+<pre><span class="kw">feat</span>:     add SCTransform v2 option        <span class="comment"># 新功能 / new feature</span>
+<span class="kw">fix</span>:      handle NA in MT% filter          <span class="comment"># bug fix</span>
+<span class="kw">docs</span>:     update README with citation      <span class="comment"># 文件 / docs only</span>
+<span class="kw">refactor</span>: extract QC into module           <span class="comment"># 結構重構，行為不變</span>
+<span class="kw">test</span>:     add unit tests for normalization <span class="comment"># 新增測試</span>
+<span class="kw">chore</span>:    bump R version to 4.4            <span class="comment"># 雜事 / housekeeping</span>
+<span class="kw">feat!</span>:    change DE function signature     <span class="comment"># ! = BREAKING CHANGE</span>
+</pre>
+<div data-lang="zh"><p>讀得懂這格式的工具：<code>semantic-release</code>（自動 bump 版本）、<code>commitizen</code>（互動式輸入 commit）、各種 changelog generator。</p></div>
+<div data-lang="en"><p>Tools that read this format: <code>semantic-release</code> (auto-bumps versions), <code>commitizen</code> (interactive commit prompts), and various changelog generators.</p></div>
+</section>
+
+<!-- ===== Section 11: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整程式碼</div>
+<h2 data-zh="十、實際操作範例" data-en="X. Hands-on walkthroughs">十、實際操作範例</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'wfGh')">GitHub Flow</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'wfGf')">Git Flow CLI</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'wfTag')">Tagging a release</button>
+</div>
+<div class="code-tab-content active" id="wfGh"><pre><span class="comment"># GitHub Flow — 完整循環 / End-to-end cycle</span>
+$ git switch main &amp;&amp; git pull
+$ git switch -c feature/qc-filter-tweak
+<span class="comment"># ... 修改檔案 ...</span>
+$ git commit -am <span class="str">"feat: tighten MT% threshold to 15"</span>
+$ git push -u origin feature/qc-filter-tweak
+
+<span class="comment"># 在 GitHub 開 PR：</span>
+$ gh pr create --fill --reviewer @teammate
+
+<span class="comment"># review 通過後 squash &amp; merge，然後刪分支</span>
+$ gh pr merge --squash --delete-branch</pre></div>
+
+<div class="code-tab-content" id="wfGf"><pre><span class="comment"># 使用 git flow CLI extension</span>
+$ brew install git-flow-avh         <span class="comment"># macOS</span>
+$ sudo apt install git-flow         <span class="comment"># Ubuntu</span>
+
+$ git flow init -d                  <span class="comment"># 接受預設（main + develop）</span>
+
+<span class="comment"># 開新 feature（從 develop 切）</span>
+$ git flow feature start sctransform-v2
+$ <span class="comment"># ... 編輯、commit ...</span>
+$ git flow feature finish sctransform-v2   <span class="comment"># 合回 develop 並刪分支</span>
+
+<span class="comment"># 準備發版</span>
+$ git flow release start 1.4.0
+$ <span class="comment"># ... 修 release-blocker、改 version 字串 ...</span>
+$ git flow release finish 1.4.0     <span class="comment"># 合進 main + develop + 自動 tag</span>
+$ git push --all &amp;&amp; git push --tags</pre></div>
+
+<div class="code-tab-content" id="wfTag"><pre><span class="comment"># 1. 建立 annotated tag（推薦，含作者與日期）</span>
+$ git tag -a v1.4.2 -m <span class="str">"Release 1.4.2 — fix NA in QC"</span>
+
+<span class="comment"># 2. 推送 tag 到遠端（注意：push 預設不會帶 tag）</span>
+$ git push origin v1.4.2
+<span class="comment"># 或一次推全部 tag：</span>
+$ git push --tags
+
+<span class="comment"># 3. 在 GitHub 建 release（從 tag 自動帶 notes）</span>
+$ gh release create v1.4.2 --notes-from-tag
+
+<span class="comment"># 4. 附加二進位檔 / Attach binaries</span>
+$ gh release upload v1.4.2 ./dist/my-tool-v1.4.2.tar.gz
+
+<span class="comment"># 5. 查看所有 tag</span>
+$ git tag --list <span class="str">"v*"</span> --sort=-v:refname | head</pre></div>
+</div>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>禁忌：</strong>不要在專案進行到一半時，未經團隊同意就切換工作流程。「半套 Git Flow」比「沒 Git Flow」還糟糕——大家會搞不清楚該往哪條分支 push。</span>
+<span data-lang="en"><strong>Don’t do this:</strong> never switch workflows mid-project without team agreement. Half-applied Git Flow is worse than no Git Flow — nobody will know which branch to push to.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 12: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 你的工具現在是 <code>v1.4.2</code>，剛修了一個 bug，下一個版本號該是？</p>
+<p data-lang="en">1. Your tool is at <code>v1.4.2</code> and you just fixed a bug. What should the next version be?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. v2.0.0</span><span data-lang="en">A. v2.0.0</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. v1.4.3</span><span data-lang="en">B. v1.4.3</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. v1.5.0</span><span data-lang="en">C. v1.5.0</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. v1.4.2-fix</span><span data-lang="en">D. v1.4.2-fix</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">2. 下列哪個工作流程「最重」（長期分支最多、規則最多）？</p>
+<p data-lang="en">2. Which workflow is the “heaviest” (most long-lived branches, most rules)?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. GitHub Flow</span><span data-lang="en">A. GitHub Flow</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. Git Flow</span><span data-lang="en">B. Git Flow</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. Trunk-based</span><span data-lang="en">C. Trunk-based</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. Forking</span><span data-lang="en">D. Forking</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. Conventional Commit 訊息 <code>feat!: change DE function signature</code> 代表？</p>
+<p data-lang="en">3. The conventional commit <code>feat!: change DE function signature</code> indicates…?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 一個普通的新功能</span><span data-lang="en">A. A regular new feature</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 一個 bug fix</span><span data-lang="en">B. A bug fix</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 一個含破壞性變更的新功能（<code>!</code> 表示 BREAKING CHANGE）</span><span data-lang="en">C. A feature with a breaking change (the <code>!</code> marks BREAKING CHANGE)</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 一個已被撤回的 commit</span><span data-lang="en">D. A reverted commit</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="gitignore-lfs.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 9: .gitignore &amp;amp; Git LFS（生物資訊版）" data-en="Step 9: .gitignore &amp;amp; Git LFS for Bioinformatics">Step 9: .gitignore &amp; Git LFS（生物資訊版）</span></a>
+<a href="actions.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="GitHub Actions &amp;amp; CI/CD（生物資訊版）" data-en="GitHub Actions &amp;amp; CI/CD for Bioinformatics">GitHub Actions &amp; CI/CD（生物資訊版）</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.wf-q{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--c-border-light);border-radius:var(--radius);margin-bottom:10px;background:var(--c-surface)}
+.wf-qtext{flex:1 1 60%;font-weight:600;color:var(--c-ink)}
+.wf-opt{background:var(--c-surface-alt);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:6px 16px;font-family:inherit;cursor:pointer;transition:var(--transition);font-size:.9rem}
+.wf-opt:hover{border-color:var(--c-accent);color:var(--c-accent-dark)}
+.wf-opt.sel{background:var(--c-accent);color:#fff;border-color:var(--c-accent-dark)}
+.wf-result{margin-top:14px;padding:18px 22px;border-radius:var(--radius);background:var(--c-surface-alt);border-left:4px solid var(--c-accent);min-height:60px;display:none}
+.wf-result.show{display:block}
+.wf-result h4{margin:0 0 6px;color:var(--c-accent-dark);font-size:1.1rem}
+.wf-result p{margin:4px 0;font-size:.92rem;color:var(--c-ink)}
+@media(max-width:680px){.wf-qtext{flex:1 1 100%}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Workflow recommender
+const WF_ANS={q1:null,q2:null,q3:null,q4:null};
+const WF_TXT={
+  zh:{
+    solo:{t:'👤 Just commit to main',r:'單兵作戰的一次性 paper 不需要分支；直接在 main 上 commit，投稿時打 tag 即可。'},
+    gh:{t:'🟢 GitHub Flow',r:'多人協作、單一版本、沒有 CI 重度要求——這是 95% 實驗室專案的最佳選擇。一條 main + 短命 feature 分支 + PR 審查。'},
+    gf:{t:'🟦 Git Flow',r:'需要同時維護多個釋出版本（例如還在支援 v1.x 同時開發 v2.x）——Git Flow 的 develop / release / hotfix 分支結構就是為此設計。'},
+    tb:{t:'⚡ Trunk-based development',r:'有完整 CI、每次 commit 都自動測試——可以走 trunk-based，速度最快，沒有整合債。'}
+  },
+  en:{
+    solo:{t:'👤 Just commit to main',r:'A solo one-shot paper needs no branches — commit straight to main and tag at submission.'},
+    gh:{t:'🟢 GitHub Flow',r:'Multi-person, single version, no heavy CI requirement — the right pick for 95% of lab projects. One main + short-lived feature branches + PR review.'},
+    gf:{t:'🟦 Git Flow',r:'You need multiple released versions in parallel (e.g., still supporting v1.x while developing v2.x). Git Flow’s develop/release/hotfix structure was built for this.'},
+    tb:{t:'⚡ Trunk-based development',r:'With strong CI running tests on every commit, you can go trunk-based — maximum velocity with no integration debt.'}
+  }
+};
+function wfDecide(){if(Object.values(WF_ANS).some(v=>v===null))return;let key='gh';if(WF_ANS.q4==='y'&&WF_ANS.q1==='n')key='solo';else if(WF_ANS.q2==='y')key='gf';else if(WF_ANS.q3==='y'&&WF_ANS.q1==='y')key='tb';else key='gh';const L=I18n.get();const o=WF_TXT[L][key];const el=document.getElementById('wfResult');el.classList.add('show');el.innerHTML='<h4>'+o.t+'</h4><p>'+o.r+'</p>';}
+document.querySelectorAll('.wf-q').forEach(row=>{const q=row.dataset.q;row.querySelectorAll('.wf-opt').forEach(b=>{b.addEventListener('click',()=>{row.querySelectorAll('.wf-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');WF_ANS[q]=b.dataset.v;wfDecide();});});});
+document.addEventListener('langchange',()=>{if(!Object.values(WF_ANS).some(v=>v===null))wfDecide();});
+
+// Quiz
+const QF={zh:{q1_y:'PATCH 用於 bug fix，1.4.2 → 1.4.3。',q1_n:'正確答案已標示。',q2_y:'Git Flow 同時有 main + develop 兩條長期分支，加上 release/hotfix。',q2_n:'正確答案已標示。',q3_y:'<code>!</code> 是 Conventional Commits 標示 BREAKING CHANGE 的捷徑。',q3_n:'正確答案已標示。'},en:{q1_y:'PATCH bump for a bug fix: 1.4.2 → 1.4.3.',q1_n:'Correct answer is highlighted.',q2_y:'Git Flow has two long-lived branches (main + develop) plus release/hotfix branches.',q2_n:'Correct answer is highlighted.',q3_y:'The <code>!</code> is the Conventional Commits shorthand for BREAKING CHANGE.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.innerHTML=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

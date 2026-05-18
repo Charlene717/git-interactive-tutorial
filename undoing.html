@@ -1,0 +1,406 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 4: Undoing &amp; Time Travel — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html" class="active">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 4 / 9</div>
+<h1 data-zh="撤銷與時光旅行 (Undoing &amp; Time Travel)" data-en="Undoing &amp; Time Travel">撤銷與時光旅行 (Undoing &amp; Time Travel)</h1>
+<p class="subtitle" data-lang="zh">Git 最大的超能力是「安全撤銷」——幾乎所有東西都可以救回來。本章教你看清「失誤在哪一層」，然後選對工具反悔。</p>
+<p class="subtitle" data-lang="en">Git's biggest superpower is "safe undo" — almost everything is recoverable. This chapter teaches you to spot where the mistake lives and reach for the right tool.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="為什麼需要學「撤銷」？" data-en="Why learn to undo?">為什麼需要學「撤銷」？</h2>
+<div data-lang="zh">
+<p>真實的分析工作很少是直線前進：你把 <code>differential_expression.R</code> 改壞了、誤刪了 <code>QC_plots/</code> 資料夾、把開發用的 <code>API_KEY</code> commit 進去、甚至剛剛 <code>reset --hard</code> 把昨天整天的工作清乾淨——這些都是真實會發生的事。</p>
+<p><strong>好消息：</strong>Git 把幾乎每一個 HEAD 移動都記錄下來，保存 90 天。學會撤銷的真正關鍵，不是背指令，而是<strong>判斷失誤在哪一層</strong>：工作區（working dir）？暫存區（index）？已 commit 但沒 push？還是已經推到 GitHub 給別人 pull 走了？層級不同，工具就不同。</p>
+</div>
+<div data-lang="en">
+<p>Real analysis work is rarely linear: you break <code>differential_expression.R</code>, accidentally delete the <code>QC_plots/</code> folder, commit an <code>API_KEY</code>, or even <code>reset --hard</code> away yesterday's entire workday. These things happen.</p>
+<p><strong>The good news:</strong> Git logs almost every HEAD move and keeps it for 90 days. The real key to undoing isn't memorizing commands — it's <strong>identifying which layer the mistake lives in</strong>: working dir? staging index? committed but unpushed? already pushed and pulled by collaborators? Different layers need different tools.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心心法：</strong>「先別 panic、先想層級」。99% 的災難都能用 <code>git reflog</code> 找回 SHA，再 <code>git checkout</code> 救回來。</span>
+<span data-lang="en"><strong>Mantra:</strong> "Don't panic, identify the layer." 99% of disasters can be recovered by finding the SHA in <code>git reflog</code> and then <code>git checkout</code>-ing it.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Decision Tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策流程" data-en="DECISION">決策流程</div>
+<h2 data-zh="撤銷決策樹：5 個問題挑工具" data-en="The Undo Decision Tree: 5 Questions">撤銷決策樹：5 個問題挑工具</h2>
+<div data-lang="zh"><p>遇到失誤時，依序問自己這 5 題，就會知道用哪一個指令。</p></div>
+<div data-lang="en"><p>When something goes wrong, ask yourself these 5 questions in order — the answer tells you which command to use.</p></div>
+
+<div class="decision-tree">
+<h4>🌳 <span data-zh="撤銷工具決策流程" data-en="Undo decision tree">撤銷工具決策流程</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>改壞了某個檔案，<strong>還沒 <code>git add</code></strong>？<span class="dt-arrow">→ 是 →</span> <code>git restore &lt;file&gt;</code>（舊版：<code>git checkout -- &lt;file&gt;</code>），把工作區還原成上次 commit 的版本。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>已經 <code>add</code> 到暫存區，但<strong>還沒 commit</strong>？<span class="dt-arrow">→ 是 →</span> <code>git restore --staged &lt;file&gt;</code>（把它從暫存區拿出來，但保留工作區編輯）。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>已經 commit、<strong>但還沒 push</strong>？<span class="dt-arrow">→ 是 →</span> 三選一：<code>reset --soft HEAD~1</code>（commit 退回、變更保留在暫存區）／ <code>reset --mixed HEAD~1</code>（預設、變更回到工作區）／ <code>commit --amend</code>（修正最後一次 commit 的訊息或內容）。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>已經 <strong>push 到 GitHub</strong>？<span class="dt-arrow">→ 是 →</span> <code>git revert &lt;sha&gt;</code>。它會產生一個「反向 commit」，安全又保留歷史，<strong>絕對不要在共用分支用 reset</strong>。</div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>東西不見了（誤刪 branch、誤 <code>reset --hard</code>）？<span class="dt-arrow">→ 是 →</span> <code>git reflog</code> 找到那個 dangling SHA，然後 <code>git checkout &lt;sha&gt;</code> 或 <code>git branch recovered &lt;sha&gt;</code>。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Modified a file but <strong>haven't run <code>git add</code> yet</strong>? <span class="dt-arrow">→ Yes →</span> <code>git restore &lt;file&gt;</code> (older syntax: <code>git checkout -- &lt;file&gt;</code>) restores the working copy to the last commit.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Already <code>add</code>-ed, <strong>not yet committed</strong>? <span class="dt-arrow">→ Yes →</span> <code>git restore --staged &lt;file&gt;</code> unstages it but keeps your edits in the working dir.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Already committed, <strong>not yet pushed</strong>? <span class="dt-arrow">→ Yes →</span> Pick one: <code>reset --soft HEAD~1</code> (rolls back commit, keeps changes staged) / <code>reset --mixed HEAD~1</code> (default, changes back in working dir) / <code>commit --amend</code> (fix last commit's message or contents).</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Already <strong>pushed to GitHub</strong>? <span class="dt-arrow">→ Yes →</span> <code>git revert &lt;sha&gt;</code> creates an inverse commit — safe for shared history. <strong>Never reset a shared branch.</strong></div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>Something is lost (deleted branch, accidental <code>reset --hard</code>)? <span class="dt-arrow">→ Yes →</span> <code>git reflog</code> finds the dangling SHA, then <code>git checkout &lt;sha&gt;</code> or <code>git branch recovered &lt;sha&gt;</code>.</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 3: Reset Modes ===== -->
+<section class="section">
+<div class="section-label" data-zh="Reset 模式" data-en="RESET">Reset 模式</div>
+<h2 data-zh="三種 reset 模式：soft / mixed / hard" data-en="The Three Reset Modes: soft / mixed / hard">三種 reset 模式：soft / mixed / hard</h2>
+<div data-lang="zh"><p><code>git reset</code> 會把 HEAD 往回搬，但「工作區」和「暫存區」要不要跟著動？這就是三種模式的差別：</p></div>
+<div data-lang="en"><p><code>git reset</code> moves HEAD backwards — but does the working dir and the index follow? That's what the three modes control:</p></div>
+
+<table class="comp-table">
+<thead><tr>
+<th data-zh="模式" data-en="Mode">模式</th>
+<th>HEAD</th>
+<th data-zh="暫存區 (Index)" data-en="Index">Index</th>
+<th data-zh="工作區 (Working dir)" data-en="Working dir">Working dir</th>
+<th data-zh="用途" data-en="When to use">用途</th>
+</tr></thead>
+<tbody>
+<tr><td><code>--soft</code></td><td data-zh="移動" data-en="moves">移動</td><td data-zh="不動" data-en="unchanged">不動</td><td data-zh="不動" data-en="unchanged">不動</td><td data-lang="zh">把上一次 commit 拆回暫存區，重新合併成新 commit。</td><td data-lang="en">"Uncommit" while keeping everything staged for a re-commit.</td></tr>
+<tr><td><code>--mixed</code> <span style="font-size:.75rem;color:var(--c-ink-light)">(default)</span></td><td data-zh="移動" data-en="moves">移動</td><td data-zh="重設" data-en="reset">重設</td><td data-zh="不動" data-en="unchanged">不動</td><td data-lang="zh">commit 取消、變更退回工作區，最常用。</td><td data-lang="en">Uncommit and unstage, but keep edits in working dir — the most common.</td></tr>
+<tr><td><code>--hard</code> <span style="font-size:.75rem;color:#b8221a">⚠</span></td><td data-zh="移動" data-en="moves">移動</td><td data-zh="重設" data-en="reset">重設</td><td data-zh="重設（破壞性！）" data-en="reset (DESTRUCTIVE)">重設（破壞性！）</td><td data-lang="zh">把所有東西回到指定 commit——你的本地修改會消失。</td><td data-lang="en">Everything snaps to the target commit — local edits are gone.</td></tr>
+</tbody></table>
+
+<div class="callout danger"><span class="callout-icon">🚨</span><div>
+<span data-lang="zh"><strong><code>--hard</code> 是真的會刪檔！</strong>沒 commit 過的修改、沒 add 過的新檔案，全部會被毀掉，沒有 reflog 救不回來。下這個指令前先 <code>git status</code> 看一下工作區。</span>
+<span data-lang="en"><strong><code>--hard</code> really does delete files!</strong> Uncommitted edits and unstaged new files are gone forever — no reflog can save them. Always <code>git status</code> first.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: revert vs reset ===== -->
+<section class="section">
+<div class="section-label" data-zh="Revert vs Reset" data-en="REVERT VS RESET">Revert vs Reset</h2>
+<h2 data-zh="已經 push 了？只能用 revert" data-en="Already pushed? Use revert, not reset">已經 push 了？只能用 revert</h2>
+<div data-lang="zh">
+<p><code>git reset</code> 是「改寫歷史」——它把舊的 commit 從分支移除。如果你的同事已經 <code>git pull</code> 拉了那個 commit，再強推（<code>push --force</code>）會讓他們的 repo 出現詭異的衝突，<strong>大家都會討厭你</strong>。</p>
+<p><code>git revert</code> 則是「補一個反向 commit」：原本 commit 加 5 行，revert 就再 commit 一次把那 5 行刪掉。歷史完整保留，所有人 <code>git pull</code> 一下就同步了。</p>
+</div>
+<div data-lang="en">
+<p><code>git reset</code> rewrites history — it removes commits from the branch. If a collaborator has already pulled that commit, force-pushing creates a nasty divergence and <strong>everybody will hate you</strong>.</p>
+<p><code>git revert</code> instead adds a new "inverse commit": if the original added 5 lines, the revert commits a deletion of those 5 lines. History stays linear, and everyone catches up with a normal <code>git pull</code>.</p>
+</div>
+<pre><span class="comment"># 安全：在共用分支撤銷一次 commit / Safe undo on a shared branch</span>
+$ git revert a1b2c3d
+<span class="comment"># 編輯器跳出，寫好 revert message → :wq</span>
+$ git push origin main
+
+<span class="comment"># 撤銷一段範圍（從 a1b2c3d 之後到 HEAD 全部反向）/ Revert a range</span>
+$ git revert a1b2c3d..HEAD
+</pre>
+</section>
+
+<!-- ===== Section 5: Stash ===== -->
+<section class="section">
+<div class="section-label" data-zh="暫存改動" data-en="STASH">暫存改動</h2>
+<h2 data-zh="git stash：臨時抽屜" data-en="git stash: the temporary drawer">git stash：臨時抽屜</h2>
+<div data-lang="zh">
+<p><strong>場景：</strong>你正在改 <code>scRNA_clustering.R</code>，改一半 PI 走進來說「上週那張 UMAP 圖能不能<em>立刻</em>給我？」——但你現在的工作區一團亂，又不想隨便 commit。<code>git stash</code> 就是這個救星：把目前所有未 commit 的變更收進一個暫存抽屜，工作區瞬間乾淨，可以安心切到別的 branch。</p>
+</div>
+<div data-lang="en">
+<p><strong>Scenario:</strong> you're halfway through <code>scRNA_clustering.R</code> when your PI walks in and asks for last week's UMAP plot <em>right now</em>. Your working dir is a mess and you don't want a junk commit. <code>git stash</code> is the rescue: it tucks every uncommitted change into a drawer, leaving your working dir clean to switch branches.</p>
+</div>
+<pre><span class="comment"># 暫存當前所有變更 / Stash everything</span>
+$ git stash
+$ git stash push -m <span class="str">"WIP: testing new clustering resolution"</span>
+
+<span class="comment"># 連未追蹤的新檔案也一起收（很重要！）/ Include untracked files</span>
+$ git stash --include-untracked
+
+<span class="comment"># 看抽屜裡有什麼 / List stashes</span>
+$ git stash list
+stash@{0}: On main: WIP: testing new clustering resolution
+stash@{1}: On dev: half-done QC code
+
+<span class="comment"># 拿回最近一個（並從抽屜刪掉）/ Pop the latest stash</span>
+$ git stash pop
+
+<span class="comment"># 拿回但不刪（怕用錯的話）/ Apply without removing</span>
+$ git stash apply stash@{1}
+
+<span class="comment"># 確認不需要、丟掉 / Drop a stash</span>
+$ git stash drop stash@{0}
+</pre>
+</section>
+
+<!-- ===== Section 6: Reflog ===== -->
+<section class="section">
+<div class="section-label" data-zh="安全網" data-en="REFLOG">安全網</h2>
+<h2 data-zh="git reflog：你的 90 天安全網" data-en="git reflog: your 90-day safety net">git reflog：你的 90 天安全網</h2>
+<div data-lang="zh">
+<p>Git 把<strong>每一次 HEAD 移動</strong>（commit、checkout、reset、merge、rebase）都記錄到 <code>.git/logs/HEAD</code>，預設保留 90 天。換句話說，<em>就算你 <code>reset --hard</code> 把昨天的工作清乾淨</em>，那個 commit 的 SHA 還在——只要還在 90 天內，<code>git reflog</code> 就能找到。</p>
+</div>
+<div data-lang="en">
+<p>Every HEAD move — commit, checkout, reset, merge, rebase — is logged to <code>.git/logs/HEAD</code> for 90 days by default. So even if you <code>reset --hard</code> and wipe yesterday's work, <em>the commit's SHA still exists</em>. As long as you're inside the 90-day window, <code>git reflog</code> can find it.</p>
+</div>
+<pre><span class="comment"># 看 HEAD 的歷史移動 / Show HEAD move history</span>
+$ git reflog
+a1b2c3d (HEAD -&gt; main) HEAD@{0}: reset: moving to HEAD~1
+e4f5g6h HEAD@{1}: commit: add DESeq2 results table
+9876543 HEAD@{2}: checkout: moving from dev to main
+...
+
+<span class="comment"># 救回方法 1：直接 checkout 那個 SHA / Recover by SHA</span>
+$ git checkout e4f5g6h
+
+<span class="comment"># 救回方法 2：把它變成一個新 branch / Recover as a branch</span>
+$ git branch recovered-work e4f5g6h
+
+<span class="comment"># 救回方法 3：用 HEAD@{N} 語法 / Recover by reflog index</span>
+$ git reset --hard HEAD@{1}    <span class="comment"># 回到 1 步前的狀態</span>
+</pre>
+<div class="callout tip"><span class="callout-icon">🆘</span><div>
+<span data-lang="zh"><strong>記得這句話：</strong>「Got 99 problems? <code>git reflog</code> has the answer.」——任何「Git 弄丟東西」的災難，第一步永遠是 <code>git reflog</code>。</span>
+<span data-lang="en"><strong>Repeat after me:</strong> "Got 99 problems? <code>git reflog</code> has the answer." Whenever Git seems to have lost something, the first command is always <code>git reflog</code>.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 7: Interactive Reset Visualizer ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</h2>
+<h2 data-zh="Reset 模式視覺化模擬器" data-en="Reset Mode Visualizer">Reset 模式視覺化模擬器</h2>
+<div data-lang="zh"><p>起始狀態：分支上有 3 個 commit <code>A → B → C</code>，HEAD、Index、Working dir 全部指向 <code>C</code>。點下方按鈕看每種 reset 模式的差別。</p></div>
+<div data-lang="en"><p>Starting state: a branch with three commits <code>A → B → C</code>; HEAD, Index, and Working dir all point to <code>C</code>. Click the buttons below to see how each reset mode behaves.</p></div>
+
+<div id="resetSim" class="interactive-panel">
+  <div class="reset-cols">
+    <div class="reset-col"><div class="reset-col-h">HEAD</div><div class="reset-blocks" id="rbHead"></div></div>
+    <div class="reset-col"><div class="reset-col-h" data-zh="暫存區 Index" data-en="Index">暫存區 Index</div><div class="reset-blocks" id="rbIndex"></div></div>
+    <div class="reset-col"><div class="reset-col-h" data-zh="工作區 Working dir" data-en="Working dir">工作區 Working dir</div><div class="reset-blocks" id="rbWork"></div></div>
+  </div>
+  <div class="reset-btns">
+    <button class="reset-btn" data-act="soft">reset --soft HEAD~1</button>
+    <button class="reset-btn" data-act="mixed">reset --mixed HEAD~1</button>
+    <button class="reset-btn" data-act="hard">reset --hard HEAD~1</button>
+    <button class="reset-btn" data-act="amend">commit --amend</button>
+    <button class="reset-btn reset-rst" data-act="reset">↻ <span data-zh="重設" data-en="Reset">重設</span></button>
+  </div>
+  <div id="resetMsg" class="reset-msg"></div>
+</div>
+</section>
+
+<!-- ===== Section 8: Code Tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整程式碼</h2>
+<h2 data-zh="撤銷指令對照範例" data-en="Undo Recipes by Layer">撤銷指令對照範例</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'safe')" data-zh="安全撤銷" data-en="Safe undos">安全撤銷</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'local')" data-zh="本機（未 push）" data-en="Local (unpushed)">本機（未 push）</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'public')" data-zh="公開（已 push）" data-en="Public (pushed)">公開（已 push）</button>
+</div>
+
+<div class="code-tab-content active" id="safe"><pre><span class="comment"># 1. 撤銷工作區單一檔案（沒 add 過） / Revert one unstaged file</span>
+$ git restore differential_expression.R
+<span class="comment"># 等同舊版： git checkout -- differential_expression.R</span>
+
+<span class="comment"># 2. 撤銷整個工作區所有未 add 的變更 / Revert ALL unstaged changes</span>
+$ git restore .
+
+<span class="comment"># 3. 從暫存區拿掉（unstage），但保留編輯 / Unstage but keep edits</span>
+$ git restore --staged config.yaml
+
+<span class="comment"># 4. 修正最後一次 commit 的訊息（沒 push 才能用）/ Fix last commit message</span>
+$ git commit --amend -m <span class="str">"fix: correct DESeq2 contrast formula"</span>
+
+<span class="comment"># 5. 把剛漏掉的檔案補進最後一次 commit / Add a forgotten file to last commit</span>
+$ git add data/sample_sheet.csv
+$ git commit --amend --no-edit</pre></div>
+
+<div class="code-tab-content" id="local"><pre><span class="comment"># --soft：commit 退回，但變更保留在暫存區 / Uncommit, keep staged</span>
+$ git reset --soft HEAD~1
+<span class="comment"># 用途：剛 commit 完發現訊息寫錯、或想拆成兩個 commit</span>
+
+<span class="comment"># --mixed（預設）：commit 退回、unstage、編輯留在工作區 / Default</span>
+$ git reset HEAD~1
+<span class="comment"># 用途：把最近一個 commit 整個拆開，重新規劃 add 哪些</span>
+
+<span class="comment"># --hard：什麼都消失，回到指定 commit / Destructive — everything wiped</span>
+$ git reset --hard HEAD~1     <span class="comment"># ⚠ 用前先 git status</span>
+
+<span class="comment"># 從 reflog 救回剛剛被 --hard 砍掉的東西 / Recover from reflog</span>
+$ git reflog
+$ git reset --hard HEAD@{1}   <span class="comment"># 回到 reset --hard 之前那一刻</span></pre></div>
+
+<div class="code-tab-content" id="public"><pre><span class="comment"># 撤銷一個已經 push 出去的 commit / Revert one pushed commit</span>
+$ git log --oneline -5
+a1b2c3d <span class="comment"># bad commit we want to undo</span>
+e4f5g6h <span class="comment"># good</span>
+
+$ git revert a1b2c3d
+<span class="comment"># 編輯器跳出 → 寫 revert message → :wq</span>
+$ git push origin main
+
+<span class="comment"># 撤銷一段範圍（含起點到 HEAD）/ Revert a range</span>
+$ git revert a1b2c3d^..HEAD --no-edit
+
+<span class="comment"># 撤銷 merge commit（要指定 -m 1 主線父節點） / Revert a merge</span>
+$ git revert -m 1 &lt;merge_sha&gt;
+
+<span class="comment"># ❌ 千萬不要在共用分支用：</span>
+<span class="comment">#   git reset --hard HEAD~1 &amp;&amp; git push --force</span>
+<span class="comment">#   會讓所有同事的 repo 爆炸</span></pre></div>
+
+</div>
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>強推紅線：</strong>共用分支（<code>main</code>、<code>dev</code>、release 分支）<strong>絕對不要 <code>push --force</code></strong>。GitHub 可以設 branch protection 直接擋下，建議所有實驗室 repo 都開。</span>
+<span data-lang="en"><strong>Force-push red line:</strong> <strong>never <code>push --force</code></strong> on shared branches (<code>main</code>, <code>dev</code>, release branches). GitHub's branch protection blocks it — turn it on for every lab repo.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Bioinformatics scenarios ===== -->
+<section class="section">
+<div class="section-label" data-zh="生資現場" data-en="IN PRACTICE">生資現場</h2>
+<h2 data-zh="生資實驗室常見撤銷場景" data-en="Common Bioinfo Undo Scenarios">生資實驗室常見撤銷場景</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🧬 <span data-zh="不小心 commit 了 BAM 大檔" data-en="Committed a giant BAM by mistake">不小心 commit 了 BAM 大檔</span></h4>
+<div data-lang="zh"><p>還沒 push：<code>git reset --soft HEAD~1</code> → 把 <code>*.bam</code> 加進 <code>.gitignore</code> → <code>git restore --staged *.bam</code> → 重新 commit。已 push 但想真正清掉 history：用 <code>git filter-repo</code> 或 BFG。</p></div>
+<div data-lang="en"><p>If unpushed: <code>git reset --soft HEAD~1</code> → add <code>*.bam</code> to <code>.gitignore</code> → <code>git restore --staged *.bam</code> → recommit. If pushed and you must purge history, use <code>git filter-repo</code> or BFG.</p></div>
+</div>
+<div class="card"><h4>🔑 <span data-zh="API key / 密碼被 commit 進去" data-en="API key committed">API key 被 commit 進去</span></h4>
+<div data-lang="zh"><p>立刻在 GitHub <strong>撤銷該 token</strong>（這比改 git 史更重要！），再用 <code>git filter-repo --replace-text</code> 重寫歷史，然後 force push。提醒所有人重新 clone。</p></div>
+<div data-lang="en"><p>First, <strong>revoke the token on GitHub</strong> — this matters more than rewriting Git history. Then <code>git filter-repo --replace-text</code> to scrub it, force push, and tell everyone to re-clone.</p></div>
+</div>
+<div class="card"><h4>📊 <span data-zh="改一半被 PI 叫去看別的 branch" data-en="PI interrupts your WIP">改一半被 PI 叫去看別的 branch</span></h4>
+<div data-lang="zh"><p><code>git stash push -m "WIP clustering"</code> → <code>git switch last-week-plots</code> → 看完之後 <code>git switch -</code> 回來 → <code>git stash pop</code>。乾淨無痕。</p></div>
+<div data-lang="en"><p><code>git stash push -m "WIP clustering"</code> → <code>git switch last-week-plots</code> → when done, <code>git switch -</code> back → <code>git stash pop</code>. Clean and trace-free.</p></div>
+</div>
+<div class="card"><h4>💥 <span data-zh="跑 reset --hard 把昨天工作清掉" data-en="reset --hard wiped yesterday">reset --hard 把昨天工作清掉</span></h4>
+<div data-lang="zh"><p>深呼吸 → <code>git reflog</code> 找到昨天最後一次 commit 的 SHA → <code>git branch recovered &lt;sha&gt;</code>。只要還在 90 天內，工作就還在。</p></div>
+<div data-lang="en"><p>Breathe → <code>git reflog</code> to find yesterday's last commit SHA → <code>git branch recovered &lt;sha&gt;</code>. As long as you're within 90 days, the work is still there.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 10: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 你 commit 了一個錯誤的 DESeq2 contrast 設定並 push 到 main，同事們已經 pull 過了。最佳修正方法是？</p>
+<p data-lang="en">1. You committed a wrong DESeq2 contrast and pushed it to main; collaborators have already pulled. Best fix?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>git reset --hard HEAD~1</code> 然後 <code>git push --force</code></span><span data-lang="en">A. <code>git reset --hard HEAD~1</code> then <code>git push --force</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>git revert &lt;sha&gt;</code> 然後正常 push</span><span data-lang="en">B. <code>git revert &lt;sha&gt;</code> then normal push</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 直接刪掉 repo 重新 clone</span><span data-lang="en">C. Delete the repo and re-clone</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>git stash</code> 然後 force push</span><span data-lang="en">D. <code>git stash</code> then force push</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">2. <code>git reset --soft HEAD~1</code> 之後，你剛才那次 commit 的變更會在哪裡？</p>
+<p data-lang="en">2. After <code>git reset --soft HEAD~1</code>, where do your last commit's changes end up?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 工作區（未 add 的狀態）</span><span data-lang="en">A. Working dir (unstaged)</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 暫存區（staging area / index）</span><span data-lang="en">B. Staging area (index)</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 全部消失了</span><span data-lang="en">C. Gone forever</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 自動 push 到 remote</span><span data-lang="en">D. Auto-pushed to remote</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. 你 panic 之下打了 <code>git reset --hard</code>，把昨天整天的分析腳本清光了。第一個應該下的指令是？</p>
+<p data-lang="en">3. In a panic you ran <code>git reset --hard</code> and wiped yesterday's analysis scripts. What's the very first command to try?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>git push --force</code></span><span data-lang="en">A. <code>git push --force</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>rm -rf .git &amp;&amp; git init</code></span><span data-lang="en">B. <code>rm -rf .git &amp;&amp; git init</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>git reflog</code> 找到那個 SHA</span><span data-lang="en">C. <code>git reflog</code> to find the SHA</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>git commit -m "redo"</code></span><span data-lang="en">D. <code>git commit -m "redo"</code></span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="inspecting.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 3: 檢視變更 (Inspecting Changes)" data-en="Step 3: Inspecting Changes">Step 3: 檢視變更 (Inspecting Changes)</span></a>
+<a href="branching.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 5: 分支 (Branching)" data-en="Step 5: Branching">Step 5: 分支 (Branching)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.reset-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.reset-col{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:12px;min-height:200px}
+.reset-col-h{font-family:var(--font-mono);font-size:.85rem;font-weight:700;color:var(--c-accent-dark);text-align:center;padding-bottom:8px;border-bottom:1px dashed var(--c-border-light);margin-bottom:10px}
+.reset-blocks{display:flex;flex-direction:column-reverse;gap:6px}
+.commit-block{background:var(--c-accent);color:#fff;border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-weight:700;text-align:center;transition:all .35s ease;box-shadow:0 2px 6px rgba(26,107,90,.18)}
+.commit-block.head-ptr{background:#d97706;box-shadow:0 4px 10px rgba(217,119,6,.35);transform:scale(1.04)}
+.commit-block.faded{opacity:.25;transform:scale(.92)}
+.commit-block.deleted{opacity:0;height:0;padding:0;margin:0;overflow:hidden}
+.reset-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.reset-btn{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-family:var(--font-mono);font-size:.82rem;transition:var(--transition)}
+.reset-btn:hover{border-color:var(--c-accent);background:var(--c-accent);color:#fff}
+.reset-btn.reset-rst{margin-left:auto;font-family:inherit}
+.reset-msg{background:var(--c-surface-alt);border-left:4px solid var(--c-accent);border-radius:var(--radius);padding:12px 16px;font-size:.88rem;min-height:48px}
+@media(max-width:680px){.reset-cols{grid-template-columns:1fr}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Reset visualizer
+const RS_MSGS={
+  zh:{
+    init:'起始狀態：HEAD、Index、Working dir 都指向 commit C。',
+    soft:'reset --soft HEAD~1：HEAD 退到 B，但 C 的變更仍留在 Index 與 Working dir——可以再 commit 一次。',
+    mixed:'reset --mixed HEAD~1（預設）：HEAD 退到 B、Index 同步重設，但 Working dir 保留 C 的變更——須重新 add。',
+    hard:'reset --hard HEAD~1：HEAD、Index、Working dir 全部回到 B。C 的變更消失（仍可在 reflog 救回）。',
+    amend:'commit --amend：HEAD 仍指向 C，但這個 C 被新的 commit 取代（SHA 變了）——只能在沒 push 過時使用。'
+  },
+  en:{
+    init:'Start state: HEAD, Index, and Working dir all point to commit C.',
+    soft:'reset --soft HEAD~1: HEAD moves to B, but C\'s changes stay in Index and Working dir — ready to recommit.',
+    mixed:'reset --mixed HEAD~1 (default): HEAD moves to B, Index also resets, but Working dir keeps C\'s changes — you must re-add.',
+    hard:'reset --hard HEAD~1: HEAD, Index, and Working dir all snap back to B. C is gone (but still in reflog).',
+    amend:'commit --amend: HEAD still points to "C," but it\'s replaced by a new commit (SHA changes). Use only before pushing.'
+  }
+};
+let state={head:'C',index:'C',work:'C'};
+function renderRS(){
+  const cols={rbHead:state.head,rbIndex:state.index,rbWork:state.work};
+  for(const k in cols){
+    const el=document.getElementById(k);
+    const target=cols[k];
+    el.innerHTML='';
+    ['A','B','C'].forEach(c=>{
+      const d=document.createElement('div');
+      d.className='commit-block';
+      d.textContent=c;
+      if(c===target)d.classList.add('head-ptr');
+      else if(['A','B','C'].indexOf(c)>['A','B','C'].indexOf(target))d.classList.add('faded');
+      el.appendChild(d);
+    });
+  }
+}
+function rsMsg(k){const L=I18n.get();document.getElementById('resetMsg').textContent=RS_MSGS[L][k];document.getElementById('resetMsg').dataset.key=k;}
+document.querySelectorAll('.reset-btn').forEach(b=>b.addEventListener('click',()=>{
+  const a=b.dataset.act;
+  if(a==='soft'){state={head:'B',index:'C',work:'C'};rsMsg('soft');}
+  else if(a==='mixed'){state={head:'B',index:'B',work:'C'};rsMsg('mixed');}
+  else if(a==='hard'){state={head:'B',index:'B',work:'B'};rsMsg('hard');}
+  else if(a==='amend'){state={head:'C',index:'C',work:'C'};rsMsg('amend');}
+  else if(a==='reset'){state={head:'C',index:'C',work:'C'};rsMsg('init');}
+  renderRS();
+}));
+document.addEventListener('langchange',()=>{const k=document.getElementById('resetMsg').dataset.key||'init';rsMsg(k);});
+document.addEventListener('DOMContentLoaded',()=>{renderRS();rsMsg('init');});
+
+// Quiz
+const QF={zh:{q1_y:'共用分支只能 revert——它會新增一個反向 commit，所有人 pull 一下就同步。',q1_n:'正確答案已標示。在公開分支永遠用 revert，不用 reset。',q2_y:'--soft 只移動 HEAD，Index 與 Working dir 都不動——所有變更都還在暫存區。',q2_n:'正確答案已標示。記住對照表：soft 只動 HEAD。',q3_y:'reflog 是你的 90 天安全網——先用它找到 dangling SHA，再用 checkout 或 branch 救回。',q3_n:'正確答案已標示。先 reflog、再行動，不要 push --force。'},en:{q1_y:'On shared branches you must revert — it adds an inverse commit, and everyone catches up via a normal pull.',q1_n:'Correct answer is highlighted. Always revert on public branches; never reset.',q2_y:'--soft moves only HEAD; the Index and Working dir are untouched, so your changes sit in the staging area.',q2_n:'Correct answer is highlighted. Remember the table: soft moves HEAD only.',q3_y:'reflog is your 90-day safety net — find the dangling SHA there first, then checkout or branch to recover.',q3_n:'Correct answer is highlighted. Reflog first, never force-push.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

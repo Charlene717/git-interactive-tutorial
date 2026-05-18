@@ -1,0 +1,449 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GitHub Actions &amp; CI/CD — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html" class="active">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">ADVANCED 2 / 3</div>
+<h1 data-zh="GitHub Actions &amp; CI/CD（生物資訊版）" data-en="GitHub Actions &amp; CI/CD for Bioinformatics">GitHub Actions &amp; CI/CD（生物資訊版）</h1>
+<p class="subtitle" data-lang="zh">讓 GitHub 幫你跑測試、檢查 pipeline、發佈 Docker image——code 一推上去，自動驗證就開跑。</p>
+<p class="subtitle" data-lang="en">Let GitHub run your tests, validate pipelines, and ship Docker images — every push triggers automated checks.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="什麼是 CI / CD？為什麼生資專案需要？" data-en="What is CI/CD and Why Bioinformatics Needs It">什麼是 CI / CD？為什麼生資專案需要？</h2>
+<div data-lang="zh">
+<p><strong>CI (Continuous Integration，持續整合)</strong>：每次 push 程式碼時自動跑測試，第一時間抓到問題。<strong>CD (Continuous Deployment/Delivery，持續部署/交付)</strong>：通過測試後自動發佈版本、打包 Docker image、或部署文件網站。</p>
+<p><strong>GitHub Actions</strong> 是 GitHub 內建的 CI 服務——公開 repo 完全免費，私有 repo 每月 2000 分鐘額度。對生資專案來說：每個 PR 都用一份小型測試資料跑一次 pipeline，能在 code 進實驗室伺服器前就抓到 regression。</p>
+</div>
+<div data-lang="en">
+<p><strong>CI (Continuous Integration)</strong>: automatically run tests on every push so you catch breakage immediately. <strong>CD (Continuous Deployment/Delivery)</strong>: automatically publish releases, build Docker images, or deploy docs after tests pass.</p>
+<p><strong>GitHub Actions</strong> is GitHub's built-in CI service — free for public repos, generous for private. For bioinformatics: run a small test dataset through your pipeline on every PR to catch regressions before they reach the lab server.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心比喻：</strong>CI 是「自動 code reviewer 永遠不下班」。寫好測試後，每次 push 都會被檢查——你不用記得跑、合作者也不用提醒你。</span>
+<span data-lang="en"><strong>Core analogy:</strong> CI is the code reviewer that never clocks out. Once tests exist, every push is checked — you don't have to remember, and your collaborators don't have to nag you.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Concepts ===== -->
+<section class="section">
+<div class="section-label" data-zh="核心概念" data-en="CONCEPTS">核心概念</div>
+<h2 data-zh="六個一定要懂的詞彙" data-en="Six Vocabulary Words You Must Know">六個一定要懂的詞彙</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">📄</div><h4>Workflow</h4>
+<div data-lang="zh"><p>放在 <code>.github/workflows/</code> 的 YAML 檔。定義<strong>何時觸發</strong>（push / PR / 排程）以及<strong>要做什麼</strong>（jobs）。</p></div>
+<div data-lang="en"><p>YAML file in <code>.github/workflows/</code>. Defines <strong>when</strong> (push / PR / schedule) and <strong>what</strong> (jobs).</p></div>
+</div>
+<div class="card"><div class="card-icon">⚙️</div><h4>Job</h4>
+<div data-lang="zh"><p>在 runner（Ubuntu / macOS / Windows VM）上執行的一個工作單位。多個 job 可以平行跑。</p></div>
+<div data-lang="en"><p>A unit running on a runner (Ubuntu / macOS / Windows VM). Multiple jobs run in parallel.</p></div>
+</div>
+<div class="card"><div class="card-icon">🪜</div><h4>Step</h4>
+<div data-lang="zh"><p>單一指令或 action：<code>uses: actions/checkout@v4</code> 或 <code>run: pytest</code>。</p></div>
+<div data-lang="en"><p>A single command or action: <code>uses: actions/checkout@v4</code> or <code>run: pytest</code>.</p></div>
+</div>
+<div class="card"><div class="card-icon">🖥️</div><h4>Runner</h4>
+<div data-lang="zh"><p>實際跑 workflow 的 VM。可用 GitHub 主機，或 self-hosted（例如架在你的實驗室 HPC 上）。</p></div>
+<div data-lang="en"><p>The VM that runs the workflow. GitHub-hosted, or self-hosted (e.g., on your lab's HPC).</p></div>
+</div>
+<div class="card"><div class="card-icon">🎯</div><h4>Trigger</h4>
+<div data-lang="zh"><p><code>on: push</code>、<code>on: pull_request</code>、<code>on: schedule</code>（cron）、<code>on: workflow_dispatch</code>（手動）。</p></div>
+<div data-lang="en"><p><code>on: push</code>, <code>on: pull_request</code>, <code>on: schedule</code> (cron), <code>on: workflow_dispatch</code> (manual).</p></div>
+</div>
+<div class="card"><div class="card-icon">🔐</div><h4>Secret</h4>
+<div data-lang="zh"><p>加密 env 變數（API key、deploy key）。存在 repo Settings → Secrets。用 <code>${{ secrets.NAME }}</code> 引用。</p></div>
+<div data-lang="en"><p>Encrypted env var (API keys, deploy keys). Stored in repo Settings → Secrets. Reference via <code>${{ secrets.NAME }}</code>.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 3: Hello World ===== -->
+<section class="section">
+<div class="section-label" data-zh="最小範例" data-en="HELLO WORLD">最小範例</div>
+<h2 data-zh="第一個 workflow：跑 pytest" data-en="Your First Workflow: Run pytest">第一個 workflow：跑 pytest</h2>
+<div data-lang="zh"><p>新建檔案 <code>.github/workflows/test.yml</code>，貼上以下內容、commit、push——下次 push 就會自動跑。</p></div>
+<div data-lang="en"><p>Create <code>.github/workflows/test.yml</code>, paste the snippet below, commit, push — and the next push triggers it automatically.</p></div>
+<pre><span class="comment"># .github/workflows/test.yml</span>
+<span class="kw">name</span>: CI
+<span class="kw">on</span>: [push, pull_request]
+<span class="kw">jobs</span>:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: <span class="str">'3.11'</span>
+      - run: pip install -e <span class="str">".[test]"</span>
+      - run: pytest
+</pre>
+<div data-lang="zh">
+<p><strong>逐段解析：</strong></p>
+<ul>
+<li><code>name: CI</code> — 在 Actions 頁面顯示的名字。</li>
+<li><code>on: [push, pull_request]</code> — 推 code 或開 PR 時觸發。</li>
+<li><code>runs-on: ubuntu-latest</code> — 用最新 Ubuntu VM。</li>
+<li><code>actions/checkout@v4</code> — 把 repo 程式碼下載到 runner。</li>
+<li><code>actions/setup-python@v5</code> — 裝 Python 3.11。</li>
+<li><code>run: pytest</code> — 執行測試；任何 step 失敗整個 job 就算 fail。</li>
+</ul>
+</div>
+<div data-lang="en">
+<p><strong>Block-by-block:</strong></p>
+<ul>
+<li><code>name: CI</code> — display name in the Actions tab.</li>
+<li><code>on: [push, pull_request]</code> — fires on push or PR.</li>
+<li><code>runs-on: ubuntu-latest</code> — uses the latest Ubuntu VM.</li>
+<li><code>actions/checkout@v4</code> — checks out the repo onto the runner.</li>
+<li><code>actions/setup-python@v5</code> — installs Python 3.11.</li>
+<li><code>run: pytest</code> — runs the tests; any failing step fails the job.</li>
+</ul>
+</div>
+</section>
+
+<!-- ===== Section 4: Bioinformatics Actions ===== -->
+<section class="section">
+<div class="section-label" data-zh="生資相關 Actions" data-en="BIOINFO ACTIONS">生資相關 Actions</div>
+<h2 data-zh="生物資訊好用的 6 個 actions" data-en="6 Actions That Bioinformatics Loves">生物資訊好用的 6 個 actions</h2>
+<table class="comp-table">
+<thead><tr><th>Action</th><th data-zh="一句話用途" data-en="One-line use case">一句話用途</th></tr></thead>
+<tbody>
+<tr><td><code>r-lib/actions/setup-r@v2</code></td><td data-lang="zh">在 runner 上安裝指定版本的 R。</td><td data-lang="en">Install a specific version of R on the runner.</td></tr>
+<tr><td><code>r-lib/actions/setup-r-dependencies@v2</code></td><td data-lang="zh">自動安裝 DESCRIPTION 列出的 R 套件，且用 renv cache 加速。</td><td data-lang="en">Auto-install R packages from DESCRIPTION, with renv-style caching.</td></tr>
+<tr><td><code>conda-incubator/setup-miniconda@v3</code></td><td data-lang="zh">建立 conda 環境並啟動，方便跑 bioconda 套件。</td><td data-lang="en">Set up and activate a conda environment — handy for bioconda tools.</td></tr>
+<tr><td><code>mamba-org/setup-micromamba@v1</code></td><td data-lang="zh">conda 的快速替代品，安裝相依套件比 conda 快 5–10×。</td><td data-lang="en">Faster conda alternative — installs deps 5–10× quicker than conda.</td></tr>
+<tr><td><code>nf-core/setup-nextflow@v1</code></td><td data-lang="zh">安裝 Nextflow，用來跑 nf-core 系列 pipeline。</td><td data-lang="en">Install Nextflow, used to run nf-core pipelines.</td></tr>
+<tr><td><code>snakemake/snakemake-github-action@v1</code></td><td data-lang="zh">直接執行 Snakefile（含 <code>--use-conda</code>），CI 友善。</td><td data-lang="en">Run a Snakefile directly (with <code>--use-conda</code>), CI-friendly.</td></tr>
+<tr><td><code>docker/setup-buildx-action@v3</code></td><td data-lang="zh">建立並推 Docker image（含 multi-arch 支援）。</td><td data-lang="en">Build and push Docker images (with multi-arch support).</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 5: Matrix &amp; Secrets ===== -->
+<section class="section">
+<div class="section-label" data-zh="矩陣與密鑰" data-en="MATRIX &amp; SECRETS">矩陣與密鑰</div>
+<h2 data-zh="Matrix builds 與 Secrets" data-en="Matrix Builds and Secrets">Matrix builds 與 Secrets</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🧮 <span data-zh="Matrix：跨版本平行測試" data-en="Matrix: parallel cross-version testing">Matrix：跨版本平行測試</span></h4>
+<pre style="margin:0;font-size:.78rem"><span class="kw">strategy</span>:
+  matrix:
+    python: [<span class="str">'3.9'</span>,<span class="str">'3.10'</span>,<span class="str">'3.11'</span>,<span class="str">'3.12'</span>]
+    os: [ubuntu-latest, macos-latest]</pre>
+<div data-lang="zh"><p style="margin-top:8px">4 × 2 = <strong>8 個 job 平行跑</strong>。發行 R / Python 套件時拿來驗證跨版本相容性最划算。</p></div>
+<div data-lang="en"><p style="margin-top:8px">4 × 2 = <strong>8 jobs in parallel</strong>. Perfect for verifying cross-version compatibility when publishing R/Python packages.</p></div>
+</div>
+<div class="card"><h4>🔐 <span data-zh="Secrets：敏感資料怎麼存" data-en="Secrets: where sensitive data lives">Secrets：敏感資料怎麼存</span></h4>
+<div data-lang="zh">
+<p style="margin-top:0"><strong>步驟：</strong>repo Settings → Secrets and variables → Actions → New secret。</p>
+<p>workflow 內：<code>${{ secrets.MY_TOKEN }}</code>。每次 run 自帶 <code>${{ secrets.GITHUB_TOKEN }}</code>，免設定。</p>
+<p><strong>最小權限原則：</strong>用 <code>permissions: contents: read</code> 鎖死範圍。</p>
+</div>
+<div data-lang="en">
+<p style="margin-top:0"><strong>How:</strong> repo Settings → Secrets and variables → Actions → New secret.</p>
+<p>In the workflow: <code>${{ secrets.MY_TOKEN }}</code>. Every run gets <code>${{ secrets.GITHUB_TOKEN }}</code> automatically.</p>
+<p><strong>Least-privilege principle:</strong> scope tightly with <code>permissions: contents: read</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>地雷：</strong>不要把 secrets 放在 workflow 層級的 <code>env:</code>——這會讓所有 step 都看得到。只在需要的 step 裡傳入。</span>
+<span data-lang="en"><strong>Pitfall:</strong> don't put secrets in workflow-level <code>env:</code> — that exposes them to every step. Pass them only into the step that needs them.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 6: Real bioinformatics example ===== -->
+<section class="section">
+<div class="section-label" data-zh="真實範例" data-en="REAL EXAMPLE">真實範例</div>
+<h2 data-zh="實戰：scRNA-seq pipeline 每次 PR 自動測試" data-en="Real Example: Auto-Test a scRNA-seq Pipeline on Every PR">實戰：scRNA-seq pipeline 每次 PR 自動測試</h2>
+<div data-lang="zh"><p>下面這個 workflow：每次有人對 main 開 PR，就用 <strong>1K 個細胞</strong> 的測試資料跑一次 Snakemake pipeline。整個 CI 不到 4 分鐘，就能保證 main 永遠跑得起來。</p></div>
+<div data-lang="en"><p>This workflow runs the Snakemake pipeline on a <strong>1K-cell test dataset</strong> every time someone opens a PR against main. The whole CI finishes in under 4 minutes — and main is guaranteed runnable.</p></div>
+<pre><span class="comment"># .github/workflows/test-pipeline.yml</span>
+<span class="kw">name</span>: Test scRNA pipeline
+<span class="kw">on</span>: pull_request
+<span class="kw">jobs</span>:
+  test-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: snakemake/snakemake-github-action@v1
+        with:
+          snakefile: workflow/Snakefile
+          args: <span class="str">'--use-conda --cores 2 --config samples=test_samples.tsv'</span>
+</pre>
+</section>
+
+<!-- ===== Section 7: Interactive Widget ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="互動：Workflow YAML 產生器" data-en="Interactive: Workflow YAML Builder">互動：Workflow YAML 產生器</h2>
+<div data-lang="zh"><p>點選下方選項，YAML 會即時更新。複製貼到 <code>.github/workflows/ci.yml</code> 就能直接用。</p></div>
+<div data-lang="en"><p>Click the toggles below — the YAML updates live. Copy and paste into <code>.github/workflows/ci.yml</code> to use immediately.</p></div>
+
+<div class="interactive-panel">
+  <div class="yb-row">
+    <span class="yb-label" data-zh="觸發條件 Triggers:" data-en="Triggers:">觸發條件 Triggers:</span>
+    <button class="yb-btn active" data-group="trig" data-val="push">push</button>
+    <button class="yb-btn active" data-group="trig" data-val="pull_request">pull_request</button>
+    <button class="yb-btn" data-group="trig" data-val="schedule">schedule</button>
+    <button class="yb-btn" data-group="trig" data-val="workflow_dispatch">manual</button>
+  </div>
+  <div class="yb-row">
+    <span class="yb-label" data-zh="語言/環境 Setup:" data-en="Setup:">語言/環境 Setup:</span>
+    <button class="yb-btn active" data-group="lang" data-val="python">Python</button>
+    <button class="yb-btn" data-group="lang" data-val="r">R</button>
+    <button class="yb-btn" data-group="lang" data-val="conda">Conda</button>
+    <button class="yb-btn" data-group="lang" data-val="nextflow">Nextflow</button>
+    <button class="yb-btn" data-group="lang" data-val="snakemake">Snakemake</button>
+  </div>
+  <div class="yb-row">
+    <span class="yb-label" data-zh="Matrix 矩陣:" data-en="Matrix:">Matrix 矩陣:</span>
+    <button class="yb-btn active" data-group="mat" data-val="single">single</button>
+    <button class="yb-btn" data-group="mat" data-val="2way">2-way</button>
+    <button class="yb-btn" data-group="mat" data-val="3way">3-way</button>
+  </div>
+  <div class="yb-output">
+    <button class="yb-copy" id="ybCopy" data-zh="複製" data-en="Copy">複製</button>
+    <pre id="ybYaml"></pre>
+  </div>
+</div>
+</section>
+
+<!-- ===== Section 8: Decision Tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策樹" data-en="DECISION">決策樹</div>
+<h2 data-zh="我的專案需要 CI 嗎？" data-en="Does My Project Need CI?">我的專案需要 CI 嗎？</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="What should I CI?" data-en="What should I CI?">What should I CI?</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>要發佈的套件（R / Python）？<span class="dt-arrow">→ 是 →</span> 用 lint + 多版本 test，tag 時自動 release。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>可重現 pipeline（Nextflow / Snakemake）？<span class="dt-arrow">→ 是 →</span> 每個 PR 都用 test profile 跑一次。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>一篇論文用的單人分析？<span class="dt-arrow">→ 可選 →</span> 但加 <code>pytest</code> + lint 能在問題變成一週災難前抓到。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>每週固定的報表？<span class="dt-arrow">→ 是 →</span> 用 <code>on: schedule</code> cron 每週自動跑。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>A package you publish (R / Python)? <span class="dt-arrow">→ Yes →</span> Lint, test on multiple versions, deploy on tag.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>A reproducible pipeline (Nextflow / Snakemake)? <span class="dt-arrow">→ Yes →</span> Run the test profile on every PR.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>A solo analysis for one paper? <span class="dt-arrow">→ Optional →</span> Adding <code>pytest</code> + lint catches dumb errors before they cost you a week.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>A scheduled report? <span class="dt-arrow">→ Yes →</span> <code>on: schedule</code> cron to refresh weekly.</div></div>
+</div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">💰</span><div>
+<span data-lang="zh"><strong>費用與額度：</strong>公開 repo <strong>免費無限制</strong>。私有 repo 免費額度每月 2000 分鐘。<strong>Linux = 1× 分鐘、macOS = 10×、Windows = 2×</strong>。Self-hosted runner 無限制（但你自己維護）。</span>
+<span data-lang="en"><strong>Cost &amp; limits:</strong> public repos = <strong>unlimited</strong> free. Private repos = 2000 min/month free. <strong>Linux = 1× minute, macOS = 10×, Windows = 2×</strong>. Self-hosted runners are unlimited (but you maintain them).</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整程式碼</div>
+<h2 data-zh="四種常見 CI 樣板" data-en="Four Common CI Templates">四種常見 CI 樣板</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'tpy')">Python pkg</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'tr')">R pkg</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'tnf')">Nextflow</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'tdk')">Docker</button>
+</div>
+
+<div class="code-tab-content active" id="tpy"><pre><span class="comment"># Python package CI: test + coverage</span>
+<span class="kw">name</span>: Python CI
+<span class="kw">on</span>: [push, pull_request]
+<span class="kw">jobs</span>:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [<span class="str">'3.10'</span>,<span class="str">'3.11'</span>,<span class="str">'3.12'</span>]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e <span class="str">".[test]"</span>
+      - run: pytest --cov=src --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}</pre></div>
+
+<div class="code-tab-content" id="tr"><pre><span class="comment"># R package CI: R CMD check across versions</span>
+<span class="kw">name</span>: R-CMD-check
+<span class="kw">on</span>: [push, pull_request]
+<span class="kw">jobs</span>:
+  check:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        r: [<span class="str">'4.3'</span>,<span class="str">'4.4'</span>]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+      - uses: r-lib/actions/setup-r-dependencies@v2
+      - uses: r-lib/actions/check-r-package@v2</pre></div>
+
+<div class="code-tab-content" id="tnf"><pre><span class="comment"># Nextflow / nf-core pipeline test profile</span>
+<span class="kw">name</span>: nf-core test
+<span class="kw">on</span>: pull_request
+<span class="kw">jobs</span>:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nf-core/setup-nextflow@v1
+      - run: nextflow run . -profile test,docker --outdir results
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nextflow-log
+          path: .nextflow.log</pre></div>
+
+<div class="code-tab-content" id="tdk"><pre><span class="comment"># Build &amp; push Docker image to GHCR</span>
+<span class="kw">name</span>: Docker
+<span class="kw">on</span>:
+  push:
+    tags: [<span class="str">'v*'</span>]
+<span class="kw">jobs</span>:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          push: <span class="kw">true</span>
+          tags: ghcr.io/${{ github.repository }}:${{ github.ref_name }}</pre></div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">🏷️</span><div>
+<span data-lang="zh"><strong>加個 status badge 到 README：</strong><code>![CI](https://github.com/user/repo/actions/workflows/test.yml/badge.svg)</code>——對 reviewer 是個一目了然的「我有在測試」信號。</span>
+<span data-lang="en"><strong>Add a status badge to your README:</strong> <code>![CI](https://github.com/user/repo/actions/workflows/test.yml/badge.svg)</code> — a clear "I run tests" signal to reviewers.</span>
+</div></div>
+<div class="callout tip"><span class="callout-icon">🧬</span><div>
+<span data-lang="zh"><strong>生資小撇步：</strong>測試資料要<strong>夠小</strong>——subsample 到 1K 個細胞或 100 條 reads——CI 應該在 5 分鐘內跑完。否則 PR 卡 30 分鐘沒人想 review。</span>
+<span data-lang="en"><strong>Bioinformatics tip:</strong> keep your test dataset <strong>tiny</strong> — subsample to 1K cells or 100 reads — so CI finishes in &lt;5 min. Otherwise a 30-min PR queue kills review momentum.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 10: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. GitHub Actions 的 workflow YAML 檔應該放在 repo 的哪個資料夾？</p>
+<p data-lang="en">1. Where in a repo do GitHub Actions workflow YAML files live?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>actions/</code></span><span data-lang="en">A. <code>actions/</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>.github/workflows/</code></span><span data-lang="en">B. <code>.github/workflows/</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>ci/</code></span><span data-lang="en">C. <code>ci/</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>.gitlab-ci/</code></span><span data-lang="en">D. <code>.gitlab-ci/</code></span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. 你想要在 Ubuntu 與 macOS 上、針對 R 4.2、4.3、4.4 測試套件。應該用什麼 GitHub Actions 功能？</p>
+<p data-lang="en">2. You want to test your R package against R 4.2, 4.3, and 4.4 on both Ubuntu and macOS. What feature do you use?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 多個獨立 workflow 檔案</span><span data-lang="en">A. Multiple separate workflow files</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>workflow_dispatch</code> 手動觸發</span><span data-lang="en">B. <code>workflow_dispatch</code> manual trigger</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>strategy.matrix</code> 矩陣策略</span><span data-lang="en">C. <code>strategy.matrix</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. self-hosted runner</span><span data-lang="en">D. Self-hosted runner</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. CI workflow 需要登入 Docker registry 來 push image，這個密碼應該存在哪裡？</p>
+<p data-lang="en">3. Your CI workflow needs to authenticate to push a Docker image. Where do you store the password?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 寫死在 workflow YAML 裡</span><span data-lang="en">A. Hardcoded in the workflow YAML</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 提交到 repo 的 <code>secrets.txt</code></span><span data-lang="en">B. Committed in a <code>secrets.txt</code> file</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 加密的 Repository Secret，用 <code>${{ secrets.NAME }}</code> 引用</span><span data-lang="en">C. As an encrypted Repository Secret, referenced via <code>${{ secrets.NAME }}</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 開放在 README 中作為說明</span><span data-lang="en">D. Posted in the README for clarity</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="workflows.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Git 工作流程 (Git Workflows)" data-en="Git Workflows">Git 工作流程 (Git Workflows)</span></a>
+<a href="reproducibility.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="生資可重現研究 (Reproducibility)" data-en="Reproducibility for Bioinformatics">生資可重現研究 (Reproducibility)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.yb-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.yb-label{font-weight:600;color:var(--c-ink);min-width:160px;font-size:.9rem}
+.yb-btn{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:6px 12px;cursor:pointer;transition:var(--transition);font-family:var(--font-mono);font-size:.82rem;color:var(--c-ink)}
+.yb-btn:hover{border-color:var(--c-accent)}
+.yb-btn.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent-dark);box-shadow:0 2px 6px rgba(26,107,90,.2)}
+.yb-output{position:relative;margin-top:12px}
+.yb-output pre{margin:0;font-size:.82rem;background:var(--c-surface-alt);border-left:4px solid var(--c-accent);padding:14px 18px;border-radius:var(--radius);min-height:160px}
+.yb-copy{position:absolute;top:8px;right:8px;background:var(--c-accent);color:#fff;border:0;border-radius:var(--radius);padding:5px 11px;font-size:.78rem;cursor:pointer;font-family:inherit;z-index:2}
+.yb-copy:hover{background:var(--c-accent-dark)}
+.yb-copy.copied{background:#2c9a76}
+@media(max-width:680px){.yb-label{min-width:100%}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// YAML builder
+const YB={
+  langSetup:{
+    python:"      - uses: actions/setup-python@v5\n        with:\n          python-version: '3.11'\n      - run: pip install -e \".[test]\"\n      - run: pytest",
+    r:"      - uses: r-lib/actions/setup-r@v2\n      - uses: r-lib/actions/setup-r-dependencies@v2\n      - uses: r-lib/actions/check-r-package@v2",
+    conda:"      - uses: conda-incubator/setup-miniconda@v3\n        with:\n          environment-file: env.yml\n      - run: pytest",
+    nextflow:"      - uses: nf-core/setup-nextflow@v1\n      - run: nextflow run . -profile test,docker",
+    snakemake:"      - uses: snakemake/snakemake-github-action@v1\n        with:\n          snakefile: workflow/Snakefile\n          args: '--use-conda --cores 2'"
+  },
+  matrix:{
+    single:"",
+    "2way":"    strategy:\n      matrix:\n        python: ['3.10','3.11','3.12']\n",
+    "3way":"    strategy:\n      matrix:\n        python: ['3.10','3.11','3.12']\n        os: [ubuntu-latest, macos-latest]\n"
+  }
+};
+function ybRender(){
+  const trigs=[...document.querySelectorAll('.yb-btn.active[data-group="trig"]')].map(b=>b.dataset.val);
+  const lang=document.querySelector('.yb-btn.active[data-group="lang"]').dataset.val;
+  const mat=document.querySelector('.yb-btn.active[data-group="mat"]').dataset.val;
+  let on;
+  if(trigs.length===0){on='workflow_dispatch';}
+  else if(trigs.length===1){on=trigs[0]==='schedule'?"\n  schedule:\n    - cron: '0 6 * * 1'":trigs[0];}
+  else{on='['+trigs.filter(t=>t!=='schedule').join(', ')+']';}
+  const mblock=YB.matrix[mat];
+  const runsOn=mat==='3way'?'${{ matrix.os }}':'ubuntu-latest';
+  const yaml=`name: CI\non: ${on}\njobs:\n  build:\n    runs-on: ${runsOn}\n${mblock}    steps:\n      - uses: actions/checkout@v4\n${YB.langSetup[lang]}`;
+  document.getElementById('ybYaml').textContent=yaml;
+}
+document.querySelectorAll('.yb-btn').forEach(b=>b.addEventListener('click',()=>{
+  const g=b.dataset.group;
+  if(g==='trig'){b.classList.toggle('active');}
+  else{document.querySelectorAll(`.yb-btn[data-group="${g}"]`).forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+  ybRender();
+}));
+document.getElementById('ybCopy').addEventListener('click',()=>{
+  const t=document.getElementById('ybYaml').textContent;
+  navigator.clipboard.writeText(t).then(()=>{const c=document.getElementById('ybCopy');c.classList.add('copied');const L=(window.I18n&&I18n.get)?I18n.get():'en';c.textContent=L==='en'?'Copied!':'已複製！';setTimeout(()=>{c.classList.remove('copied');c.textContent=L==='en'?'Copy':'複製';},1500);});
+});
+document.addEventListener('DOMContentLoaded',ybRender);
+ybRender();
+
+// Quiz
+const QF={zh:{q1_y:'YAML 檔必須在 .github/workflows/ 內，GitHub 才會偵測並執行。',q1_n:'正確答案已標示。',q2_y:'strategy.matrix 可以同時定義多個維度，產生 cartesian product 平行 job。',q2_n:'正確答案已標示。',q3_y:'密碼放 Repository Secret，workflow 用 ${{ secrets.NAME }} 引用，永遠不會出現在 log。',q3_n:'正確答案已標示。'},en:{q1_y:'Workflow YAML must live in .github/workflows/ for GitHub to detect and run it.',q1_n:'Correct answer is highlighted.',q2_y:'strategy.matrix lets you define multiple dimensions, producing a cartesian product of parallel jobs.',q2_n:'Correct answer is highlighted.',q3_y:'Store credentials as Repository Secrets and reference them via ${{ secrets.NAME }} — they never appear in logs.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=(window.I18n&&I18n.get)?I18n.get():'en';fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

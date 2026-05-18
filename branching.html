@@ -1,0 +1,392 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 5: Branching — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html" class="active">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 5 / 9</div>
+<h1 data-zh="分支 (Branching)" data-en="Branching">分支 (Branching)</h1>
+<p class="subtitle" data-lang="zh">如果 commit 是時間點，那麼 branch 就是平行時空——而且在 Git 裡，開一條分支只是改一個 41 bytes 的檔案，幾乎免費。</p>
+<p class="subtitle" data-lang="en">If commits are timepoints, branches are timelines. In Git a new branch is just a 41-byte file change — essentially free.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="什麼是 Git 分支？" data-en="What is a Git branch?">什麼是 Git 分支？</h2>
+<div data-lang="zh">
+<p>在 Git 裡，<strong>branch（分支）就是一個指向 commit 的輕量指標</strong>——它不是檔案的副本，也不會複製整個專案。所以建立、切換、刪除分支都幾乎瞬間完成（微秒等級），對效能毫無影響。</p>
+<p>如果我們把每個 commit 想成歷史時間軸上的一個「時間點」，那麼分支就是這條時間軸的「平行時空」：你可以從同一個起點分出無限多條獨立路線，每條都能各自向前累積 commit，互不干擾。等到實驗成功，就把分支合回主線；失敗了，整條丟掉，主線完全不受影響。</p>
+</div>
+<div data-lang="en">
+<p>In Git, a <strong>branch is just a lightweight pointer to a commit</strong> — not a copy of files, not a duplicate of the project. Creating, switching, and deleting branches are essentially free operations (microseconds), with no performance cost.</p>
+<p>If a commit is a "moment in time" on a historical timeline, a branch is a parallel timeline: from any starting point you can spawn unlimited independent lines, each accumulating its own commits without interference. If the experiment works, merge it back; if not, throw the whole branch away — the main line stays untouched.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心心法：</strong>Git 的分支是「免費」的。其他 VCS（如 SVN）開分支等於複製整個專案目錄，又慢又貴；Git 只是動一個指標，所以鼓勵你<strong>動不動就開分支</strong>——topic branch、實驗 branch、WIP branch，用完就丟。</span>
+<span data-lang="en"><strong>Mental shift:</strong> Git branches are free. Other VCS systems (e.g., SVN) copy the entire project tree — slow and expensive. Git just moves a pointer, so you're encouraged to <strong>branch liberally</strong> — topic, experimental, WIP branches — and discard them freely.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Mental model ===== -->
+<section class="section">
+<div class="section-label" data-zh="心智模型" data-en="MENTAL MODEL">心智模型</div>
+<h2 data-zh="三個核心概念" data-en="Three Core Concepts">三個核心概念</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">🌿</div><h4 data-zh="Branch（分支）" data-en="Branch">Branch（分支）</h4>
+<div data-lang="zh"><p>就是一個可以移動的指標，指向某個 commit。當你在這條分支上做新的 commit，分支指標會自動往前移到最新的 commit——你不用手動更新。</p></div>
+<div data-lang="en"><p>A movable pointer to a commit. When you commit on a branch, the pointer automatically advances to the new commit — you don't need to update it manually.</p></div>
+</div>
+<div class="card"><div class="card-icon">🎯</div><h4 data-zh="HEAD" data-en="HEAD">HEAD</h4>
+<div data-lang="zh"><p>一個特殊指標，指向「目前所在分支」。它告訴 Git「下次 commit 要放到哪一條分支」。<code>cat .git/HEAD</code> 通常會看到 <code>ref: refs/heads/main</code>。</p></div>
+<div data-lang="en"><p>A special pointer to your <em>current</em> branch — it tells Git where the next commit will go. Running <code>cat .git/HEAD</code> usually shows <code>ref: refs/heads/main</code>.</p></div>
+</div>
+<div class="card"><div class="card-icon">📌</div><h4 data-zh="Detached HEAD（游離狀態）" data-en="Detached HEAD">Detached HEAD（游離狀態）</h4>
+<div data-lang="zh"><p>當 HEAD 直接指向某個 commit（而不是分支）時就進入「游離 HEAD」。<code>git checkout &lt;sha&gt;</code> 會觸發；Git 會警告：在這狀態下做 commit，若沒開新分支，這些 commit 容易變成孤兒，被 garbage collect 回收。</p></div>
+<div data-lang="en"><p>HEAD points directly at a commit (not a branch). Triggered by <code>git checkout &lt;sha&gt;</code>. Git warns you: commits made here are orphans unless you create a branch — eventually garbage-collected.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 3: Daily commands ===== -->
+<section class="section">
+<div class="section-label" data-zh="常用指令" data-en="COMMANDS">常用指令</div>
+<h2 data-zh="分支的日常操作" data-en="Day-to-day Branch Commands">分支的日常操作</h2>
+<div data-lang="zh"><p>Git 2.23+ 引入了 <code>git switch</code> 與 <code>git restore</code>，把原本被 <code>git checkout</code> 一個指令身兼多職的功能拆開。新寫法語意更清楚，這裡優先示範。</p></div>
+<div data-lang="en"><p>Git 2.23+ introduced <code>git switch</code> and <code>git restore</code>, splitting what <code>git checkout</code> used to overload. The new syntax is clearer — we use it first.</p></div>
+<pre><span class="comment"># 列出 / 檢視 / List &amp; inspect</span>
+$ git branch                  <span class="comment"># 列出本機分支 / list local</span>
+$ git branch -a               <span class="comment"># 含遠端 / incl. remote</span>
+$ git branch -v               <span class="comment"># 顯示每分支最後一個 commit / last commit per branch</span>
+$ git branch --merged         <span class="comment"># 已合併到目前分支 / merged into HEAD</span>
+$ git branch --no-merged      <span class="comment"># 尚未合併 / not yet merged</span>
+
+<span class="comment"># 建立 / Create</span>
+$ git branch feature-x        <span class="comment"># 只建立指標，不切過去 / create only</span>
+$ git switch -c feature-x     <span class="comment"># 建立並切過去（推薦）/ create + switch</span>
+$ git checkout -b feature-x   <span class="comment"># 舊寫法（仍然能用）/ legacy syntax</span>
+
+<span class="comment"># 切換 / Switch</span>
+$ git switch main             <span class="comment"># 現代 / modern</span>
+$ git checkout main           <span class="comment"># 舊寫法 / legacy</span>
+
+<span class="comment"># 重新命名 / Rename</span>
+$ git branch -m old-name new-name
+
+<span class="comment"># 刪除 / Delete</span>
+$ git branch -d feature-x     <span class="comment"># 安全刪除：若未合併會拒絕 / safe — refuses if unmerged</span>
+$ git branch -D feature-x     <span class="comment"># 強制刪除：可能遺失 commit / force, lossy</span>
+</pre>
+<div class="callout tip"><span class="callout-icon">✨</span><div>
+<span data-lang="zh"><strong>為什麼推薦 <code>switch</code>？</strong><code>checkout</code> 在歷史上被塞了太多功能（切分支、還原檔案、進 detached HEAD…），對新手非常混亂。<code>switch</code> 只做「切換分支」一件事，語意清楚。</span>
+<span data-lang="en"><strong>Why prefer <code>switch</code>?</strong> <code>checkout</code> historically did too many things (switch branches, restore files, enter detached HEAD…) — confusing for newcomers. <code>switch</code> does one thing: switch branches.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Different from SVN / Perforce ===== -->
+<section class="section">
+<div class="section-label" data-zh="觀念對比" data-en="MENTAL SHIFT">觀念對比</div>
+<h2 data-zh="為什麼 Git 的分支「不一樣」？" data-en="Why Git Branches Feel Different">為什麼 Git 的分支「不一樣」？</h2>
+<div data-lang="zh">
+<p>如果你之前用過 SVN、Perforce 或其他集中式 VCS，會記得「開分支」是大工程：要複製整個目錄樹、可能要先請示 lead，整個團隊都會看到。所以你不太敢隨便開分支。</p>
+<p>Git 完全不同。一條分支只是 <code>.git/refs/heads/&lt;name&gt;</code> 底下的一個 41-byte 檔案（裡面只放一個 SHA-1）。沒有複製、沒有交易、沒有人會看到——直到你 <code>push</code> 上去之前，這條分支只存在你的本機。</p>
+<p>結果是：Git 使用者開分支非常隨意。修一個小 bug 開一條、試一個新演算法開一條、寫一半的 WIP 開一條……完成後合回去，或直接 <code>git branch -D</code> 丟掉。這種「拋棄式分支（throwaway branch）」文化，是 Git 跟其他 VCS 最大的差別之一。</p>
+</div>
+<div data-lang="en">
+<p>If you've used SVN, Perforce, or another centralized VCS, "branching" was a big deal: copy the whole tree, sometimes ask the lead, and the whole team sees it. So you rarely branched.</p>
+<p>Git is completely different. A branch is a 41-byte file under <code>.git/refs/heads/&lt;name&gt;</code> (just one SHA-1). No copy, no transaction, nobody else sees it — until you <code>push</code>, the branch is only on your machine.</p>
+<p>The result: Git users branch freely. A tiny bug fix? Branch. A new algorithm to try? Branch. A WIP idea? Branch. Merge back when done, or <code>git branch -D</code> to discard. This "throwaway branch" culture is one of Git's biggest cultural differences from older VCS.</p>
+</div>
+</section>
+
+<!-- ===== Section 5: Naming conventions ===== -->
+<section class="section">
+<div class="section-label" data-zh="命名慣例" data-en="NAMING">命名慣例</div>
+<h2 data-zh="分支命名慣例" data-en="Branch Naming Conventions">分支命名慣例</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="風格" data-en="Style">風格</th>
+<th data-zh="範例" data-en="Example">範例</th>
+<th data-zh="適合場景" data-en="When to use">適合場景</th>
+</tr></thead>
+<tbody>
+<tr><td data-zh="描述式" data-en="Descriptive"><strong data-zh="描述式" data-en="Descriptive">描述式</strong></td><td><code>add-deseq2-volcano-plot</code></td><td data-lang="zh">小修小補、單人快速開發</td><td data-lang="en">Small fixes, quick solo dev</td></tr>
+<tr><td><strong data-zh="Issue 編號式" data-en="Issue-based">Issue 編號式</strong></td><td><code>fix/issue-42-mt-threshold</code></td><td data-lang="zh">跟 issue tracker 綁定的修復</td><td data-lang="en">Tied to an issue tracker</td></tr>
+<tr><td><strong data-zh="作者前綴" data-en="By author">作者前綴</strong></td><td><code>charlene/scrna-integration</code></td><td data-lang="zh">個人沙盒、長期實驗</td><td data-lang="en">Personal sandbox, long-running experiments</td></tr>
+<tr><td><strong data-zh="Release 標記" data-en="Release">Release 標記</strong></td><td><code>release/v1.2.0</code></td><td data-lang="zh">準備發布的凍結版本</td><td data-lang="en">Preparing a frozen release</td></tr>
+</tbody></table>
+<div class="callout tip"><span class="callout-icon">🏷️</span><div>
+<span data-lang="zh"><strong>小提醒：</strong>分支名不能有空格，建議全用小寫＋短橫線 (<code>-</code>) 或斜線 (<code>/</code>)；斜線會在 GitHub UI 上產生「資料夾」效果，方便 <code>feature/...</code>、<code>fix/...</code>、<code>release/...</code> 分組。</span>
+<span data-lang="en"><strong>Tip:</strong> branch names can't contain spaces — use lowercase with hyphens (<code>-</code>) or slashes (<code>/</code>). Slashes create "folder" grouping in the GitHub UI, handy for <code>feature/...</code>, <code>fix/...</code>, <code>release/...</code>.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 6: Interactive Branch Visualizer ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="分支視覺化模擬器" data-en="Branch Visualizer">分支視覺化模擬器</h2>
+<div data-lang="zh"><p>點按鈕觀察 commit、分支指標、HEAD 怎麼動。黃色框框是 <strong>HEAD</strong>，它指向「目前所在的分支」；綠色／藍色標籤是分支指標。</p></div>
+<div data-lang="en"><p>Click the buttons and watch how commits, branch pointers, and HEAD move. The yellow box is <strong>HEAD</strong>, which points at the current branch; green/blue labels are branch pointers.</p></div>
+
+<div id="bvBox" class="interactive-panel">
+  <div id="bvControls" class="bv-controls">
+    <button data-act="commitMain" data-zh="在 main 做 commit" data-en="Commit on main">在 main 做 commit</button>
+    <button data-act="createFeat" data-zh="從這建立 feature 分支" data-en="Create feature branch">從這建立 feature 分支</button>
+    <button data-act="switchFeat" data-zh="切到 feature" data-en="Switch to feature">切到 feature</button>
+    <button data-act="commitFeat" data-zh="在 feature 做 commit" data-en="Commit on feature">在 feature 做 commit</button>
+    <button data-act="switchMain" data-zh="切回 main" data-en="Switch to main">切回 main</button>
+    <button data-act="deleteFeat" data-zh="刪除 feature 分支" data-en="Delete feature">刪除 feature</button>
+    <button data-act="reset" data-zh="重設" data-en="Reset">重設</button>
+  </div>
+  <svg id="bvSvg" viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="bvLog" class="bv-log"></div>
+</div>
+</section>
+
+<!-- ===== Section 7: Decision tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策流程" data-en="DECISION TREE">決策流程</div>
+<h2 data-zh="什麼時候該開新分支？" data-en="When Should I Create a New Branch?">什麼時候該開新分支？</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="新分支決策樹" data-en="New-branch decision tree">新分支決策樹</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>正在嘗試一個有風險的想法？<span class="dt-arrow">→ 是 →</span> 開分支。失敗就整條丟掉，主線完全沒事。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>這個 feature 預估要超過 1 小時才能寫完？<span class="dt-arrow">→ 是 →</span> 開分支，避免半成品卡在 main。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>只是自己一個人在用的腳本，修一個 typo？<span class="dt-arrow">→ 視情況 →</span> 直接 commit 到 main 也行。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>多人同時改不同部分？<span class="dt-arrow">→ 一定要 →</span> 一個 feature 一條 branch，後面才能用 PR review。</div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>準備投稿論文要凍結程式碼？<span class="dt-arrow">→ 是 →</span> 開 <code>release/manuscript-v1</code>，之後 main 可以繼續開發、不影響快照。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Trying out a risky idea? <span class="dt-arrow">→ Yes →</span> Branch. If it fails, throw the branch away — main is untouched.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Working on a feature that takes more than ~1 hour? <span class="dt-arrow">→ Yes →</span> Branch — don't leave half-done work on main.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Fixing a tiny typo on a script you maintain alone? <span class="dt-arrow">→ Optional →</span> A direct commit to main is fine.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Multiple people working on different things? <span class="dt-arrow">→ Definitely →</span> One branch per feature, so PR review is possible.</div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>Preparing for paper submission? <span class="dt-arrow">→ Yes →</span> Branch <code>release/manuscript-v1</code> so further dev continues on main without affecting the snapshot.</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 8: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整範例" data-en="CODE">完整範例</div>
+<h2 data-zh="分支生命週期完整範例" data-en="Branch Lifecycle — Complete Examples">分支生命週期完整範例</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'modern')">Modern (git switch)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'classic')">Classic (git checkout)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'bio')" data-zh="生資範例" data-en="Bioinformatics example">生資範例</button>
+</div>
+<div class="code-tab-content active" id="modern"><pre><span class="comment"># 從 main 出發、建立並切到 feature 分支 / Create + switch</span>
+$ git switch main
+$ git switch -c feature/add-volcano-plot
+
+<span class="comment"># 編輯檔案後 commit / Edit + commit</span>
+$ <span class="func">echo</span> <span class="str">"plot_volcano()"</span> &gt;&gt; analysis.R
+$ git add analysis.R
+$ git commit -m <span class="str">"feat: add volcano plot"</span>
+
+<span class="comment"># 切回 main / Switch back</span>
+$ git switch main
+
+<span class="comment"># 確認 feature 已合併後安全刪除（合併示範見 Step 6） / Delete</span>
+$ git branch -d feature/add-volcano-plot
+</pre></div>
+
+<div class="code-tab-content" id="classic"><pre><span class="comment"># 舊版寫法：checkout -b 一次完成 create + switch / Legacy</span>
+$ git checkout main
+$ git checkout -b feature/add-volcano-plot
+
+<span class="comment"># 編輯後 commit / Edit + commit</span>
+$ <span class="func">echo</span> <span class="str">"plot_volcano()"</span> &gt;&gt; analysis.R
+$ git add analysis.R
+$ git commit -m <span class="str">"feat: add volcano plot"</span>
+
+<span class="comment"># 切回 main / Switch back</span>
+$ git checkout main
+
+<span class="comment"># 刪除 / Delete</span>
+$ git branch -d feature/add-volcano-plot
+</pre></div>
+
+<div class="code-tab-content" id="bio"><pre><span class="comment"># 場景：你維護 scrna-pipeline，要加入 sctransform 正規化 step</span>
+<span class="comment"># Scenario: maintain scrna-pipeline, add sctransform normalization</span>
+
+$ <span class="func">cd</span> ~/projects/scrna-pipeline
+$ git switch main
+$ git pull origin main                     <span class="comment"># 先同步遠端 / sync remote</span>
+$ git switch -c feature/sctransform
+
+<span class="comment"># commit 1: 加入函式骨架 / scaffold function</span>
+$ <span class="func">vim</span> R/normalize.R
+$ git add R/normalize.R
+$ git commit -m <span class="str">"feat(normalize): add sctransform skeleton"</span>
+
+<span class="comment"># commit 2: 整合到主 pipeline / wire into pipeline</span>
+$ <span class="func">vim</span> R/run_pipeline.R
+$ git commit -am <span class="str">"feat(pipeline): wire sctransform into run_pipeline"</span>
+
+<span class="comment"># commit 3: 加單元測試 / add unit tests</span>
+$ <span class="func">vim</span> tests/testthat/test-normalize.R
+$ git add tests/testthat/test-normalize.R
+$ git commit -m <span class="str">"test(normalize): cover sctransform path"</span>
+
+<span class="comment"># 確認分支狀態，準備 merge（合併方式見 Step 6） / Review &amp; prep merge</span>
+$ git log --oneline main..HEAD             <span class="comment"># 看 feature 比 main 多了哪些 commit</span>
+$ git switch main
+$ git branch --no-merged                   <span class="comment"># feature/sctransform 應出現於此</span>
+<span class="comment"># 接下來：Step 6 會教 git merge / git rebase</span>
+</pre></div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">🧬</span><div>
+<span data-lang="zh"><strong>生資場景小提示：</strong>讓 <code>main</code> 永遠保持「目前已發表 / 已投稿」的版本；任何新分析開 <code>feature/...</code> 分支跑，跑通、review 過再合進來。這樣論文 reviewer 來信要復現結果時，<code>git checkout main</code> 就是當初提交的版本。</span>
+<span data-lang="en"><strong>Bioinformatics tip:</strong> keep <code>main</code> as the "currently published / submitted" version; do new analyses on <code>feature/...</code> branches and merge only after review. When a reviewer asks you to reproduce a result, <code>git checkout main</code> is exactly the submitted version.</span>
+</div></div>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>共用專案守則：</strong>千萬不要直接 commit 到 <code>main</code>。一定要先開 feature 分支、push 上去開 Pull Request（Step 8），讓組員 review。直接推到共用 main 等於跳過所有把關，是最常見的協作事故來源。</span>
+<span data-lang="en"><strong>Shared-project rule:</strong> never commit directly to <code>main</code>. Always branch + push + open a Pull Request (Step 8) so teammates can review. Direct commits to a shared main bypass all safeguards and are the single most common source of collaboration accidents.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 從技術面看，一條 Git 分支究竟是什麼？</p>
+<p data-lang="en">1. Technically speaking, what is a Git branch?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 整個專案目錄的副本</span><span data-lang="en">A. A copy of the entire project directory</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 一個可移動的指標，指向某個 commit</span><span data-lang="en">B. A movable pointer to a commit</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 一份 commit 的 diff 集合</span><span data-lang="en">C. A bundled set of commit diffs</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. GitHub 端產生的一個遠端複本</span><span data-lang="en">D. A remote replica created by GitHub</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. 你執行 <code>git checkout &lt;commit-sha&gt;</code>（指 SHA 而非分支名）。Git 會警告什麼？</p>
+<p data-lang="en">2. You run <code>git checkout &lt;commit-sha&gt;</code> (using a SHA, not a branch name). What does Git warn about?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 你的工作區未存檔</span><span data-lang="en">A. Your working tree is unsaved</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 你和遠端有衝突</span><span data-lang="en">B. You have conflicts with the remote</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 你進入了 detached HEAD，新 commit 若沒開分支會變成孤兒</span><span data-lang="en">C. You're in detached HEAD; new commits without a branch will be orphaned</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 該 commit 已被 garbage collect</span><span data-lang="en">D. That commit has already been garbage-collected</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="0">
+<p data-lang="zh">3. <code>git branch -d feature-x</code> 與 <code>git branch -D feature-x</code> 的差別是什麼？</p>
+<p data-lang="en">3. What is the difference between <code>git branch -d feature-x</code> and <code>git branch -D feature-x</code>?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 小寫 <code>-d</code> 是安全刪除（未合併會拒絕）；大寫 <code>-D</code> 是強制刪除（可能遺失 commit）</span><span data-lang="en">A. Lowercase <code>-d</code> is safe (refuses if unmerged); uppercase <code>-D</code> forces deletion (may lose commits)</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 兩個完全一樣，只是別名</span><span data-lang="en">B. They are identical — just aliases</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>-d</code> 刪本機；<code>-D</code> 刪遠端</span><span data-lang="en">C. <code>-d</code> deletes local; <code>-D</code> deletes remote</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>-d</code> 只重新命名；<code>-D</code> 才真正刪除</span><span data-lang="en">D. <code>-d</code> only renames; only <code>-D</code> actually deletes</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="undoing.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 4: 撤銷與時光旅行 (Undoing &amp;amp; Time Travel)" data-en="Step 4: Undoing &amp;amp; Time Travel">Step 4: 撤銷與時光旅行 (Undoing &amp; Time Travel)</span></a>
+<a href="merge-rebase.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 6: 合併與 Rebase (Merging &amp;amp; Rebasing)" data-en="Step 6: Merging &amp;amp; Rebasing">Step 6: 合併與 Rebase (Merging &amp; Rebasing)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.bv-controls{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.bv-controls button{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:7px 12px;font-family:inherit;font-size:.82rem;cursor:pointer;transition:var(--transition);color:var(--c-ink)}
+.bv-controls button:hover{border-color:var(--c-accent);background:var(--c-accent);color:#fff;transform:translateY(-1px)}
+.bv-controls button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+#bvSvg{width:100%;height:240px;background:var(--c-surface-alt);border-radius:var(--radius);border:1px solid var(--c-border-light)}
+.bv-commit{fill:var(--c-surface);stroke:var(--c-ink);stroke-width:2}
+.bv-commit-label{font-family:var(--font-mono);font-size:11px;fill:var(--c-ink);text-anchor:middle;font-weight:600}
+.bv-edge{stroke:var(--c-ink-light);stroke-width:2;fill:none}
+.bv-branch-main{fill:#1a6b5a;stroke:#0e4a3e}
+.bv-branch-feat{fill:#2e6a9c;stroke:#1d4b73}
+.bv-branch-label{font-family:var(--font-mono);font-size:11px;fill:#fff;text-anchor:middle;font-weight:700}
+.bv-head{fill:#f4c542;stroke:#a8821e;stroke-width:2}
+.bv-head-label{font-family:var(--font-mono);font-size:10px;fill:#5a4310;text-anchor:middle;font-weight:700}
+.bv-pointer{stroke-width:1.5;fill:none;stroke-dasharray:3 3}
+.bv-log{margin-top:10px;font-family:var(--font-mono);font-size:.78rem;color:var(--c-ink-light);min-height:18px}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Branch Visualizer
+const BV={
+  state:null,
+  init(){this.state={commits:[{id:'A',x:90}],edges:[],main:0,feat:null,head:'main'};this.render();this.log('');},
+  log(msg){document.getElementById('bvLog').textContent=msg;},
+  render(){
+    const s=this.state;const svg=document.getElementById('bvSvg');
+    let h='';const cy=160;
+    // edges between commits (chain)
+    for(let i=1;i<s.commits.length;i++){h+=`<line class="bv-edge" x1="${s.commits[i-1].x+22}" y1="${cy}" x2="${s.commits[i].x-22}" y2="${cy}"/>`;}
+    // commits
+    s.commits.forEach(c=>{h+=`<circle class="bv-commit" cx="${c.x}" cy="${cy}" r="22"/><text class="bv-commit-label" x="${c.x}" y="${cy+4}">${c.id}</text>`;});
+    // branch labels
+    const mainC=s.commits[s.main];
+    h+=`<rect class="bv-branch-main" x="${mainC.x-32}" y="60" width="64" height="26" rx="6"/><text class="bv-branch-label" x="${mainC.x}" y="77">main</text><line class="bv-pointer" stroke="#0e4a3e" x1="${mainC.x}" y1="86" x2="${mainC.x}" y2="${cy-22}"/>`;
+    if(s.feat!==null){const fc=s.commits[s.feat];h+=`<rect class="bv-branch-feat" x="${fc.x-36}" y="98" width="72" height="26" rx="6"/><text class="bv-branch-label" x="${fc.x}" y="115">feature</text><line class="bv-pointer" stroke="#1d4b73" x1="${fc.x}" y1="124" x2="${fc.x}" y2="${cy-22}"/>`;}
+    // HEAD indicator
+    const headBranchIdx=s.head==='main'?s.main:s.feat;
+    if(headBranchIdx!==null){
+      const headLabelY=s.head==='main'?60:98;
+      const headX=s.commits[headBranchIdx].x+(s.head==='main'?40:48);
+      h+=`<rect class="bv-head" x="${headX}" y="${headLabelY+2}" width="48" height="22" rx="4"/><text class="bv-head-label" x="${headX+24}" y="${headLabelY+17}">HEAD</text>`;
+    }
+    svg.innerHTML=h;
+    // disable invalid buttons
+    document.querySelectorAll('#bvControls button').forEach(b=>{
+      const a=b.dataset.act;b.disabled=false;
+      if(a==='createFeat'&&s.feat!==null)b.disabled=true;
+      if(a==='switchFeat'&&(s.feat===null||s.head==='feature'))b.disabled=true;
+      if(a==='switchMain'&&s.head==='main')b.disabled=true;
+      if(a==='commitFeat'&&s.head!=='feature')b.disabled=true;
+      if(a==='deleteFeat'&&(s.feat===null||s.head==='feature'))b.disabled=true;
+    });
+  },
+  nextId(){return String.fromCharCode(65+this.state.commits.length);},
+  commitOn(branch){
+    const s=this.state;const id=this.nextId();const parentIdx=branch==='main'?s.main:s.feat;
+    const x=s.commits[parentIdx].x+90;s.commits.push({id,x});
+    const newIdx=s.commits.length-1;
+    if(branch==='main')s.main=newIdx;else s.feat=newIdx;
+    this.render();
+  },
+  act(a){
+    const L=(document.documentElement.getAttribute('data-lang')||'en');const MSG={
+      zh:{commitMain:'在 main 做了新 commit；main 指標前移。',createFeat:'從目前 commit 建立 feature 分支（指標而已，沒複製檔案）。',switchFeat:'HEAD 切到 feature——之後 commit 會推進 feature。',commitFeat:'在 feature 做 commit；只有 feature 指標前移，main 不動。',switchMain:'HEAD 切回 main。',deleteFeat:'刪除 feature 分支（指標移除，commit 還在；若無人指向會被回收）。',reset:'已重設。'},
+      en:{commitMain:'Committed on main — main pointer advanced.',createFeat:'Branch feature created at current commit (just a pointer, no copy).',switchFeat:'HEAD moved to feature — next commits advance feature.',commitFeat:'Committed on feature — only the feature pointer advances, main stays.',switchMain:'HEAD moved back to main.',deleteFeat:'feature branch deleted (pointer removed; commits remain until GC if unreferenced).',reset:'Reset.'}
+    };
+    const s=this.state;
+    if(a==='commitMain'){if(s.head!=='main'){s.head='main';}this.commitOn('main');}
+    else if(a==='createFeat'){s.feat=s.head==='main'?s.main:s.feat;this.render();}
+    else if(a==='switchFeat'){s.head='feature';this.render();}
+    else if(a==='commitFeat'){this.commitOn('feature');}
+    else if(a==='switchMain'){s.head='main';this.render();}
+    else if(a==='deleteFeat'){s.feat=null;this.render();}
+    else if(a==='reset'){this.init();return;}
+    this.log(MSG[L][a]||'');
+  }
+};
+document.addEventListener('DOMContentLoaded',()=>{BV.init();document.querySelectorAll('#bvControls button').forEach(b=>b.addEventListener('click',()=>BV.act(b.dataset.act)));document.addEventListener('langchange',()=>BV.render());});
+
+// Quiz
+const QF={
+  zh:{q1_y:'正確！branch 只是 .git/refs/heads/ 底下一個 41-byte 檔案，存著 SHA-1。',q1_n:'正確答案已標示——branch 是指標，不是檔案副本。',
+       q2_y:'正確！detached HEAD 下的 commit 沒有分支指向，最終會被 garbage collect。要保留請 git switch -c new-branch。',q2_n:'正確答案已標示。',
+       q3_y:'正確！小寫 -d 安全（拒絕未合併的分支），大寫 -D 強制（可能丟 commit）。',q3_n:'正確答案已標示。'},
+  en:{q1_y:'Correct — a branch is just a 41-byte file under .git/refs/heads/ containing a SHA-1.',q1_n:'Correct answer highlighted — a branch is a pointer, not a copy.',
+       q2_y:'Correct — commits made in detached HEAD have no branch referencing them and will be GC\'d. Save them with git switch -c new-branch.',q2_n:'Correct answer highlighted.',
+       q3_y:'Correct — lowercase -d is safe (refuses unmerged), uppercase -D forces (may lose commits).',q3_n:'Correct answer highlighted.'}
+};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=(document.documentElement.getAttribute('data-lang')||'en');fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

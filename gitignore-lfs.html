@@ -1,0 +1,449 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 9: .gitignore &amp; Git LFS — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html" class="active">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 9 / 9</div>
+<h1 data-zh=".gitignore &amp; Git LFS（生物資訊版）" data-en=".gitignore &amp; Git LFS for Bioinformatics">.gitignore &amp; Git LFS（生物資訊版）</h1>
+<p class="subtitle" data-lang="zh">FASTQ、BAM、H5AD 都不該丟進 Git——學會 <code>.gitignore</code> 規則、Git LFS 的取捨，以及該存到哪。</p>
+<p class="subtitle" data-lang="en">FASTQ, BAM, H5AD — none of these belong in Git. Learn the <code>.gitignore</code> rules, Git LFS trade-offs, and where the data should actually live.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="為什麼基因體資料不能直接 commit？" data-en="Why You Can't Just Commit Genomic Data">為什麼基因體資料不能直接 commit？</h2>
+<div data-lang="zh">
+<p>Git 當初是為了管理 Linux 核心的<strong>原始碼</strong>而設計——幾百萬行純文字。它<strong>不是為了存 50 GB 的 BAM 檔</strong>而生的。沒有規劃就 <code>git add .</code> 的下場：(1) 不小心把一個 50 GB BAM 加進去，(2) repo 體積爆炸到無法 clone，(3) GitHub 直接拒絕你的 push（單一檔案上限 100 MB、push 上限 2 GB）。</p>
+<p>本章涵蓋四件事：(1) <strong>什麼絕對不要 commit</strong>；(2) <code>.gitignore</code> 規則語法；(3) Git LFS 何時值得開、何時不值得；(4) 最重要的替代方案——<strong>不要追蹤資料</strong>，只追蹤產生資料的程式碼與 accession 編號。</p>
+</div>
+<div data-lang="en">
+<p>Git was originally designed to manage the Linux kernel's <strong>source code</strong> — millions of lines of plain text. It was <strong>not</strong> built to hold 50 GB BAM files. Run <code>git add .</code> without thinking and you get: (1) a 50 GB BAM accidentally staged, (2) a repo so bloated nobody can clone it, (3) GitHub rejecting your push (100 MB per-file limit, 2 GB per-push limit).</p>
+<p>This chapter covers four things: (1) what you must <strong>never</strong> commit; (2) <code>.gitignore</code> pattern syntax; (3) when Git LFS makes sense and when it doesn't; (4) the most important alternative — <strong>don't track the data at all</strong>, only track the code that generates it and the accession numbers that point to it.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心心法：</strong>Git 追蹤<em>程式碼</em>，資料用 SRA / Zenodo / S3 / NAS 存。論文 reviewer 看到的 repo，應該是「clone 下來、跑 pipeline、複現我的結果」——不是「請先下載 80 GB 才能開始」。</span>
+<span data-lang="en"><strong>Mental model:</strong> Git tracks <em>code</em>; data lives in SRA, Zenodo, S3, or your NAS. The repo a reviewer clones should be "clone → run pipeline → reproduce my results" — not "first, download 80 GB of data."</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: File-type table ===== -->
+<section class="section">
+<div class="section-label" data-zh="哪些檔案不該 commit" data-en="WHAT TO IGNORE">哪些檔案不該 commit</div>
+<h2 data-zh="生物資訊常見檔案分類" data-en="Common Bioinformatics File Types">生物資訊常見檔案分類</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="檔案類型" data-en="File type">File type</th>
+<th data-zh="大小級距" data-en="Size class">Size</th>
+<th data-zh="進 Git？" data-en="Track in Git?">Track?</th>
+<th data-zh="替代方案" data-en="Alternative">Alternative</th>
+</tr></thead>
+<tbody>
+<tr><td><code>.R</code>, <code>.py</code>, <code>.sh</code>, <code>.smk</code>, <code>.nf</code></td><td>KB</td><td><span style="color:#1a6b5a;font-weight:600">✅ YES</span></td><td>—</td></tr>
+<tr><td><code>.Rmd</code>, <code>.ipynb</code>（已清空輸出 / clean）</td><td>KB–MB</td><td><span style="color:#1a6b5a;font-weight:600">✅ YES</span></td><td data-zh="commit 前用 nbstripout / quarto 清空輸出" data-en="strip outputs with nbstripout / quarto before commit">nbstripout / quarto</td></tr>
+<tr><td><code>.csv</code> <span data-zh="（小結果，&lt;1 MB）" data-en="(small results, &lt;1 MB)">(small, &lt;1 MB)</span></td><td>KB–MB</td><td><span style="color:#1a6b5a;font-weight:600">✅ YES</span></td><td>—</td></tr>
+<tr><td><code>.png</code>, <code>.pdf</code> <span data-zh="（圖表）" data-en="(figures)">(figures)</span></td><td>KB–MB</td><td><span style="color:#c97a2c;font-weight:600">⚠️ maybe</span></td><td data-zh="改用程式碼重新產生" data-en="regenerate from code">regenerate from code</td></tr>
+<tr><td><code>.rds</code>, <code>.RData</code> <span data-zh="（小）" data-en="(small)">(small)</span></td><td>MB</td><td><span style="color:#c97a2c;font-weight:600">⚠️ maybe</span></td><td data-zh="&gt;50 MB 用 LFS；否則重跑" data-en="LFS if &gt; 50 MB; else regenerate">LFS or regenerate</td></tr>
+<tr><td><code>.h5ad</code>, <code>.h5</code>, <code>.loom</code></td><td>MB–GB</td><td><span style="color:#c0392b;font-weight:600">❌ NO</span></td><td>S3 / Zenodo / figshare</td></tr>
+<tr><td><code>.fastq(.gz)</code>, <code>.bam</code>, <code>.cram</code></td><td>GB–TB</td><td><span style="color:#c0392b;font-weight:600">⛔ NEVER</span></td><td>SRA / ENA / GEO accession</td></tr>
+<tr><td><code>.tar.gz</code> <span data-zh="原始打包" data-en="raw archives">raw archives</span></td><td>GB</td><td><span style="color:#c0392b;font-weight:600">⛔ NEVER</span></td><td data-zh="外部儲存" data-en="external storage">external</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 3: .gitignore syntax ===== -->
+<section class="section">
+<div class="section-label" data-zh="語法" data-en="SYNTAX">語法</div>
+<h2 data-zh=".gitignore 規則語法" data-en=".gitignore Pattern Syntax">.gitignore 規則語法</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>📐 <span data-zh="基本 pattern" data-en="Basic patterns">基本 pattern</span></h4>
+<pre style="margin:0;font-size:.82rem"><span class="comment"># 萬用字元 / wildcard</span>
+*.bam              <span class="comment"># 所有 .bam</span>
+data/              <span class="comment"># 整個資料夾</span>
+data/raw/*.fq.gz   <span class="comment"># 子目錄特定檔</span>
+**/temp/           <span class="comment"># 任何深度的 temp/</span>
+!keep.csv          <span class="comment"># 否定：例外保留</span>
+.DS_Store          <span class="comment"># 隱藏檔</span></pre>
+</div>
+<div class="card"><h4>📍 <span data-zh="放在哪？" data-en="Where to put it?">放在哪？</span></h4>
+<div data-lang="zh"><p>通常放 <strong>repo 根目錄</strong>；子目錄也可以放各自的 <code>.gitignore</code>（規則只影響該子樹）。<code>.gitignore</code> 本身<strong>要被 commit</strong>——這樣協作者 clone 後也繼承同一份 ignore 規則。</p></div>
+<div data-lang="en"><p>Usually at the <strong>repo root</strong>; subdirectories can also have their own <code>.gitignore</code> (scoped to that subtree). The <code>.gitignore</code> file itself <strong>must be committed</strong> so collaborators inherit the same rules on clone.</p></div>
+</div>
+</div>
+<div class="callout tip" style="margin-top:14px"><span class="callout-icon">🌐</span><div>
+<span data-lang="zh">GitHub 在 <a href="https://github.com/github/gitignore">github.com/github/gitignore</a> 維護各種語言的 <code>.gitignore</code> 模板。新 repo 時 GitHub 介面也會問你要不要套用——R、Python 都有現成版本，直接套再加生資專用規則最快。</span>
+<span data-lang="en">GitHub maintains language-specific <code>.gitignore</code> templates at <a href="https://github.com/github/gitignore">github.com/github/gitignore</a>. When creating a new repo, GitHub also offers them in the UI — start with R or Python, then layer on your bioinformatics-specific rules.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Template .gitignore ===== -->
+<section class="section">
+<div class="section-label" data-zh="範本" data-en="TEMPLATE">生物資訊 .gitignore 範本</div>
+<h2 data-zh="可直接套用的範本" data-en="A Drop-in Bioinformatics .gitignore">一份可直接套用的 .gitignore</h2>
+<div data-lang="zh"><p>下方是一個常見的 R + Python + nextflow / snakemake 專案 <code>.gitignore</code>。註解標出每段為什麼這樣寫。</p></div>
+<div data-lang="en"><p>Below is a typical <code>.gitignore</code> for an R + Python + nextflow/snakemake project. Comments explain each block.</p></div>
+<pre><span class="comment"># ===== Data (never commit raw or processed data) =====</span>
+data/raw/
+data/processed/
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.bam
+*.bai
+*.cram
+*.h5ad
+*.h5
+*.loom
+*.rds
+*.RData
+
+<span class="comment"># ===== Pipeline working dirs =====</span>
+work/
+.nextflow*
+.snakemake/
+logs/
+slurm-*.out
+
+<span class="comment"># ===== R/Python clutter =====</span>
+.Rproj.user/
+.Rhistory
+.RData
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+
+<span class="comment"># ===== Conda/venv =====</span>
+env/
+.venv/
+*.conda
+
+<span class="comment"># ===== OS &amp; editor =====</span>
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+<span class="comment"># ===== Results to keep (negation) =====</span>
+!results/figures/final_figure_1.pdf
+</pre>
+<div class="callout warn" style="margin-top:10px"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>順序很重要：</strong>否定規則（<code>!</code>）必須在它要例外的 pattern <em>之後</em>。例如 <code>results/*.pdf</code> + <code>!results/figures/final_figure_1.pdf</code>，順序顛倒會失效。</span>
+<span data-lang="en"><strong>Order matters:</strong> a negation rule (<code>!</code>) must come <em>after</em> the pattern it excepts. E.g. <code>results/*.pdf</code> followed by <code>!results/figures/final_figure_1.pdf</code> — reverse the order and the negation has no effect.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 5: Already committed by mistake ===== -->
+<section class="section">
+<div class="section-label" data-zh="搶救" data-en="ROLLBACK">不小心 commit 了大檔，怎麼救？</div>
+<h2 data-zh="已經 commit / push 才發現怎麼辦？" data-en="Already Committed by Mistake — How to Remove?">已經 commit / push 才發現怎麼辦？</h2>
+<div data-lang="zh">
+<p><strong>情境 A：剛 commit、還沒 push。</strong>從 index 移除但保留磁碟上的檔案，加進 <code>.gitignore</code>，再 commit。</p>
+</div>
+<div data-lang="en">
+<p><strong>Scenario A: just committed, not pushed yet.</strong> Remove from the index but keep the file on disk, add it to <code>.gitignore</code>, then commit.</p>
+</div>
+<pre>$ git rm --cached path/to/big.bam
+$ <span class="func">echo</span> <span class="str">"*.bam"</span> &gt;&gt; .gitignore
+$ git add .gitignore
+$ git commit -m <span class="str">"Stop tracking BAM files"</span>
+</pre>
+<div data-lang="zh">
+<p><strong>情境 B：已經 push、需要從歷史中徹底清除。</strong>使用 <code>git filter-repo</code>（現代推薦）或 <code>BFG Repo-Cleaner</code>。注意：這會<strong>改寫歷史</strong>，所有協作者必須重新 clone。</p>
+</div>
+<div data-lang="en">
+<p><strong>Scenario B: already pushed, need to purge from history.</strong> Use <code>git filter-repo</code> (modern, recommended) or the <code>BFG Repo-Cleaner</code>. This <strong>rewrites history</strong>, so every collaborator must re-clone.</p>
+</div>
+<pre><span class="comment"># 移除歷史中所有 large.bam / Remove large.bam from all history</span>
+$ git filter-repo --path large.bam --invert-paths
+
+<span class="comment"># 強制 push 改寫後的歷史 / Force-push the rewritten history</span>
+$ git push origin --force --all
+$ git push origin --force --tags
+</pre>
+<div class="callout danger"><span class="callout-icon">🚨</span><div>
+<span data-lang="zh"><strong>GitHub 拒絕 &gt; 100 MB 的單檔！</strong> 一旦不小心 push，你必須先 rewrite history 才能再次 push。所以最好的策略是<strong>事前 <code>.gitignore</code> 寫好</strong>，而不是事後挽救。</span>
+<span data-lang="en"><strong>GitHub rejects any push containing a file &gt; 100 MB.</strong> Once you push it by accident, you must rewrite history before another push will succeed. The best strategy is to write <code>.gitignore</code> <em>before</em> staging — not to rescue afterwards.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 6: Git LFS ===== -->
+<section class="section">
+<div class="section-label" data-zh="Git LFS" data-en="LFS">Git LFS</div>
+<h2 data-zh="Git LFS 是什麼？什麼時候用？" data-en="Git Large File Storage: What and When?">Git LFS 是什麼？什麼時候用？</h2>
+<div data-lang="zh">
+<p><strong>Git LFS (Large File Storage)</strong>：把大檔存到外部 server，repo 內只留一個小小的 <strong>pointer file</strong>（一行 hash）。Clone 時 LFS client 才會去下載真正的檔案。</p>
+</div>
+<div data-lang="en">
+<p><strong>Git LFS (Large File Storage)</strong> stores big files outside Git on an LFS server; your commits only contain a tiny <strong>pointer file</strong> (a single hash). The LFS client downloads the real file on clone or checkout.</p>
+</div>
+<pre><span class="comment"># 安裝（每台機器一次） / Install (once per machine)</span>
+$ git lfs install
+
+<span class="comment"># 告訴 LFS 追蹤特定副檔名 / Track a file pattern</span>
+$ git lfs track <span class="str">"*.h5"</span>
+$ git lfs track <span class="str">"models/*.pkl"</span>
+
+<span class="comment"># 上面指令會更新 .gitattributes — 別忘了 commit 它</span>
+$ git add .gitattributes
+$ git commit -m <span class="str">"Track *.h5 via LFS"</span>
+</pre>
+<div class="card-grid cols-2" style="margin-top:14px">
+<div class="card" style="border-left:4px solid #1a6b5a"><h4 style="color:#1a6b5a">✅ <span data-zh="LFS 適合" data-en="LFS makes sense when">LFS 適合的情況</span></h4>
+<div data-lang="zh"><ul style="margin:6px 0 0 18px;padding:0;font-size:.9rem">
+<li>檔案<strong>必須</strong>跟程式碼一起版本化（例如參考索引、訓練好的 model checkpoint、論文 supplementary）</li>
+<li>單檔 &lt; 5 GB</li>
+<li>總量符合 GitHub LFS 配額（免費 1 GB）</li>
+</ul></div>
+<div data-lang="en"><ul style="margin:6px 0 0 18px;padding:0;font-size:.9rem">
+<li>The file <strong>must</strong> be versioned alongside code (e.g. reference index, trained model checkpoint, paper supplementary data)</li>
+<li>Single file &lt; 5 GB</li>
+<li>Total fits GitHub LFS quota (1 GB free)</li>
+</ul></div>
+</div>
+<div class="card" style="border-left:4px solid #c0392b"><h4 style="color:#c0392b">❌ <span data-zh="LFS 不適合" data-en="LFS does NOT make sense when">LFS 不適合的情況</span></h4>
+<div data-lang="zh"><ul style="margin:6px 0 0 18px;padding:0;font-size:.9rem">
+<li>原始 FASTQ — 太大、應該在 SRA</li>
+<li>公開資料集 — 用 accession 連結即可</li>
+<li>可以由程式重新產生的檔案（圖、表）</li>
+</ul></div>
+<div data-lang="en"><ul style="margin:6px 0 0 18px;padding:0;font-size:.9rem">
+<li>Raw FASTQs — too big, belong in SRA</li>
+<li>Public datasets — just link the accession</li>
+<li>Anything regeneratable from code (figures, tables)</li>
+</ul></div>
+</div>
+</div>
+<div class="callout warn" style="margin-top:12px"><span class="callout-icon">💸</span><div>
+<span data-lang="zh"><strong>GitHub LFS 配額地雷：</strong>免費帳號只有 <strong>1 GB 儲存 + 1 GB / 月頻寬</strong>——而且是「整個帳號」共享，不是每個 repo。超過後必須買 data pack（每包 $5/月，5 GB 儲存 + 50 GB 頻寬）。把 model 放進 LFS 前先估算流量。</span>
+<span data-lang="en"><strong>GitHub LFS quota gotcha:</strong> a free account gets only <strong>1 GB of storage + 1 GB/month of bandwidth</strong> — and the limits are <em>per account</em>, not per repo. Beyond that you must buy data packs ($5/month each, 5 GB storage + 50 GB bandwidth). Estimate traffic before putting a model in LFS.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 7: Decision tree + interactive ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策流程" data-en="DECISION TREE">這檔案到底該不該 commit？</div>
+<h2 data-zh="決策流程：Should I commit this file?" data-en="Decision Tree: Should I Commit This File?">決策流程：Should I commit this file?</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="逐項判斷" data-en="Walk through the questions">逐項判斷</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>是<strong>原始碼</strong>（script、config、文件）？<span class="dt-arrow">→ 是 →</span> 正常 commit。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>是原始或中間資料（FASTQ、BAM、h5ad）？<span class="dt-arrow">→ 是 →</span> <strong>絕對不</strong> commit；放外部儲存、README 寫 accession。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>是小型衍生結果（CSV 表、≤ 5 MB 圖）？<span class="dt-arrow">→ 是 →</span> 可以 commit，但<strong>優先考慮從程式重新產生</strong>。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>是<strong>必須</strong>版本化的二進位檔且 &lt; 1 GB？<span class="dt-arrow">→ 是 →</span> 用 Git LFS。</div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>是 Jupyter notebook（<code>.ipynb</code>）？<span class="dt-arrow">→ 先做 →</span> <code>nbstripout</code> 清掉 output 再 commit。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Is it <strong>source code</strong> (script, config, docs)? <span class="dt-arrow">→ Yes →</span> Commit normally.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Is it raw or intermediate data (FASTQ, BAM, h5ad)? <span class="dt-arrow">→ Yes →</span> <strong>Never</strong> commit. Use external storage; cite accessions in README.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Small derived result (CSV table, figure ≤ 5 MB)? <span class="dt-arrow">→ Yes →</span> You can commit it — but <strong>prefer regenerating from code</strong>.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Binary that <strong>must</strong> be versioned and &lt; 1 GB? <span class="dt-arrow">→ Yes →</span> Git LFS.</div></div>
+<div class="dt-node"><span class="dt-q">Q5:</span><div>Jupyter notebook (<code>.ipynb</code>)? <span class="dt-arrow">→ First →</span> Strip outputs with <code>nbstripout</code>, then commit.</div></div>
+</div>
+</div>
+
+<h3 style="margin-top:24px" data-zh="🎯 互動：你會怎麼處理這 8 個檔案？" data-en="🎯 Interactive: How would you handle these 8 files?">🎯 互動：你會怎麼處理這 8 個檔案？</h3>
+<div data-lang="zh"><p>點下面每張卡的按鈕做出選擇——Commit（正常 commit）、Ignore（加進 <code>.gitignore</code>）、或 LFS。馬上看到回饋與解釋。</p></div>
+<div data-lang="en"><p>Pick an action for each file — Commit (normal), Ignore (add to <code>.gitignore</code>), or LFS. You'll get instant feedback with reasoning.</p></div>
+
+<div id="classifierGrid" class="classifier-grid"></div>
+<div class="classifier-score" id="classifierScore" data-zh="目前 0 / 0 答對" data-en="0 / 0 correct so far">目前 0 / 0 答對</div>
+</section>
+
+<!-- ===== Section 8: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整指令範例</div>
+<h2 data-zh="實戰：三個常見場景" data-en="Three Common Workflows">實戰：三個常見場景</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'quickstart')">Quick start</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'addlfs')">Add LFS to existing repo</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'rmbig')">Remove a big file</button>
+</div>
+<div class="code-tab-content active" id="quickstart"><pre><span class="comment"># 從 GitHub 模板套一份 R 版 .gitignore</span>
+$ <span class="func">curl</span> -O https://raw.githubusercontent.com/github/gitignore/main/R.gitignore
+$ <span class="func">mv</span> R.gitignore .gitignore
+
+<span class="comment"># 加上生資專用規則 / Append bioinformatics-specific rules</span>
+$ <span class="func">cat</span> &gt;&gt; .gitignore &lt;&lt;<span class="str">'EOF'</span>
+data/
+*.fastq.gz
+*.bam
+*.h5ad
+.snakemake/
+work/
+EOF
+
+$ git add .gitignore
+$ git commit -m <span class="str">"Add bioinformatics .gitignore"</span></pre></div>
+
+<div class="code-tab-content" id="addlfs"><pre><span class="comment"># 1. 安裝 LFS（每台機器一次） / Install LFS once per machine</span>
+$ git lfs install
+
+<span class="comment"># 2. 告訴 LFS 要追蹤哪些 pattern / Track patterns</span>
+$ git lfs track <span class="str">"*.h5"</span>
+$ git lfs track <span class="str">"models/*.pt"</span>
+
+<span class="comment"># 3. commit .gitattributes（這是 LFS 自動產的）</span>
+$ git add .gitattributes
+$ git commit -m <span class="str">"Track *.h5 and model checkpoints via LFS"</span>
+
+<span class="comment"># 4. 加入大檔，它會自動存進 LFS</span>
+$ git add models/best.pt
+$ git commit -m <span class="str">"Add trained model checkpoint"</span>
+$ git push origin main
+
+<span class="comment"># 確認 LFS 真的接管了哪些檔 / Verify which files LFS handles</span>
+$ git lfs ls-files</pre></div>
+
+<div class="code-tab-content" id="rmbig"><pre><span class="comment"># A. 還沒 push：從 index 移除、留磁碟、加進 .gitignore</span>
+$ git rm --cached huge.bam
+$ <span class="func">echo</span> <span class="str">"*.bam"</span> &gt;&gt; .gitignore
+$ git add .gitignore
+$ git commit -m <span class="str">"Stop tracking BAM files"</span>
+
+<span class="comment"># B. 已 push：從歷史完整清除（會改寫 history）</span>
+<span class="comment"># 安裝 git-filter-repo: pip install git-filter-repo</span>
+$ git filter-repo --path huge.bam --invert-paths
+
+<span class="comment"># 強制 push、告知所有協作者重新 clone</span>
+$ git push origin --force --all
+$ git push origin --force --tags
+
+<span class="comment"># 釋放本地 .git 物件空間</span>
+$ git reflog expire --expire=now --all
+$ git gc --prune=now --aggressive</pre></div>
+</div>
+
+<div class="callout danger" style="margin-top:12px"><span class="callout-icon">⛔</span><div>
+<span data-lang="zh"><strong>filter-repo 是不可逆操作！</strong>它改寫每個 commit 的 SHA，所有人之前 clone 的本地 repo 都失效，必須重新 clone。動手前先在 Slack / email 告知所有協作者，並備份 repo（<code>git clone --mirror</code>）。</span>
+<span data-lang="en"><strong><code>filter-repo</code> is irreversible.</strong> It rewrites every commit SHA, invalidating every collaborator's local clone — they must re-clone. Coordinate on Slack/email before running it, and back up the repo first with <code>git clone --mirror</code>.</span>
+</div></div>
+
+<div class="callout tip" style="margin-top:10px"><span class="callout-icon">🧬</span><div>
+<span data-lang="zh"><strong>生資現場慣例：</strong>FASTQ 原始資料屬於 <strong>SRA / ENA / GEO</strong>。論文 repo 的 README 只要列出 accession（如 <code>GSE123456</code>、<code>SRP456789</code>）和 <code>fasterq-dump</code> 指令，reviewer 自己拉就好——不要把 80 GB 塞進 GitHub。</span>
+<span data-lang="en"><strong>Bioinformatics convention:</strong> raw FASTQs belong in <strong>SRA / ENA / GEO</strong>. Your paper repo's README should just list the accessions (e.g. <code>GSE123456</code>, <code>SRP456789</code>) and a <code>fasterq-dump</code> command — let the reviewer fetch the data themselves. Don't push 80 GB to GitHub.</span>
+</div></div>
+</section>
+
+<!-- ===== Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">1. 你不小心 commit + push 了一個 10 GB 的 <code>large.bam</code>，最正確的處理流程是？</p>
+<p data-lang="en">1. You accidentally committed and pushed a 10 GB <code>large.bam</code>. What's the right fix?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 直接刪掉本地檔案、重新 push</span><span data-lang="en">A. Just delete the local file and push again</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 改 <code>.gitignore</code> 就好，歷史不用動</span><span data-lang="en">B. Just edit <code>.gitignore</code>; leave history alone</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>git rm --cached</code> + commit；要徹底從歷史清除則用 <code>git filter-repo</code>，並通知所有協作者重新 clone</span><span data-lang="en">C. <code>git rm --cached</code> then commit; for full history purge use <code>git filter-repo</code> and warn collaborators to re-clone</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 把 BAM 用 LFS 重新追蹤</span><span data-lang="en">D. Re-track the BAM with LFS</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. 想忽略「專案任何深度」的所有 FASTQ 檔（包括 <code>.fastq</code> 與 <code>.fastq.gz</code>），最好的 <code>.gitignore</code> 寫法是？</p>
+<p data-lang="en">2. To ignore all FASTQ files (both <code>.fastq</code> and <code>.fastq.gz</code>) anywhere in the project, the best pattern is?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>data/*.fastq</code></span><span data-lang="en">A. <code>data/*.fastq</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>fastq</code></span><span data-lang="en">B. <code>fastq</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>*.fastq</code> 與 <code>*.fastq.gz</code>，或 <code>**/*.fastq*</code></span><span data-lang="en">C. <code>*.fastq</code> and <code>*.fastq.gz</code>, or <code>**/*.fastq*</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>!*.fastq</code></span><span data-lang="en">D. <code>!*.fastq</code></span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">3. 下面哪一個情境最適合用 Git LFS？</p>
+<p data-lang="en">3. Which scenario is the BEST fit for Git LFS?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 30 GB 的原始 FASTQ 測序資料</span><span data-lang="en">A. 30 GB of raw FASTQ sequencing data</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 一個 200 MB 的 trained model checkpoint，必須跟程式版本綁在一起</span><span data-lang="en">B. A 200 MB trained model checkpoint that must be versioned with the code</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 一個可以從 R script 重新產生的 figure.png</span><span data-lang="en">C. A figure.png that can be regenerated by an R script</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 隨手寫的 <code>analysis.R</code></span><span data-lang="en">D. A casual <code>analysis.R</code> script</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="collaboration.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 8: GitHub 協作 (PR &amp;amp; Review)" data-en="Step 8: GitHub Collaboration (PR &amp;amp; Review)">Step 8: GitHub 協作 (PR &amp; Review)</span></a>
+<a href="workflows.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Git 工作流程 (Git Workflows)" data-en="Git Workflows">Git 工作流程 (Git Workflows)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.classifier-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:10px}
+.cls-card{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:14px 12px;transition:var(--transition)}
+.cls-card.answered{opacity:.95}
+.cls-card .cls-file{font-family:var(--font-mono);font-size:.92rem;font-weight:600;color:var(--c-accent-dark);word-break:break-all;margin-bottom:8px}
+.cls-card .cls-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.cls-card .cls-btn{flex:1;min-width:62px;background:var(--c-surface-alt);border:1px solid var(--c-border-light);border-radius:6px;padding:6px 4px;font-size:.78rem;font-family:inherit;cursor:pointer;transition:var(--transition)}
+.cls-card .cls-btn:hover{border-color:var(--c-accent);background:#fff}
+.cls-card .cls-btn.correct{background:#1a6b5a;color:#fff;border-color:#1a6b5a}
+.cls-card .cls-btn.wrong{background:#c0392b;color:#fff;border-color:#c0392b}
+.cls-card .cls-explain{font-size:.78rem;color:var(--c-ink-light);margin-top:8px;line-height:1.45;display:none}
+.cls-card.answered .cls-explain{display:block}
+.classifier-score{margin-top:14px;padding:10px 14px;background:var(--c-surface-alt);border-left:4px solid var(--c-accent);border-radius:6px;font-weight:600;font-size:.95rem}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Classifier widget
+const FILES=[
+ {n:'analysis.R',a:'commit',zh:'純文字程式碼——正是 Git 設計的目的。',en:'Plain-text source code — exactly what Git is for.'},
+ {n:'sample.fastq.gz',a:'ignore',zh:'原始測序資料常 GB 起跳，應放 SRA / NAS。',en:'Raw sequencing data is GBs; belongs in SRA / NAS.'},
+ {n:'pbmc.h5ad',a:'ignore',zh:'單細胞物件常 1–10 GB，外部儲存（Zenodo / S3）。',en:'Single-cell objects are often 1–10 GB; use external storage.'},
+ {n:'figure_2.pdf',a:'commit',zh:'小型衍生圖通常可以——最好同時保留產生它的 script。',en:'A small derived figure is OK — keep the script that produced it too.'},
+ {n:'notebook.ipynb',a:'commit',zh:'可以 commit，但先用 nbstripout 清掉 output cell 再加。',en:'OK to commit, but strip output cells with nbstripout first.'},
+ {n:'reference.fa',a:'lfs',zh:'參考基因組常 ~3 GB；若必須跟 pipeline 綁定，LFS 是選項（更建議用 conda / igenomes 從外部抓）。',en:'Reference genome ~3 GB; LFS works if it must travel with the pipeline (better: pull from conda / igenomes externally).'},
+ {n:'results.csv',a:'commit',zh:'小型結果表（KB–MB）正常 commit。',en:'Small results table (KB–MB) — commit normally.'},
+ {n:'.DS_Store',a:'ignore',zh:'macOS 自動產的垃圾檔，加進 <code>.gitignore</code>。',en:'macOS-generated junk — add to <code>.gitignore</code>.'}
+];
+const ACTIONS=['commit','ignore','lfs'];
+const ACT_LABEL={zh:{commit:'Commit',ignore:'Ignore',lfs:'LFS'},en:{commit:'Commit',ignore:'Ignore',lfs:'LFS'}};
+let score=0,answered=0;
+function buildClassifier(){
+  const grid=document.getElementById('classifierGrid');grid.innerHTML='';
+  FILES.forEach((f,i)=>{
+    const c=document.createElement('div');c.className='cls-card';c.dataset.idx=i;
+    let btnHtml='';ACTIONS.forEach(a=>{btnHtml+=`<button class="cls-btn" data-act="${a}">${a.toUpperCase()}</button>`;});
+    c.innerHTML=`<div class="cls-file">${f.n}</div><div class="cls-buttons">${btnHtml}</div><div class="cls-explain"></div>`;
+    grid.appendChild(c);
+  });
+  grid.querySelectorAll('.cls-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const card=b.closest('.cls-card');if(card.classList.contains('answered'))return;
+      const idx=+card.dataset.idx;const correct=FILES[idx].a===b.dataset.act;
+      card.classList.add('answered');
+      if(correct){b.classList.add('correct');score++;}
+      else{b.classList.add('wrong');card.querySelector(`[data-act="${FILES[idx].a}"]`).classList.add('correct');}
+      answered++;
+      const L=I18n.get();const txt=L==='zh'?FILES[idx].zh:FILES[idx].en;
+      card.querySelector('.cls-explain').innerHTML=(correct?'✅ ':'❌ ')+txt;
+      updateScore();
+    });
+  });
+  updateScore();
+}
+function updateScore(){
+  const L=I18n.get();const el=document.getElementById('classifierScore');
+  el.textContent=L==='zh'?`目前 ${score} / ${answered} 答對 (共 ${FILES.length} 題)`:`${score} / ${answered} correct so far (of ${FILES.length})`;
+}
+document.addEventListener('DOMContentLoaded',buildClassifier);
+document.addEventListener('langchange',()=>{
+  document.querySelectorAll('.cls-card.answered').forEach(c=>{
+    const idx=+c.dataset.idx;const L=I18n.get();const txt=L==='zh'?FILES[idx].zh:FILES[idx].en;
+    const ok=c.querySelector('.cls-btn.correct.wrong')?false:!c.querySelector('.cls-btn.wrong');
+    c.querySelector('.cls-explain').innerHTML=(ok?'✅ ':'❌ ')+txt;
+  });
+  updateScore();
+});
+
+// Quiz
+const QF={zh:{q1_y:'正解：先 git rm --cached 移除追蹤；若已 push，需要 git filter-repo 改寫歷史，並通知所有人重新 clone。',q1_n:'正確答案已標示。',q2_y:'*.fastq + *.fastq.gz 是經典寫法；**/*.fastq* 也可以涵蓋深層子目錄。',q2_n:'正確答案已標示。',q3_y:'LFS 適合：必須版本化、放得進 1 GB 配額、單檔 &lt; 5 GB 的二進位檔——例如 model checkpoint。',q3_n:'正確答案已標示。'},en:{q1_y:'Correct — use git rm --cached to untrack; if pushed already, use git filter-repo to purge history and warn collaborators to re-clone.',q1_n:'Correct answer is highlighted.',q2_y:'*.fastq plus *.fastq.gz is the classic pair; **/*.fastq* also matches at any depth.',q2_n:'Correct answer is highlighted.',q3_y:'LFS fits binaries that must be versioned, fit in the 1 GB quota, and stay under 5 GB per file — e.g. a model checkpoint.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 8: GitHub Collaboration — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html" class="active">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 8 / 9</div>
+<h1 data-zh="GitHub 協作 (PR &amp; Review)" data-en="GitHub Collaboration (PR &amp; Review)">GitHub 協作 (PR &amp; Review)</h1>
+<p class="subtitle" data-lang="zh">Git 只是版本控制，GitHub 把它變成一個社群——Issue、Pull Request、Code Review 是讓多人協作不互相覆寫的關鍵。</p>
+<p class="subtitle" data-lang="en">Git is just version control; GitHub layers collaboration on top — issues, pull requests, and code review are what let many people work on one codebase without trampling each other.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="從版本控制到社群協作" data-en="From version control to social coding">從版本控制到社群協作</h2>
+<div data-lang="zh">
+<p>Git 本身只解決一件事：誰、在何時、改了什麼。<strong>GitHub</strong> 在這之上加了一整層協作介面——Issue 追蹤、Pull Request 審查、Project 看板、Organization 權限——讓開源專案（如 Seurat、Scanpy、nf-core）能由數百人共同維護。</p>
+<p>本章的核心工作流可以濃縮成一條鏈：<strong>fork → branch → push → PR → review → merge</strong>。後面每一節都是在拆解這條鏈的某一段。</p>
+</div>
+<div data-lang="en">
+<p>Git answers one question: who changed what, when. <strong>GitHub</strong> layers an entire collaboration UI on top — issue tracking, pull-request review, project boards, organization permissions — which is how open-source projects like Seurat, Scanpy, and nf-core get maintained by hundreds of contributors.</p>
+<p>This chapter compresses to one chain: <strong>fork → branch → push → PR → review → merge</strong>. Each section below unpacks one link in that chain.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心心智模型：</strong>PR 不是「提交程式碼」，而是「請求把我的分支合進去」——它是一個 <em>對話框</em>，包含 diff、討論、CI 結果、審查意見。</span>
+<span data-lang="en"><strong>Mental model:</strong> a PR isn't "submitting code" — it's "requesting that my branch be merged in." It's a <em>conversation thread</em> wrapped around a diff, with CI results and reviewer comments attached.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Fork vs Clone ===== -->
+<section class="section">
+<div class="section-label" data-zh="FORK" data-en="FORK">FORK</div>
+<h2 data-zh="Fork 與 Clone 的差別" data-en="Fork vs Clone">Fork 與 Clone 的差別</h2>
+<div data-lang="zh">
+<p><strong>Fork</strong> 是在 GitHub 伺服器上把整個 repo 複製到 <em>你的帳號</em> 底下（你擁有寫入權）；<strong>Clone</strong> 則是把 repo 下載到 <em>你的本機</em>。兩者不互斥——典型開源貢獻是「先 fork，再 clone fork」。</p>
+</div>
+<div data-lang="en">
+<p>A <strong>fork</strong> is a server-side copy of a repo under <em>your account</em> (you own write access to it). A <strong>clone</strong> is a local copy on <em>your machine</em>. They're not mutually exclusive — typical open-source contribution is "fork first, then clone the fork."</p>
+</div>
+<div class="card-grid cols-2">
+<div class="card"><h4>🍴 <span data-zh="何時 fork？" data-en="When to fork?">何時 fork？</span></h4>
+<div data-lang="zh"><p>你 <strong>沒有寫入權</strong> 的 repo——大部分開源工具（Seurat、Scanpy、nf-core/rnaseq）都屬於此類。Fork 後你在自己副本內推進，再透過 PR 把改動送回 upstream。</p></div>
+<div data-lang="en"><p>You <strong>don't have write access</strong> — true for most OSS tools (Seurat, Scanpy, nf-core/rnaseq). You push into your own copy, then open a PR back to upstream.</p></div>
+</div>
+<div class="card"><h4>📥 <span data-zh="何時只 clone？" data-en="When to just clone?">何時只 clone？</span></h4>
+<div data-lang="zh"><p>你 <strong>有寫入權</strong>——個人 repo、實驗室 organization 下的專案。直接 clone、開 feature branch、推回 origin、開 PR 就好。</p></div>
+<div data-lang="en"><p>You <strong>have write access</strong> — your own repos, your lab's org repos. Just clone, branch, push to origin, and open a PR there.</p></div>
+</div>
+</div>
+<div class="callout tip"><span class="callout-icon">🔺</span><div>
+<span data-lang="zh"><strong>「三角工作流」：</strong>upstream（原作者的 canonical repo）↔ origin（你 fork 在 GitHub 的副本）↔ local（你的本機）。本機 commit 後 <code>git push origin</code>，再到 GitHub 從 fork 開 PR 到 upstream。記得定期 <code>git pull upstream main</code> 同步。</span>
+<span data-lang="en"><strong>The "triangle workflow":</strong> upstream (the canonical repo) ↔ origin (your fork on GitHub) ↔ local (your machine). Commit locally, <code>git push origin</code>, then open a PR from your fork to upstream on the GitHub UI. Periodically <code>git pull upstream main</code> to stay in sync.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 3: PR Anatomy ===== -->
+<section class="section">
+<div class="section-label" data-zh="PR" data-en="PR">PR</div>
+<h2 data-zh="一個 Pull Request 長什麼樣？" data-en="The anatomy of a Pull Request">一個 Pull Request 長什麼樣？</h2>
+<div data-lang="zh"><p>一個 PR 在 GitHub UI 上分成 4 個 tab，加上「標題＋描述」這個核心區。理解每一塊在做什麼，才能寫出評審員看了願意合進去的 PR。</p></div>
+<div data-lang="en"><p>A PR has 4 tabs on GitHub plus the title-and-description core. Knowing what each part is for is the difference between a PR that gets merged and one that stalls.</p></div>
+<table class="comp-table">
+<thead><tr><th data-zh="區塊" data-en="Part">區塊</th><th data-zh="內容" data-en="Content">內容</th><th data-zh="最佳實踐" data-en="Best practice">最佳實踐</th></tr></thead>
+<tbody>
+<tr><td><strong>Title</strong></td><td data-lang="zh">一句話總結改動</td><td data-lang="zh">祈使句、簡短：<code>Add SCTransform v2 normalization option</code></td><td data-lang="en">One-line summary of the change</td><td data-lang="en">Imperative, concise: <code>Add SCTransform v2 normalization option</code></td></tr>
+<tr><td><strong>Description</strong></td><td data-lang="zh">What / Why / 截圖 / 測試計畫</td><td data-lang="zh">用 <code>Fixes #42</code> 連結 issue，合進去時自動關閉</td><td data-lang="en">What / why / screenshots / test plan</td><td data-lang="en">Link issues with <code>Fixes #42</code> — auto-closes them on merge</td></tr>
+<tr><td><strong>Commits</strong> tab</td><td data-lang="zh">這次 PR 推上來的所有 commit</td><td data-lang="zh">commit message 寫清楚，方便 squash 時參考</td><td data-lang="en">Every commit pushed for this PR</td><td data-lang="en">Write clear messages — they help when squashing</td></tr>
+<tr><td><strong>Files Changed</strong> tab</td><td data-lang="zh">完整 diff，可在行上留 inline comment</td><td data-lang="zh">PR 控制在 &lt; 400 行有效更動</td><td data-lang="en">Full diff with inline-comment support</td><td data-lang="en">Keep effective changes under ~400 lines</td></tr>
+<tr><td><strong>Conversation</strong> tab</td><td data-lang="zh">討論、approval、change request</td><td data-lang="zh">每個 review comment 都要回覆</td><td data-lang="en">Discussion, approvals, change-requests</td><td data-lang="en">Reply to every reviewer comment</td></tr>
+<tr><td><strong>Checks</strong> tab</td><td data-lang="zh">CI 結果（GitHub Actions、Codecov…）</td><td data-lang="zh">紅燈不要請 review——詳見 Advanced 2</td><td data-lang="en">CI results (Actions, Codecov, …)</td><td data-lang="en">Don't request review while red — see Advanced 2</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 4: Draft PR ===== -->
+<section class="section">
+<div class="section-label" data-zh="DRAFT" data-en="DRAFT">DRAFT</div>
+<h2 data-zh="Draft PR 與 Ready PR" data-en="Draft PRs vs Ready PRs">Draft PR 與 Ready PR</h2>
+<div data-lang="zh">
+<p>新功能還沒寫完？開 <strong>Draft PR</strong>——CI 會跑、團隊看得到方向、但不會被當成「請審查」。寫完了再點「Ready for review」轉成正式 PR。事後想暫停評審也可以「Convert to draft」收回。</p>
+<p>對 bioinformatics 專案特別實用：分析腳本很長、想先把 plot 截圖貼上來確認方向，draft PR 是最低摩擦的辦法。</p>
+</div>
+<div data-lang="en">
+<p>Feature still in progress? Open a <strong>Draft PR</strong> — CI runs, teammates can see the direction, but reviewers aren't pinged. When you're done, click <em>Ready for review</em> to promote it. You can also <em>Convert to draft</em> later to pause review.</p>
+<p>Especially useful for bioinformatics: analyses can sprawl, and posting a plot screenshot inside a draft PR is the lowest-friction way to ask "is this the right direction?"</p>
+</div>
+</section>
+
+<!-- ===== Section 5: Review etiquette ===== -->
+<section class="section">
+<div class="section-label" data-zh="REVIEW" data-en="REVIEW">REVIEW</div>
+<h2 data-zh="Code review 禮儀" data-en="Code Review Etiquette">Code review 禮儀</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🔍 <span data-zh="當評審員 (Reviewer)" data-en="As a reviewer">當評審員 (Reviewer)</span></h4>
+<div data-lang="zh"><p>•<strong>具體</strong>：「這裡 NaN 沒處理」優於「程式碼很怪」。<br>•<strong>提替代方案</strong>：別只罵，附上能跑的範例。<br>•區分 <strong>blocking</strong>（一定要改）和 <strong>nit</strong>（小意見）。<br>•別 bikeshed——空格、命名爭一週不值得。<br>•覺得 OK 就按 <em>Approve</em>，別卡著。</p></div>
+<div data-lang="en"><p>•<strong>Be specific</strong>: "NaN not handled here" beats "this is weird."<br>•<strong>Suggest an alternative</strong>: don't just criticize — show a working snippet.<br>•Mark issues as <strong>blocking</strong> vs <strong>nit</strong>.<br>•Don't bikeshed — a week-long debate over spacing isn't worth it.<br>•If it's good, hit <em>Approve</em> — don't sit on it.</p></div>
+</div>
+<div class="card"><h4>✍️ <span data-zh="當作者 (Author)" data-en="As an author">當作者 (Author)</span></h4>
+<div data-lang="zh"><p>•<strong>每個 comment 都回覆</strong>，即使只是 <code>Done.</code><br>•修正時推 <strong>新 commit</strong>——別 <code>git push --force</code>，會把評審員的 anchor 沖掉。<br>•合進去前再 squash 不遲。<br>•謝謝評審員——他們的時間是免費的禮物。</p></div>
+<div data-lang="en"><p>•<strong>Reply to every comment</strong>, even if just <code>Done.</code><br>•Push <strong>new commits</strong> for fixes — don't <code>git push --force</code> mid-review; it wipes the reviewer's line anchors.<br>•Squash later, before merge.<br>•Thank your reviewers — their time is a free gift.</p></div>
+</div>
+</div>
+<div class="callout tip"><span class="callout-icon">✨</span><div>
+<span data-lang="zh"><strong>Suggested changes：</strong>評審員可以在 inline comment 內用 <code>```suggestion</code> 區塊提出修改，作者一鍵點 <em>Commit suggestion</em> 就能採納。打字一行的成本，比解釋十行還省。</span>
+<span data-lang="en"><strong>GitHub's "Suggested changes":</strong> reviewers can wrap an edit in a <code>```suggestion</code> block inside an inline comment; the author accepts with one click. Typing the one-line fix is often cheaper than explaining it.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 6: Issues & labels ===== -->
+<section class="section">
+<div class="section-label" data-zh="ISSUES" data-en="ISSUES">ISSUES</div>
+<h2 data-zh="Issue、Label、Assignee" data-en="Issues, Labels, Assignees">Issue、Label、Assignee</h2>
+<div data-lang="zh">
+<p><strong>Issue</strong> 是 GitHub 的 bug/feature/discussion 追蹤板——任何「待辦」都該先開一個 issue，再用 PR 解決它。三個維度幫你整理：</p>
+<ul>
+<li><strong>Labels</strong>：<code>bug</code>、<code>enhancement</code>、<code>good first issue</code>、<code>help wanted</code>——分類、過濾、新手友善。</li>
+<li><strong>Assignees</strong>：指派負責人；沒人 assign 的 issue 通常會被遺忘。</li>
+<li><strong>Milestone</strong>：對應版本（如 <code>v2.0 release</code>）。</li>
+</ul>
+<p>在 PR 描述寫 <code>Fixes #42</code>（或 <code>Closes</code>、<code>Resolves</code>），PR 被 merge 那一刻 issue #42 會自動關閉——少一步手動清單。</p>
+</div>
+<div data-lang="en">
+<p><strong>Issues</strong> are GitHub's bug/feature/discussion tracker — anything you owe the codebase should start as an issue, then get resolved by a PR. Three knobs:</p>
+<ul>
+<li><strong>Labels</strong>: <code>bug</code>, <code>enhancement</code>, <code>good first issue</code>, <code>help wanted</code> — for filtering and onboarding newcomers.</li>
+<li><strong>Assignees</strong>: who owns it; unassigned issues tend to evaporate.</li>
+<li><strong>Milestone</strong>: groups issues by release (<code>v2.0 release</code>).</li>
+</ul>
+<p>Write <code>Fixes #42</code> (or <code>Closes</code>, <code>Resolves</code>) in the PR description, and issue #42 auto-closes the moment the PR is merged — one fewer step in your housekeeping.</p>
+</div>
+</section>
+
+<!-- ===== Section 7: Merge strategies ===== -->
+<section class="section">
+<div class="section-label" data-zh="MERGE" data-en="MERGE">MERGE</div>
+<h2 data-zh="GitHub 上的三種 merge 策略" data-en="Three merge strategies on GitHub">GitHub 上的三種 merge 策略</h2>
+<table class="comp-table">
+<thead><tr><th data-zh="策略" data-en="Strategy">策略</th><th data-zh="實際發生什麼" data-en="What happens">實際發生什麼</th><th data-zh="何時用" data-en="When to use">何時用</th></tr></thead>
+<tbody>
+<tr><td><strong>Create merge commit</strong></td><td data-lang="zh">保留分支形狀，新增一個 merge commit</td><td data-lang="zh">有意義的 feature branch、想保留協作軌跡</td><td data-lang="en">Preserves the branch shape, adds a merge commit</td><td data-lang="en">Meaningful feature branches; you want collaboration history visible</td></tr>
+<tr><td><strong>Squash and merge</strong></td><td data-lang="zh">把 PR 內所有 commit 壓成 1 個</td><td data-lang="zh">PR 內有很多 WIP commit、想要 main 線乾淨</td><td data-lang="en">Collapses every PR commit into one</td><td data-lang="en">Many WIP commits in the PR; you want main clean</td></tr>
+<tr><td><strong>Rebase and merge</strong></td><td data-lang="zh">把 PR commit 一個個重播到 base 上，無 merge commit</td><td data-lang="zh">commit 已經很乾淨、想要線性歷史</td><td data-lang="en">Replays PR commits linearly onto base, no merge commit</td><td data-lang="en">Commits are already clean; you want a linear history</td></tr>
+</tbody></table>
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>共識：</strong>每個專案應該在 README 或 CONTRIBUTING.md 中寫清楚要用哪一種——團隊混用最痛苦。Scanpy 用 squash，nf-core 用 merge commit，Linux kernel 用 rebase。</span>
+<span data-lang="en"><strong>Convention:</strong> each project should pick one strategy and document it in README or CONTRIBUTING.md — mixing is the painful path. Scanpy uses squash, nf-core uses merge commits, the Linux kernel uses rebase.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 8: Interactive PR simulator ===== -->
+<section class="section">
+<div class="section-label" data-zh="INTERACTIVE" data-en="INTERACTIVE">INTERACTIVE</div>
+<h2 data-zh="PR 審查模擬器" data-en="PR Review Simulator">PR 審查模擬器</h2>
+<div data-lang="zh"><p>按 <em>下一步</em> 按鈕，看一個 PR 從打開到合進去的四個狀態：Pending → Changes Requested → Approved → Merged。</p></div>
+<div data-lang="en"><p>Click <em>Next state</em> to watch a PR move through its four phases: Pending → Changes Requested → Approved → Merged.</p></div>
+
+<div class="pr-sim">
+  <div class="pr-card">
+    <div class="pr-head">
+      <span class="pr-status" id="prStatus" data-state="pending"><span class="pr-dot"></span><span id="prStatusText">Pending review</span></span>
+      <span class="pr-num">#142</span>
+    </div>
+    <h4 class="pr-title" data-zh="Add SCTransform v2 normalization option" data-en="Add SCTransform v2 normalization option">Add SCTransform v2 normalization option</h4>
+    <div class="pr-meta"><span data-zh="作者：charlene717 · 2 commits · +84 −12" data-en="by charlene717 · 2 commits · +84 −12">作者：charlene717 · 2 commits · +84 −12</span></div>
+    <div class="pr-body" id="prBody"></div>
+    <div class="pr-actions">
+      <button id="prNext" class="pr-btn"><span data-zh="下一步 →" data-en="Next state →">下一步 →</span></button>
+      <button id="prReset" class="pr-btn pr-btn-ghost"><span data-zh="重置" data-en="Reset">重置</span></button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== Section 9: Decision tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策" data-en="DECIDE">決策</div>
+<h2 data-zh="我要怎麼貢獻一個開源 bioinformatics 工具？" data-en="How do I contribute to an open-source bioinformatics tool?">我要怎麼貢獻一個開源 bioinformatics 工具？</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="以 Scanpy 為例" data-en="Using Scanpy as an example">以 Scanpy 為例</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>只是回報一個 bug？<span class="dt-arrow">→ 是 →</span> 直接到 repo 開 <strong>Issue</strong>，附最小可重現範例（MWE）。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>有 fix 想送回去？<span class="dt-arrow">→ 是 →</span> <strong>Fork</strong> → clone → 開 branch → 修 → push 到自己 fork → 從 fork 開 <strong>PR</strong> 到 upstream。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>評審員 request changes？<span class="dt-arrow">→ 是 →</span> 在同一條 branch 推新 commit（PR 會自動更新），<strong>不要</strong> force-push。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>PR 沉了一週沒回應？<span class="dt-arrow">→ 是 →</span> 在 PR 底下禮貌留言 <em>Gentle ping — happy to address feedback</em>。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Just a bug report? <span class="dt-arrow">→ Yes →</span> Open an <strong>Issue</strong> on the upstream repo with a minimal working example.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Got a fix? <span class="dt-arrow">→ Yes →</span> <strong>Fork</strong> → clone → branch → commit → push to your fork → open a <strong>PR</strong> from your fork back to upstream.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Reviewer requests changes? <span class="dt-arrow">→ Yes →</span> Push new commits to the same branch (PR auto-updates) — <strong>don't</strong> force-push.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>PR cold for a week? <span class="dt-arrow">→ Yes →</span> Politely ping: <em>"Gentle ping — happy to address feedback."</em></div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 10: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整流程" data-en="WORKFLOW">完整流程</div>
+<h2 data-zh="完整 PR 工作流程" data-en="The full PR workflow">完整 PR 工作流程</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'fork-wf')">Fork workflow (OSS)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'same-wf')">Same-repo (lab)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'cli-wf')">GitHub CLI</button>
+</div>
+
+<div class="code-tab-content active" id="fork-wf"><pre><span class="comment"># 1. 在 GitHub 網頁右上角點「Fork」按鈕 / Click "Fork" on the upstream repo page</span>
+<span class="comment">#    => 你的帳號底下會出現 github.com/charlene717/scanpy</span>
+
+<span class="comment"># 2. Clone 你的 fork（不是原作者的 repo） / Clone YOUR fork</span>
+$ git clone git@github.com:charlene717/scanpy.git
+$ <span class="func">cd</span> scanpy
+
+<span class="comment"># 3. 加入 upstream remote，方便日後同步原作者更新</span>
+$ git remote add upstream git@github.com:scverse/scanpy.git
+$ git remote -v
+origin    git@github.com:charlene717/scanpy.git (push)
+upstream  git@github.com:scverse/scanpy.git     (fetch)
+
+<span class="comment"># 4. 開 feature branch / Branch off main</span>
+$ git switch -c fix/sctransform-nan-handling
+
+<span class="comment"># 5. 編輯、commit / Edit and commit</span>
+$ git add scanpy/preprocessing/_normalization.py
+$ git commit -m <span class="str">"Handle NaN values in SCTransform v2"</span>
+
+<span class="comment"># 6. Push 到你的 fork / Push to YOUR fork</span>
+$ git push -u origin fix/sctransform-nan-handling
+
+<span class="comment"># 7. 到 GitHub 點「Compare &amp; pull request」開 PR</span>
+<span class="comment">#    Base: scverse/scanpy:main  ←  Compare: charlene717/scanpy:fix/sctransform-nan-handling</span>
+<span class="comment">#    填標題、描述（含 Fixes #1234）、提交！</span></pre></div>
+
+<div class="code-tab-content" id="same-wf"><pre><span class="comment"># 你的實驗室 organization 下、你有寫入權的 repo</span>
+<span class="comment"># Your lab's org repo where you have push access</span>
+
+<span class="comment"># 1. Clone（直接 clone 原 repo，不用 fork） / Clone directly (no fork needed)</span>
+$ git clone git@github.com:my-lab/scRNA-pipeline.git
+$ <span class="func">cd</span> scRNA-pipeline
+
+<span class="comment"># 2. 開 feature branch / Branch off main</span>
+$ git switch -c feature/add-doublet-filter
+
+<span class="comment"># 3. 工作 + commit / Work and commit</span>
+$ git add R/doublet.R tests/test-doublet.R
+$ git commit -m <span class="str">"Add scDblFinder integration for doublet removal"</span>
+
+<span class="comment"># 4. Push 到同一個 repo / Push to the same repo</span>
+$ git push -u origin feature/add-doublet-filter
+
+<span class="comment"># 5. 開 PR：base = main ← compare = feature/add-doublet-filter</span>
+<span class="comment">#    Request review from @PI, @senior-postdoc</span></pre></div>
+
+<div class="code-tab-content" id="cli-wf"><pre><span class="comment"># 用 GitHub CLI（gh）一條龍 / Doing it all with GitHub CLI</span>
+$ gh auth login                                       <span class="comment"># 首次登入</span>
+
+<span class="comment"># 開 PR（自動偵測 branch 和 base）</span>
+$ gh pr create --title <span class="str">"Fix SCTransform NaN handling"</span> \
+               --body  <span class="str">"Fixes #1234. Replaces NaN with row median."</span> \
+               --base  main
+
+<span class="comment"># 列出當前 repo 的開放 PR</span>
+$ gh pr list
+#142  Fix SCTransform NaN handling   charlene717:fix/sctransform-nan-handling
+
+<span class="comment"># 拉某個 PR 下來 review（自動切到對應 branch）</span>
+$ gh pr checkout 142
+
+<span class="comment"># 直接在 CLI 評論 / 批准 / 要求修改</span>
+$ gh pr review 142 --approve -b <span class="str">"LGTM, thanks!"</span>
+$ gh pr review 142 --request-changes -b <span class="str">"Need test coverage"</span>
+
+<span class="comment"># Merge（squash / rebase / merge 三選一）</span>
+$ gh pr merge 142 --squash --delete-branch</pre></div>
+</div>
+</section>
+
+<!-- ===== Section 11: Bioinformatics callout ===== -->
+<section class="section">
+<div class="section-label" data-zh="生資現場" data-en="IN PRACTICE">生資現場</div>
+<h2 data-zh="生物資訊實務：PR 與你的論文" data-en="In practice: PRs and your paper">生物資訊實務：PR 與你的論文</h2>
+<div class="callout tip"><span class="callout-icon">📐</span><div>
+<span data-lang="zh"><strong>小 PR 比較快 merge：</strong>研究顯示 <strong>&lt; 400 行有效更動</strong> 的 PR 比起千行巨獸，merge 速度快 3 倍，被找到 bug 的機率也高 2 倍。把大功能拆成 3–5 個 PR 是值得的紀律。</span>
+<span data-lang="en"><strong>Small PRs merge faster:</strong> studies show PRs <strong>under ~400 lines changed</strong> get merged 3× faster than thousand-line monsters, and reviewers catch 2× more bugs. Splitting a big feature into 3–5 PRs is a discipline that pays off.</span>
+</div></div>
+<div class="callout warn"><span class="callout-icon">🚫</span><div>
+<span data-lang="zh"><strong>別自己 merge 自己的 PR：</strong>就算技術上你能按下 Merge，在共用專案請別這麼做。PR 的全部意義就是「第二雙眼睛」——這個門檻不該為了快而省。</span>
+<span data-lang="en"><strong>Don't merge your own PR without review:</strong> even if you technically can. On a shared project, the whole point of a PR is the second pair of eyes — don't trade that away for speed.</span>
+</div></div>
+<div class="callout tip"><span class="callout-icon">📄</span><div>
+<span data-lang="zh"><strong>論文裡引用你的 PR：</strong>在 Methods 或 Code availability 段落貼 PR URL，例如 <code>https://github.com/lab/pipeline/pull/42</code>。Reviewer 想看就點得到，且 commit hash 永久存在。</span>
+<span data-lang="en"><strong>Cite your PR in the paper:</strong> drop the URL into Methods or Code Availability, e.g. <code>https://github.com/lab/pipeline/pull/42</code>. Reviewers can inspect the exact change, and the commit hash is permanent.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 12: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">1. 你想對 Seurat 提一個 bug fix。最正確的開始方式是？</p>
+<p data-lang="en">1. You want to contribute a bug fix to Seurat. What's the right opening move?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 直接 clone Seurat → 編輯 → push 到 main</span><span data-lang="en">A. Clone Seurat directly → edit → push to main</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 在 Issue 留言貼上整段 diff</span><span data-lang="en">B. Paste the full diff in an Issue comment</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. Fork Seurat → clone fork → 開 branch → 修 → push 到 fork → 從 fork 開 PR 到 upstream</span><span data-lang="en">C. Fork Seurat → clone the fork → branch → fix → push to your fork → open PR to upstream</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 寄 email 給 Seurat 維護者附上修正後的整份檔案</span><span data-lang="en">D. Email the maintainer with the fixed file attached</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">2. 你的 PR 描述寫了 <code>Fixes #42</code>。當 PR 被 merge 時，issue #42 會怎樣？</p>
+<p data-lang="en">2. Your PR description says <code>Fixes #42</code>. What happens to issue #42 when the PR is merged?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 什麼都不會發生——還是要手動關閉</span><span data-lang="en">A. Nothing — you still close it manually</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 自動被關閉（auto-closed）</span><span data-lang="en">B. It auto-closes</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 被標記為 duplicate</span><span data-lang="en">C. It gets marked as duplicate</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. issue #42 也會被 merge 進 main</span><span data-lang="en">D. Issue #42 also gets merged into main</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="0">
+<p data-lang="zh">3. 評審員 request changes，你的 fix 寫好了。最佳推送方式是？</p>
+<p data-lang="en">3. The reviewer requested changes; you've written the fix. Best way to push it?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 在同一 branch 推新 commit（PR 自動更新），不要 force-push</span><span data-lang="en">A. Push new commits to the same branch (PR auto-updates); don't force-push</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>git push --force</code> 蓋掉舊 commit</span><span data-lang="en">B. <code>git push --force</code> to overwrite old commits</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 關掉這個 PR，另開新的</span><span data-lang="en">C. Close this PR and open a new one</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 把整個 branch 刪掉重來</span><span data-lang="en">D. Delete the branch and start over</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="remotes.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 7: 遠端與 GitHub 同步 (Remotes &amp;amp; GitHub Sync)" data-en="Step 7: Remotes &amp;amp; GitHub Sync">Step 7: 遠端與 GitHub 同步 (Remotes &amp; GitHub Sync)</span></a>
+<a href="gitignore-lfs.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 9: .gitignore &amp;amp; Git LFS（生物資訊版）" data-en="Step 9: .gitignore &amp;amp; Git LFS for Bioinformatics">Step 9: .gitignore &amp; Git LFS（生物資訊版）</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+/* PR Simulator */
+.pr-sim{margin-top:8px}
+.pr-card{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.pr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.pr-status{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:999px;transition:var(--transition)}
+.pr-status .pr-dot{width:10px;height:10px;border-radius:50%}
+.pr-status[data-state="pending"]{background:#eef0f3;color:#586069}.pr-status[data-state="pending"] .pr-dot{background:#959da5}
+.pr-status[data-state="changes"]{background:#ffe8e6;color:#cb2431}.pr-status[data-state="changes"] .pr-dot{background:#cb2431}
+.pr-status[data-state="approved"]{background:#dcffe4;color:#1a7f37}.pr-status[data-state="approved"] .pr-dot{background:#1a7f37}
+.pr-status[data-state="merged"]{background:#efe2ff;color:#6f42c1}.pr-status[data-state="merged"] .pr-dot{background:#6f42c1}
+.pr-num{font-family:var(--font-mono);color:var(--c-ink-light);font-size:.9rem}
+.pr-title{margin:4px 0 2px;font-size:1.05rem}
+.pr-meta{font-size:.82rem;color:var(--c-ink-light);margin-bottom:14px}
+.pr-body{min-height:80px;padding:12px 14px;background:var(--c-surface-alt);border-radius:8px;border-left:3px solid var(--c-accent);font-size:.88rem;line-height:1.55;margin-bottom:14px}
+.pr-comment{padding:8px 0;border-bottom:1px dashed var(--c-border-light)}
+.pr-comment:last-child{border-bottom:none}
+.pr-comment .pc-who{font-weight:600;color:var(--c-accent-dark);font-size:.82rem}
+.pr-comment.indent{margin-left:22px;border-left:2px solid var(--c-border-light);padding-left:12px}
+.pr-actions{display:flex;gap:10px}
+.pr-btn{background:var(--c-accent);color:#fff;border:none;border-radius:var(--radius);padding:9px 18px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.88rem;transition:var(--transition)}
+.pr-btn:hover{background:var(--c-accent-dark);transform:translateY(-1px)}
+.pr-btn-ghost{background:transparent;color:var(--c-accent-dark);border:1px solid var(--c-border-light)}
+.pr-btn-ghost:hover{background:var(--c-surface-alt)}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// PR Simulator
+const PR_STATES=['pending','changes','approved','merged'];
+const PR_TEXT={
+  zh:{
+    pending:'Pending review',
+    changes:'Changes requested',
+    approved:'Approved',
+    merged:'Merged',
+    body:{
+      pending:'<div class="pr-comment"><div class="pc-who">charlene717 opened this pull request</div><div>Adds an opt-in flag <code>use_sctransform_v2=True</code> to <code>sc.pp.normalize()</code>. Fixes #1234.</div></div>',
+      changes:'<div class="pr-comment"><div class="pc-who">@reviewer-postdoc requested changes</div><div>Can you add a unit test for the NaN edge case? See inline comment in <code>test_normalization.py</code>.</div></div><div class="pr-comment indent"><div class="pc-who">charlene717 replied</div><div>Good catch — will push a fix.</div></div>',
+      approved:'<div class="pr-comment"><div class="pc-who">@reviewer-postdoc approved these changes</div><div>LGTM ✨ Thanks for adding the test.</div></div><div class="pr-comment indent"><div class="pc-who">charlene717</div><div>Thanks for the review!</div></div>',
+      merged:'<div class="pr-comment"><div class="pc-who">@maintainer merged commit a1b2c3d into main</div><div>Squashed and merged. Issue #1234 auto-closed.</div></div>'
+    }
+  },
+  en:{
+    pending:'Pending review',
+    changes:'Changes requested',
+    approved:'Approved',
+    merged:'Merged',
+    body:{
+      pending:'<div class="pr-comment"><div class="pc-who">charlene717 opened this pull request</div><div>Adds an opt-in flag <code>use_sctransform_v2=True</code> to <code>sc.pp.normalize()</code>. Fixes #1234.</div></div>',
+      changes:'<div class="pr-comment"><div class="pc-who">@reviewer-postdoc requested changes</div><div>Can you add a unit test for the NaN edge case? See inline comment on <code>test_normalization.py</code>.</div></div><div class="pr-comment indent"><div class="pc-who">charlene717 replied</div><div>Good catch — will push a fix.</div></div>',
+      approved:'<div class="pr-comment"><div class="pc-who">@reviewer-postdoc approved these changes</div><div>LGTM ✨ Thanks for adding the test.</div></div><div class="pr-comment indent"><div class="pc-who">charlene717</div><div>Thanks for the review!</div></div>',
+      merged:'<div class="pr-comment"><div class="pc-who">@maintainer merged commit a1b2c3d into main</div><div>Squashed and merged. Issue #1234 auto-closed.</div></div>'
+    }
+  }
+};
+let prIdx=0;
+function renderPR(){const L=I18n.get();const s=PR_STATES[prIdx];const st=document.getElementById('prStatus');st.dataset.state=s;document.getElementById('prStatusText').textContent=PR_TEXT[L][s];document.getElementById('prBody').innerHTML=PR_TEXT[L].body[s];}
+document.getElementById('prNext').addEventListener('click',()=>{prIdx=(prIdx+1)%PR_STATES.length;renderPR();});
+document.getElementById('prReset').addEventListener('click',()=>{prIdx=0;renderPR();});
+document.addEventListener('langchange',renderPR);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(renderPR,80));
+
+// Quiz
+const QF={zh:{q1_y:'Fork → clone fork → branch → fix → push → PR 是開源貢獻的標準流程。',q1_n:'正確答案已標示。',q2_y:'PR 描述中 Fixes / Closes / Resolves #N 在 merge 時會自動關閉對應 issue。',q2_n:'正確答案已標示。',q3_y:'推新 commit 才不會破壞評審員留在舊 diff 上的 inline comment 對齊點。',q3_n:'正確答案已標示。'},en:{q1_y:'Fork → clone fork → branch → fix → push → PR is the standard OSS contribution flow.',q1_n:'Correct answer is highlighted.',q2_y:'Fixes/Closes/Resolves #N in the PR description auto-closes the issue on merge.',q2_n:'Correct answer is highlighted.',q3_y:'New commits preserve the reviewer\'s inline-comment anchors; force-push would shift them.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

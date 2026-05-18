@@ -1,0 +1,472 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 7: Remotes &amp; GitHub Sync — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html" class="active">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 7 / 9</div>
+<h1 data-zh="遠端與 GitHub 同步 (Remotes &amp; GitHub Sync)" data-en="Remotes &amp; GitHub Sync">遠端與 GitHub 同步 (Remotes &amp; GitHub Sync)</h1>
+<p class="subtitle" data-lang="zh">本機 repo 和 GitHub 上的 repo 之間，靠 fetch / pull / push 三個動詞溝通——理解它們，雲端協作就不再神秘。</p>
+<p class="subtitle" data-lang="en">Local repo and GitHub repo talk to each other via three verbs — fetch, pull, push. Once those click, cloud collaboration stops feeling magical.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="什麼是 remote？" data-en="What is a remote?">什麼是 remote？</h2>
+<div data-lang="zh">
+<p><strong>remote（遠端）</strong>本質上只是一個有名字的 URL，指向 repo 的另一份副本（通常在 GitHub 上）。大多數 repo 都有一個叫 <code>origin</code> 的 remote——可能是你自己的 fork，也可能是 lab 的 canonical repo。當你 <code>git clone</code> 時，Git 自動把來源設成 <code>origin</code>。</p>
+<p>本章重點：本機與 remote 之間如何保持同步。所有同步動作都繞著三個動詞轉——<code>git fetch</code>（下載）、<code>git pull</code>（下載並合併）、<code>git push</code>（上傳）。再加上「tracking branch」這個概念，你就能掌握 GitHub 協作的核心機制。</p>
+</div>
+<div data-lang="en">
+<p>A <strong>remote</strong> is just a named URL pointing to another copy of your repo (typically on GitHub). Most repos have a remote called <code>origin</code> — either your own fork, or the lab's canonical repo. When you <code>git clone</code>, Git automatically sets the source as <code>origin</code>.</p>
+<p>This chapter is about how local and remote stay in sync. Everything revolves around three verbs — <code>git fetch</code> (download), <code>git pull</code> (download + merge), <code>git push</code> (upload). Add the idea of a "tracking branch," and you have the core mechanics of GitHub collaboration.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心原則：</strong>remote 只是別名。<code>origin</code> 不是 Git 內建的保留字，只是 <code>git clone</code> 預設取的名字。你可以隨時 <code>git remote rename origin upstream</code> 改名。</span>
+<span data-lang="en"><strong>Core principle:</strong> a remote is just an alias. <code>origin</code> isn't a Git keyword — it's just the default name <code>git clone</code> assigns. You can <code>git remote rename origin upstream</code> any time.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Remote management ===== -->
+<section class="section">
+<div class="section-label" data-zh="管理 remote" data-en="REMOTES">管理 remote</div>
+<h2 data-zh="一、管理 remote" data-en="I. Managing Remotes">一、管理 remote</h2>
+<div data-lang="zh"><p>新建一個本機 repo 時，要手動把它連到 GitHub。clone 下來的 repo 則自動有 <code>origin</code>。當你 fork 別人的 repo 後，慣例會把<strong>自己的 fork</strong> 設為 <code>origin</code>、<strong>原始 repo</strong> 設為 <code>upstream</code>。</p></div>
+<div data-lang="en"><p>For a freshly initialized local repo, you wire it to GitHub by hand. For a cloned repo, <code>origin</code> is already set. When you fork someone's repo, the convention is to keep <strong>your fork</strong> as <code>origin</code> and add the <strong>original repo</strong> as <code>upstream</code>.</p></div>
+<pre><span class="comment"># 列出所有 remote 與 URL / List remotes with URLs</span>
+$ git remote -v
+origin  git@github.com:charlene/scRNA-pipeline.git (fetch)
+origin  git@github.com:charlene/scRNA-pipeline.git (push)
+
+<span class="comment"># 新增 remote / Add a remote</span>
+$ git remote add origin git@github.com:charlene/scRNA-pipeline.git
+
+<span class="comment"># 切換 URL（例如 HTTPS → SSH） / Switch URL (HTTPS ↔ SSH)</span>
+$ git remote set-url origin git@github.com:charlene/scRNA-pipeline.git
+
+<span class="comment"># 改名 / Rename</span>
+$ git remote rename origin upstream
+
+<span class="comment"># 移除 / Remove</span>
+$ git remote remove old-mirror
+
+<span class="comment"># Fork workflow: 自己的 fork = origin, 原 repo = upstream</span>
+$ git remote add upstream git@github.com:lab/scRNA-pipeline.git
+</pre>
+</section>
+
+<!-- ===== Section 3: Three sync verbs ===== -->
+<section class="section">
+<div class="section-label" data-zh="三個同步動詞" data-en="THREE VERBS">三個同步動詞</div>
+<h2 data-zh="二、fetch / pull / push" data-en="II. fetch / pull / push">二、fetch / pull / push</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">📥</div><h4>git fetch</h4>
+<div data-lang="zh"><p>把 remote 的 refs 和 objects 下載到本機，但<strong>不動工作目錄</strong>。本機多了 <code>origin/main</code> 之類的 remote-tracking ref，本地分支不變。最安全。</p></div>
+<div data-lang="en"><p>Downloads remote refs and objects to your machine, but <strong>doesn't touch your working tree</strong>. Updates remote-tracking refs like <code>origin/main</code>; your local branches stay put. Safest verb.</p></div>
+</div>
+<div class="card"><div class="card-icon">📥➕</div><h4>git pull</h4>
+<div data-lang="zh"><p>等同 <code>git fetch</code> + <code>git merge origin/&lt;current-branch&gt;</code>（預設）。方便，但把兩個動作混在一起；衝突時新手容易亂。</p></div>
+<div data-lang="en"><p>Equivalent to <code>git fetch</code> + <code>git merge origin/&lt;current-branch&gt;</code> (default). Convenient but conflates two operations — newcomers get tangled when conflicts arise.</p></div>
+</div>
+<div class="card"><div class="card-icon">📤</div><h4>git push</h4>
+<div data-lang="zh"><p>把本機 commit 上傳到 remote。第一次推新分支用 <code>git push -u origin feature</code> 設定 upstream，之後直接 <code>git push</code> 就懂去哪。</p></div>
+<div data-lang="en"><p>Uploads local commits to the remote. First time pushing a new branch, use <code>git push -u origin feature</code> to set the upstream — future <code>git push</code> calls know where to go.</p></div>
+</div>
+</div>
+<pre style="margin-top:14px"><span class="comment"># pull 的內部其實就是 fetch + merge / pull == fetch + merge</span>
+$ git pull
+<span class="comment"># 等價於 / Equivalent to:</span>
+$ git fetch origin
+$ git merge origin/main
+
+<span class="comment"># 第一次推新分支 / First push of a new branch</span>
+$ git push -u origin feature-clustering
+<span class="comment"># 之後 / Later</span>
+$ git push
+</pre>
+</section>
+
+<!-- ===== Section 4: Tracking ===== -->
+<section class="section">
+<div class="section-label" data-zh="追蹤分支" data-en="TRACKING">追蹤分支</div>
+<h2 data-zh="三、tracking branch（追蹤分支）" data-en="III. Tracking Branches">三、tracking branch（追蹤分支）</h2>
+<div data-lang="zh">
+<p>本機的 <code>main</code> 通常會 <strong>track</strong>（追蹤）<code>origin/main</code>——這個 remote-tracking ref 是 fetch 後本機對 remote 狀態的快照。tracking 關係讓 <code>git status</code> 能說「你的分支領先 2 個 commit」或「落後 3 個 commit」。</p>
+<p>沒有 tracking，<code>git pull</code> / <code>git push</code> 都要明寫 remote 和分支名。</p>
+</div>
+<div data-lang="en">
+<p>Your local <code>main</code> typically <strong>tracks</strong> <code>origin/main</code> — that remote-tracking ref is a snapshot of remote state after the last fetch. The tracking relationship is what lets <code>git status</code> say "Your branch is ahead by 2 commits" or "behind by 3."</p>
+<p>Without tracking, every <code>git pull</code> / <code>git push</code> needs explicit remote and branch names.</p>
+</div>
+<pre><span class="comment"># 查看分支與其追蹤關係 / Show branches with tracking info</span>
+$ git branch -vv
+* main          a3f12b9 [origin/main] Add QC step
+  feature-umap  7d2e8c1 [origin/feature-umap: ahead 2] Tune n_neighbors
+
+<span class="comment"># 從遠端建立追蹤的本地分支 / Create a local branch tracking a remote one</span>
+$ git checkout --track origin/feature-clustering
+<span class="comment"># 簡寫 / Shortcut (Git ≥ 2.23):</span>
+$ git switch feature-clustering   <span class="comment"># 若名稱不衝突會自動 --track</span>
+
+<span class="comment"># 為現有分支設追蹤 / Set upstream for an existing branch</span>
+$ git branch -u origin/main main
+</pre>
+</section>
+
+<!-- ===== Section 5: Comparison table ===== -->
+<section class="section">
+<div class="section-label" data-zh="對照表" data-en="COMPARISON">對照表</div>
+<h2 data-zh="四、fetch vs pull vs push" data-en="IV. fetch vs pull vs push">四、fetch vs pull vs push</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="動詞" data-en="Verb">動詞</th>
+<th data-zh="方向" data-en="Direction">方向</th>
+<th data-zh="動工作目錄？" data-en="Touches working tree?">動工作目錄？</th>
+<th data-zh="安全性" data-en="Safety">安全性</th>
+</tr></thead>
+<tbody>
+<tr><td><code>fetch</code></td><td data-lang="zh">remote → 本機 refs（不動分支）</td><td data-lang="en">remote → local refs only</td><td data-lang="zh">否</td><td data-lang="en">no</td><td data-lang="zh">最安全</td><td data-lang="en">safest</td></tr>
+<tr><td><code>pull</code></td><td data-lang="zh">remote → 本機 + 合併到當前分支</td><td data-lang="en">remote → local + merge</td><td data-lang="zh">會</td><td data-lang="en">yes</td><td data-lang="zh">大致安全（可能衝突）</td><td data-lang="en">mostly safe (can conflict)</td></tr>
+<tr><td><code>push</code></td><td data-lang="zh">本機 → remote</td><td data-lang="en">local → remote</td><td data-lang="zh">不動本機；遠端會更新</td><td data-lang="en">n/a local; remote updates</td><td data-lang="zh">安全；若 remote 領先會失敗</td><td data-lang="en">safe; fails if remote is ahead</td></tr>
+</tbody></table>
+
+<div class="callout tip"><span class="callout-icon">🛡️</span><div>
+<span data-lang="zh"><strong>新手規則：</strong>不確定時就先 <code>git fetch</code>——它永遠不會弄壞你的工作目錄。看清楚 <code>git log HEAD..origin/main</code> 多了什麼，再決定要 merge 還是 rebase。</span>
+<span data-lang="en"><strong>Newcomer rule:</strong> when in doubt, <code>git fetch</code> first — it never modifies your working tree. Inspect what arrived with <code>git log HEAD..origin/main</code>, then decide whether to merge or rebase.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 6: pull.rebase strategy ===== -->
+<section class="section">
+<div class="section-label" data-zh="pull 策略" data-en="PULL STRATEGY">pull 策略</div>
+<h2 data-zh="五、pull.rebase 該怎麼選？" data-en="V. Choosing a pull.rebase strategy">五、pull.rebase 該怎麼選？</h2>
+<div data-lang="zh"><p>Git 2.27 之後，第一次 <code>git pull</code> 會提醒你選擇策略：</p></div>
+<div data-lang="en"><p>Since Git 2.27, the first <code>git pull</code> asks which strategy to use:</p></div>
+<pre><span class="comment"># 三種策略 / Three options</span>
+$ git config --global pull.rebase <span class="kw">false</span>   <span class="comment"># 預設：fetch + merge（產生 merge commit）</span>
+$ git config --global pull.rebase <span class="kw">true</span>    <span class="comment"># fetch + rebase（線性歷史）</span>
+$ git config --global pull.rebase only    <span class="comment"># 只允許 fast-forward，否則拒絕</span>
+</pre>
+<div class="card-grid cols-3">
+<div class="card"><h4 data-zh="false（merge）" data-en="false (merge)">false（merge）</h4>
+<div data-lang="zh"><p>新手友善；歷史保留分歧的「真實樣貌」。代價：每次 pull 都可能產生 merge commit，long-term repo 會出現很多「Merge branch 'main' of...」噪音。</p></div>
+<div data-lang="en"><p>Friendly for beginners; history preserves the "real shape" of divergence. Cost: every pull may produce a merge commit, and the log fills with "Merge branch 'main' of..." noise.</p></div>
+</div>
+<div class="card"><h4>true（rebase）</h4>
+<div data-lang="zh"><p>線性歷史，<code>git log</code> 漂亮。代價：rebase 會改寫本機 commit hash，已 push 出去的東西別用。</p></div>
+<div data-lang="en"><p>Linear history, pretty <code>git log</code>. Cost: rebase rewrites local commit hashes — never use it on commits you've already pushed.</p></div>
+</div>
+<div class="card"><h4>only</h4>
+<div data-lang="zh"><p>嚴格模式：只允許 fast-forward。一旦本機有未 push 的 commit 又 fetch 到新東西，就會拒絕——強迫你自己決定 merge 還是 rebase。</p></div>
+<div data-lang="en"><p>Strict: only fast-forward is allowed. If you have unpushed commits AND remote moved, it refuses — forcing you to decide merge vs rebase explicitly.</p></div>
+</div>
+</div>
+<div class="callout tip"><span class="callout-icon">🎯</span><div>
+<span data-lang="zh"><strong>建議：</strong>新手選 <code>false</code>，熟練後改 <code>only</code>。<code>true</code> 適合單人開發或約定好「永遠 rebase」的小團隊。</span>
+<span data-lang="en"><strong>Recommendation:</strong> beginners pick <code>false</code>; switch to <code>only</code> once you're comfortable. <code>true</code> suits solo work or a small team that has agreed "always rebase."</span>
+</div></div>
+</section>
+
+<!-- ===== Section 7: Auth troubleshooting ===== -->
+<section class="section">
+<div class="section-label" data-zh="認證排錯" data-en="AUTH">認證排錯</div>
+<h2 data-zh="六、push 失敗的常見訊息" data-en="VI. Common push failures">六、push 失敗的常見訊息</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="錯誤訊息" data-en="Error message">錯誤訊息</th>
+<th data-zh="原因" data-en="Cause">原因</th>
+<th data-zh="處理" data-en="Fix">處理</th>
+</tr></thead>
+<tbody>
+<tr><td><code>Permission denied (publickey)</code></td><td data-lang="zh">SSH key 沒加進 agent，或加錯 GitHub 帳號</td><td data-zh="檢查"><code>ssh-add -l</code> <span data-lang="zh">看 agent 內金鑰；<code>ssh -T git@github.com</code> 驗證身分</span><span data-lang="en">to inspect agent; <code>ssh -T git@github.com</code> to verify identity</span></td><td data-lang="en">SSH key missing from agent or on wrong GitHub account</td></tr>
+<tr><td><code>fatal: Authentication failed</code></td><td data-lang="zh">PAT 過期 / scope 不足</td><td data-lang="zh">重新產 PAT，或改用 SSH</td><td data-lang="en">PAT expired or has insufficient scope</td><td data-lang="en">Regenerate the PAT, or switch to SSH</td></tr>
+<tr><td><code>Updates were rejected</code> <span style="opacity:.7">(non-fast-forward)</span></td><td data-lang="zh">remote 上有你還沒抓的 commit</td><td data-lang="zh">先 <code>git pull</code>（或 <code>fetch</code> + <code>rebase</code>）再 push</td><td data-lang="en">Remote has commits you don't have locally</td><td data-lang="en"><code>git pull</code> (or <code>fetch</code> + <code>rebase</code>) before pushing</td></tr>
+<tr><td><code>Connection refused on port 22</code></td><td data-lang="zh">防火牆擋 SSH port</td><td data-lang="zh">在 <code>~/.ssh/config</code> 改走 port 443（見 Setup 章）</td><td data-lang="en">Firewall blocks SSH port</td><td data-lang="en">In <code>~/.ssh/config</code> route via port 443 (see Setup chapter)</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 8: Interactive sync visualizer ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="同步狀態視覺化器" data-en="Sync Status Visualizer">同步狀態視覺化器</h2>
+<div data-lang="zh"><p>按下按鈕觀察 local 與 remote 兩側 commit 序列的變化——fetch 後 remote 的 commit 會以虛線複本出現在 local 側；pull --rebase 會把你的 commit 重播到 remote 之上；push 在 remote 領先時會失敗。</p></div>
+<div data-lang="en"><p>Click the buttons to watch local and remote diverge and re-sync. After fetch, remote commits show up as dashed copies on the local side; pull --rebase replays your commits on top of remote's; push fails when remote is ahead.</p></div>
+
+<div id="syncVis" class="interactive-panel">
+  <div class="sync-controls">
+    <button class="sync-btn local" data-act="commit-local" data-zh="Make local commit" data-en="Make local commit">+ local commit</button>
+    <button class="sync-btn remote" data-act="commit-remote" data-zh="Make remote commit" data-en="Make remote commit">+ remote commit</button>
+    <button class="sync-btn fetch" data-act="fetch">git fetch</button>
+    <button class="sync-btn pull" data-act="pull">git pull --rebase</button>
+    <button class="sync-btn push" data-act="push">git push</button>
+    <button class="sync-btn reset" data-act="reset" data-zh="重設" data-en="Reset">Reset</button>
+  </div>
+  <div class="sync-board">
+    <div class="sync-side">
+      <div class="sync-side-label" data-zh="本機 (local)" data-en="Local">本機 (local)</div>
+      <div class="sync-col" id="localCol"></div>
+    </div>
+    <div class="sync-arrow" id="syncArrow">↔</div>
+    <div class="sync-side">
+      <div class="sync-side-label" data-zh="遠端 (origin)" data-en="Remote (origin)">遠端 (origin)</div>
+      <div class="sync-col" id="remoteCol"></div>
+    </div>
+  </div>
+  <div class="sync-log" id="syncLog"></div>
+</div>
+</section>
+
+<!-- ===== Section 9: Decision tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策流程" data-en="DECISION TREE">決策流程</div>
+<h2 data-zh="七、pull / push 出問題了怎麼辦？" data-en="VII. When pull or push fails">七、pull / push 出問題了怎麼辦？</h2>
+<div class="decision-tree">
+<h4>🌳 <span data-zh="同步失敗排查" data-en="Sync failure triage">同步失敗排查</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>push 被拒絕，訊息為 <code>rejected — fetch first</code>？<span class="dt-arrow">→ 是 →</span> 先 <code>git pull</code>（或 fetch + merge），解完衝突再 <code>git push</code>。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>訊息為 <code>non-fast-forward</code>？<span class="dt-arrow">→ 是 →</span> 你的 push 和 remote 都動過。<code>git pull --rebase</code> 或 merge，再 push。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>authentication 失敗？<span class="dt-arrow">→ 是 →</span> <code>ssh-add -l</code> 看 key 在不在 agent；或檢查 PAT 是否過期、scope 是否足夠。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>只想安全地看 remote 有什麼新東西、不想 merge？<span class="dt-arrow">→ 是 →</span> <code>git fetch</code>，然後 <code>git log HEAD..origin/main</code> 看新 commit。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Push was rejected, message says <code>rejected — fetch first</code>? <span class="dt-arrow">→ Yes →</span> <code>git pull</code> (or fetch + merge), resolve conflicts, then <code>git push</code>.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Message says <code>non-fast-forward</code>? <span class="dt-arrow">→ Yes →</span> Both your branch and the remote moved. <code>git pull --rebase</code> or merge, then push.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Authentication failed? <span class="dt-arrow">→ Yes →</span> Check <code>ssh-add -l</code> for keys in the agent; or check whether your PAT expired or lacks scope.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Just want to safely see what's new without merging? <span class="dt-arrow">→ Yes →</span> <code>git fetch</code>, then <code>git log HEAD..origin/main</code> to inspect the new commits.</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 10: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整程式碼</div>
+<h2 data-zh="常見場景指令套餐" data-en="Command bundles for common scenarios">常見場景指令套餐</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'addrem')" data-zh="新增 remote" data-en="Add a remote">Add a remote</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'daily')" data-zh="日常同步" data-en="Daily sync">Daily sync</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'rejected')" data-zh="push 被拒" data-en="Fix rejected push">Fix rejected push</button>
+</div>
+<div class="code-tab-content active" id="addrem"><pre><span class="comment"># 1. 先在 GitHub 上建好空 repo（不要勾 README / .gitignore）</span>
+<span class="comment">#    Create empty repo on GitHub first (no README/.gitignore)</span>
+
+<span class="comment"># 2. 在本機 repo 內新增 remote / Add remote locally</span>
+$ git remote add origin git@github.com:charlene/scRNA-pipeline.git
+$ git remote -v
+origin  git@github.com:charlene/scRNA-pipeline.git (fetch)
+origin  git@github.com:charlene/scRNA-pipeline.git (push)
+
+<span class="comment"># 3. 首次推上 main 並設定 upstream / First push, sets upstream</span>
+$ git push -u origin main
+
+<span class="comment"># 4. 之後就可以直接 / Later, simply:</span>
+$ git push</pre></div>
+
+<div class="code-tab-content" id="daily"><pre><span class="comment"># 早上開工流程 / Morning workflow</span>
+$ git fetch origin                 <span class="comment"># 看看遠端有沒有新東西，安全</span>
+$ git status                       <span class="comment"># Your branch is behind origin/main by 3 commits</span>
+$ git log HEAD..origin/main --oneline   <span class="comment"># 看是哪些新 commit</span>
+
+<span class="comment"># 確認沒問題後拉下來 / Pull when satisfied</span>
+$ git pull                         <span class="comment"># = fetch + merge (or rebase, 依設定)</span>
+
+<span class="comment"># 寫完一段、commit、推 / Commit and push your work</span>
+$ git add analysis/qc.R
+$ git commit -m <span class="str">"Add QC threshold tuning"</span>
+$ git push</pre></div>
+
+<div class="code-tab-content" id="rejected"><pre><span class="comment"># push 失敗訊息 / Push fails with:</span>
+<span class="comment">#   ! [rejected]   main -&gt; main (non-fast-forward)</span>
+<span class="comment">#   error: failed to push some refs ...</span>
+<span class="comment">#   hint: Updates were rejected because the tip of your current</span>
+<span class="comment">#         branch is behind its remote counterpart.</span>
+
+<span class="comment"># 1. 拉下來並 rebase 自己的 commit 到 remote 之上</span>
+$ git pull --rebase origin main
+
+<span class="comment"># 2. 若有衝突，解決後 / If conflicts, resolve then:</span>
+$ git add &lt;resolved-files&gt;
+$ git rebase --continue
+
+<span class="comment"># 3. 再推一次 / Push again</span>
+$ git push
+
+<span class="comment"># 看 force push 之前先確認沒有別人的 commit 會被覆蓋</span>
+<span class="comment"># Before any --force, double-check nobody else's commit gets erased</span>
+$ git push --force-with-lease    <span class="comment"># 比 --force 安全</span></pre></div>
+</div>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>不要對共用分支用 <code>git push --force</code>！</strong>它會把 remote 強制覆寫成你的版本，別人新推的 commit 會消失。要 force 也請用 <code>--force-with-lease</code>，並先跟團隊同步。</span>
+<span data-lang="en"><strong>Never <code>git push --force</code> to a shared branch!</strong> It overwrites the remote with your version, erasing anyone else's recent pushes. If you must force-push, use <code>--force-with-lease</code> and coordinate with the team first.</span>
+</div></div>
+
+<div class="callout tip"><span class="callout-icon">🧬</span><div>
+<span data-lang="zh"><strong>生資情境：</strong>同時在本機 NB 和 HPC 開發時，<code>git push</code> 從 NB 上去，<code>git pull</code> 在 HPC 拉下來——把 Git 當成程式碼的 <code>rsync</code>。記得：data 用 rsync 或 LFS，code 用 git。</span>
+<span data-lang="en"><strong>Bioinformatics:</strong> when juggling a laptop and HPC, <code>git push</code> from the laptop and <code>git pull</code> on HPC — Git becomes a poor man's <code>rsync</code> for code. Just remember: data still goes through rsync or Git LFS; code goes through Git.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 11: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 想看看 collaborator 推了什麼新 commit 但<strong>不要動到</strong>自己的工作目錄，最安全的指令是？</p>
+<p data-lang="en">1. What's the safest way to see what your collaborator pushed <strong>without modifying anything</strong> locally?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>git pull</code></span><span data-lang="en">A. <code>git pull</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>git fetch</code></span><span data-lang="en">B. <code>git fetch</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>git push</code></span><span data-lang="en">C. <code>git push</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>git reset --hard origin/main</code></span><span data-lang="en">D. <code>git reset --hard origin/main</code></span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. 預設情況下，<code>git pull</code> 等價於下列哪兩個動作？</p>
+<p data-lang="en">2. By default, <code>git pull</code> is equivalent to which pair of operations?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>git push</code> + <code>git commit</code></span><span data-lang="en">A. <code>git push</code> + <code>git commit</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>git clone</code> + <code>git checkout</code></span><span data-lang="en">B. <code>git clone</code> + <code>git checkout</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>git fetch</code> + <code>git merge origin/&lt;current-branch&gt;</code></span><span data-lang="en">C. <code>git fetch</code> + <code>git merge origin/&lt;current-branch&gt;</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>git reset</code> + <code>git rebase</code></span><span data-lang="en">D. <code>git reset</code> + <code>git rebase</code></span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. push 時出現 <code>Updates were rejected (non-fast-forward)</code>，最可能的原因是？</p>
+<p data-lang="en">3. Push fails with <code>Updates were rejected (non-fast-forward)</code>. Most likely cause?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. SSH key 沒加到 agent</span><span data-lang="en">A. SSH key missing from agent</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 沒設定 <code>user.email</code></span><span data-lang="en">B. <code>user.email</code> not configured</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. remote 有你還沒抓下來的 commit——要先 pull / fetch</span><span data-lang="en">C. Remote has commits you don't have — pull/fetch first</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 分支名稱裡有大寫字母</span><span data-lang="en">D. Uppercase letters in the branch name</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="merge-rebase.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 6: 合併與 Rebase (Merging &amp;amp; Rebasing)" data-en="Step 6: Merging &amp;amp; Rebasing">Step 6: 合併與 Rebase (Merging &amp; Rebasing)</span></a>
+<a href="collaboration.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 8: GitHub 協作 (PR &amp;amp; Review)" data-en="Step 8: GitHub Collaboration (PR &amp;amp; Review)">Step 8: GitHub 協作 (PR &amp; Review)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.sync-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.sync-btn{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-family:inherit;font-size:.85rem;transition:var(--transition)}
+.sync-btn:hover{border-color:var(--c-accent);transform:translateY(-1px)}
+.sync-btn.local{border-color:#2563eb;color:#1d4ed8}
+.sync-btn.remote{border-color:#a855f7;color:#7e22ce}
+.sync-btn.fetch{border-color:#0891b2;color:#0e7490}
+.sync-btn.pull{border-color:#16a34a;color:#15803d}
+.sync-btn.push{border-color:#ea580c;color:#c2410c}
+.sync-btn.reset{border-color:var(--c-border-light);color:var(--c-ink-light)}
+.sync-board{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:start;background:var(--c-surface-alt);border-radius:var(--radius);padding:18px;border:1px solid var(--c-border-light)}
+.sync-side{min-height:200px}
+.sync-side-label{font-weight:600;font-size:.9rem;margin-bottom:10px;text-align:center;color:var(--c-ink-light);text-transform:uppercase;letter-spacing:.5px}
+.sync-col{display:flex;flex-direction:column-reverse;gap:6px;min-height:160px;padding:8px;background:#fff;border:1px dashed var(--c-border-light);border-radius:6px}
+.sync-commit{padding:8px 10px;border-radius:5px;font-family:var(--font-mono);font-size:.78rem;text-align:center;border:1px solid;animation:syncPop .25s ease}
+.sync-commit.l{background:#dbeafe;border-color:#2563eb;color:#1d4ed8}
+.sync-commit.r{background:#f3e8ff;border-color:#a855f7;color:#7e22ce}
+.sync-commit.ghost{background:transparent;border-style:dashed;opacity:.7}
+@keyframes syncPop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.sync-arrow{font-size:1.6rem;color:var(--c-accent);align-self:center;padding:0 4px}
+.sync-log{margin-top:12px;background:#0f172a;color:#cbd5e1;border-radius:6px;padding:10px 14px;font-family:var(--font-mono);font-size:.78rem;min-height:60px;max-height:140px;overflow-y:auto;white-space:pre-wrap}
+.sync-log .ok{color:#86efac}
+.sync-log .err{color:#fca5a5}
+.sync-log .info{color:#93c5fd}
+@media(max-width:680px){.sync-board{grid-template-columns:1fr;gap:8px}.sync-arrow{transform:rotate(90deg);justify-self:center}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// ===== Sync visualizer =====
+const SV={local:[],remote:[],fetched:[],lc:0,rc:0};
+const MSG={
+  zh:{
+    cl:'本機新增 commit',cr:'遠端新增 commit',
+    fetch:'fetch 完成：本機看見遠端最新狀態（未合併）',
+    fetchSame:'fetch 完成：本機已是最新',
+    pullFf:'pull --rebase：fast-forward，無新本機 commit',
+    pullRb:'pull --rebase：本機 commit 已重播到遠端之上',
+    pullClean:'pull --rebase：兩邊一致，無事可做',
+    pushOk:'push 成功：本機 commit 已上傳到遠端',
+    pushBlock:'push 被拒絕（non-fast-forward）：先 fetch + rebase 再 push',
+    pushClean:'push：沒有新本機 commit 可推',
+    reset:'重設模擬器'
+  },
+  en:{
+    cl:'Local commit made',cr:'Remote commit made (someone else pushed)',
+    fetch:'fetch done: local now sees remote refs (not merged)',
+    fetchSame:'fetch done: already up to date',
+    pullFf:'pull --rebase: fast-forward, no local commits to replay',
+    pullRb:'pull --rebase: local commits replayed on top of remote',
+    pullClean:'pull --rebase: nothing to do, both sides identical',
+    pushOk:'push succeeded: local commits uploaded to remote',
+    pushBlock:'push rejected (non-fast-forward): fetch + rebase first',
+    pushClean:'push: no new local commits to upload',
+    reset:'Simulator reset'
+  }
+};
+function L(){return I18n.get();}
+function render(){
+  const lc=document.getElementById('localCol');const rc=document.getElementById('remoteCol');
+  lc.innerHTML='';rc.innerHTML='';
+  SV.local.forEach(c=>{const d=document.createElement('div');d.className='sync-commit l';d.textContent=c;lc.appendChild(d);});
+  SV.fetched.forEach(c=>{const d=document.createElement('div');d.className='sync-commit r ghost';d.textContent=c+' (fetched)';lc.appendChild(d);});
+  SV.remote.forEach(c=>{const d=document.createElement('div');d.className='sync-commit r';d.textContent=c;rc.appendChild(d);});
+}
+function logMsg(t,cls){const el=document.getElementById('syncLog');const line=document.createElement('div');line.className=cls||'info';line.textContent='› '+t;el.appendChild(line);el.scrollTop=el.scrollHeight;}
+function arraysEqual(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+function act(a){const m=MSG[L()];
+  if(a==='commit-local'){SV.lc++;SV.local.push('L'+SV.lc);logMsg(m.cl+' (L'+SV.lc+')','info');}
+  else if(a==='commit-remote'){SV.rc++;SV.remote.push('R'+SV.rc);logMsg(m.cr+' (R'+SV.rc+')','info');}
+  else if(a==='fetch'){
+    if(arraysEqual(SV.fetched,SV.remote)){logMsg(m.fetchSame,'ok');}
+    else{SV.fetched=[...SV.remote];logMsg(m.fetch,'ok');}
+  }
+  else if(a==='pull'){
+    // fetch first
+    SV.fetched=[...SV.remote];
+    // rebase local on top of remote: local commits keep order but conceptually replayed
+    if(SV.remote.length===0&&SV.local.length===0){logMsg(m.pullClean,'ok');}
+    else if(SV.local.length===0){logMsg(m.pullFf,'ok');}
+    else{logMsg(m.pullRb,'ok');}
+    SV.fetched=[];
+  }
+  else if(a==='push'){
+    // if remote has commits not in local-history snapshot, reject
+    const remoteAhead=SV.remote.length>0&&!arraysEqual(SV.fetched,SV.remote)?true:SV.remote.length>0&&SV.fetched.length<SV.remote.length;
+    // Simpler: reject if remote has any commit AND we have local commits not yet integrated
+    if(SV.remote.length>0&&SV.local.length>0&&!arraysEqual(SV.fetched,SV.remote)){logMsg(m.pushBlock,'err');}
+    else if(SV.local.length===0){logMsg(m.pushClean,'info');}
+    else{
+      // push: append local to remote
+      SV.local.forEach(c=>SV.remote.push(c));
+      SV.local=[];SV.fetched=[...SV.remote];
+      logMsg(m.pushOk,'ok');
+    }
+  }
+  else if(a==='reset'){SV.local=[];SV.remote=[];SV.fetched=[];SV.lc=0;SV.rc=0;document.getElementById('syncLog').innerHTML='';logMsg(m.reset,'info');}
+  render();
+}
+document.querySelectorAll('#syncVis .sync-btn').forEach(b=>b.addEventListener('click',()=>act(b.dataset.act)));
+document.addEventListener('DOMContentLoaded',()=>{render();logMsg(L()==='zh'?'點按鈕開始模擬':'Click any button to start the simulation','info');});
+
+// ===== Quiz =====
+const QF={
+  zh:{q1_y:'fetch 只更新 remote-tracking refs，工作目錄與本地分支都不變——最安全。',q1_n:'正確答案已標示（fetch 不動本機分支）。',
+      q2_y:'預設 pull = fetch + merge（pull.rebase=true 則改為 rebase）。',q2_n:'正確答案已標示。',
+      q3_y:'remote 領先你還沒抓的 commit；先 pull/fetch 再 push。',q3_n:'正確答案已標示。'},
+  en:{q1_y:'fetch only updates remote-tracking refs — working tree and local branches untouched.',q1_n:'Correct answer is highlighted (fetch is the non-mutating choice).',
+      q2_y:'By default pull = fetch + merge (or rebase if pull.rebase=true).',q2_n:'Correct answer is highlighted.',
+      q3_y:'Remote has commits ahead of yours; pull or fetch first, then push.',q3_n:'Correct answer is highlighted.'}
+};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const lang=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[lang]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

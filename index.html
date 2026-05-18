@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Git / GitHub for Bioinformatics — Interactive Tutorial</title>
+<meta name="description" content="Bilingual interactive tutorial — Git &amp; GitHub for bioinformatics. 12 modules from setup to reproducibility, with interactive simulators and code examples.">
+<link rel="stylesheet" href="styles.css"></head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li>
+    <li><a href="repo-basics.html">Repo</a></li>
+    <li><a href="inspecting.html">Inspect</a></li>
+    <li><a href="undoing.html">Undo</a></li>
+    <li><a href="branching.html">Branch</a></li>
+    <li><a href="merge-rebase.html">Merge</a></li>
+    <li><a href="remotes.html">Remote</a></li>
+    <li><a href="collaboration.html">PR</a></li>
+    <li><a href="gitignore-lfs.html">LFS</a></li>
+    <li><a href="workflows.html">Flow</a></li>
+    <li><a href="actions.html">Actions</a></li>
+    <li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<header class="hub-hero"><div style="position:relative;z-index:1;">
+<h1 data-zh="Git / GitHub for Bioinformatics 互動式教學" data-en="Git / GitHub for Bioinformatics — Interactive Tutorial">Git / GitHub for Bioinformatics 互動式教學</h1>
+<p data-lang="zh">從零開始學會 Git——12 個模組帶你從首次 commit 走到完整 GitHub 協作流程，再延伸到生物資訊 pipeline 的版本管控與可重現研究。</p>
+<p data-lang="en">From your first commit to full GitHub collaboration — 12 modules covering core Git, branching strategies, GitHub workflows, and reproducible bioinformatics pipelines.</p>
+</div></header>
+
+<h2 class="hub-section-title"><span>01</span> <span data-zh="Git 核心流程" data-en="Core Git Pipeline">Git 核心流程</span></h2>
+<div class="hub-steps-grid">
+  <a href="setup.html" class="hub-card"><div class="hub-emoji">⚙️</div><span class="step-num">Step 1</span><h3 data-zh="安裝與設定 (Setup &amp; Config)" data-en="Setup &amp; Config">安裝與設定 (Setup &amp; Config)</h3><p data-lang="zh">安裝 Git、設定身份、SSH key、PAT、.gitconfig，以及 line-ending 與編輯器選擇。</p><p data-lang="en">Install Git, configure identity, set up SSH keys / PATs, edit .gitconfig, and handle line endings and editors.</p></a>
+  <a href="repo-basics.html" class="hub-card"><div class="hub-emoji">📦</div><span class="step-num">Step 2</span><h3 data-zh="儲存庫基礎 (Repo Basics)" data-en="Repository Basics">儲存庫基礎 (Repo Basics)</h3><p data-lang="zh">init / clone、三區概念（工作區/暫存區/儲存庫）、add / commit / status / log。</p><p data-lang="en">init/clone, the three areas (working tree / staging / repository), and add/commit/status/log.</p></a>
+  <a href="inspecting.html" class="hub-card"><div class="hub-emoji">🔍</div><span class="step-num">Step 3</span><h3 data-zh="檢視變更 (Inspecting)" data-en="Inspecting Changes">檢視變更 (Inspecting)</h3><p data-lang="zh">用 diff / log / show / blame 看清楚每次 commit 改了什麼、是誰、在何時。</p><p data-lang="en">Use diff/log/show/blame to see exactly what changed, who changed it, and when.</p></a>
+  <a href="undoing.html" class="hub-card"><div class="hub-emoji">⏪</div><span class="step-num">Step 4</span><h3 data-zh="撤銷與時光旅行 (Undo)" data-en="Undoing &amp; Time Travel">撤銷與時光旅行 (Undo)</h3><p data-lang="zh">restore / reset (soft/mixed/hard) / revert / stash / reflog — 學會安全地反悔。</p><p data-lang="en">restore / reset (soft/mixed/hard) / revert / stash / reflog — undo safely.</p></a>
+  <a href="branching.html" class="hub-card"><div class="hub-emoji">🌿</div><span class="step-num">Step 5</span><h3 data-zh="分支 (Branching)" data-en="Branching">分支 (Branching)</h3><p data-lang="zh">branch / switch / checkout、HEAD 指標、輕量分支運用，並用互動圖看分支移動。</p><p data-lang="en">branch / switch / checkout, the HEAD pointer, and using cheap branches — visualize the moves interactively.</p></a>
+  <a href="merge-rebase.html" class="hub-card"><div class="hub-emoji">🔀</div><span class="step-num">Step 6</span><h3 data-zh="合併與 Rebase" data-en="Merging &amp; Rebasing">合併與 Rebase</h3><p data-lang="zh">merge（fast-forward / no-ff）、rebase、cherry-pick、衝突解決，附動畫對比。</p><p data-lang="en">merge (ff / no-ff), rebase, cherry-pick, and conflict resolution — with side-by-side animations.</p></a>
+  <a href="remotes.html" class="hub-card"><div class="hub-emoji">☁️</div><span class="step-num">Step 7</span><h3 data-zh="遠端與 GitHub 同步" data-en="Remotes &amp; GitHub Sync">遠端與 GitHub 同步</h3><p data-lang="zh">remote / push / pull / fetch、tracking branch、SSH 與 PAT 認證流程。</p><p data-lang="en">remote / push / pull / fetch, tracking branches, and authentication via SSH or PAT.</p></a>
+  <a href="collaboration.html" class="hub-card"><div class="hub-emoji">🤝</div><span class="step-num">Step 8</span><h3 data-zh="GitHub 協作 (PR &amp; Review)" data-en="GitHub Collaboration">GitHub 協作 (PR &amp; Review)</h3><p data-lang="zh">fork、Pull Request、code review、Issue、Draft PR、Projects 看板與權限。</p><p data-lang="en">fork, pull requests, code review, issues, draft PRs, project boards, and permissions.</p></a>
+  <a href="gitignore-lfs.html" class="hub-card"><div class="hub-emoji">🧬</div><span class="step-num">Step 9</span><h3 data-zh=".gitignore &amp; Git LFS（生物資訊）" data-en=".gitignore &amp; Git LFS for Bioinformatics">.gitignore &amp; Git LFS（生物資訊）</h3><p data-lang="zh">FASTQ / BAM / H5AD 不應該被 commit——學會 .gitignore 規則與 Git LFS 取捨。</p><p data-lang="en">FASTQ/BAM/H5AD should not be committed — master .gitignore patterns and Git LFS trade-offs.</p></a>
+</div>
+
+<h2 class="hub-section-title"><span>02</span> <span data-zh="進階主題" data-en="Advanced Topics">進階主題</span></h2>
+<div class="hub-steps-grid">
+  <a href="workflows.html" class="hub-card"><div class="hub-emoji">🔁</div><span class="step-num">Advanced</span><h3 data-zh="Git 工作流程 (Workflows)" data-en="Git Workflows">Git 工作流程 (Workflows)</h3><p data-lang="zh">GitHub Flow、Git Flow、trunk-based、release / tag、semver，以及實驗室專案最佳選擇。</p><p data-lang="en">GitHub Flow, Git Flow, trunk-based, release/tag, semver — and how to pick one for a lab project.</p></a>
+  <a href="actions.html" class="hub-card"><div class="hub-emoji">🤖</div><span class="step-num">Advanced</span><h3 data-zh="GitHub Actions &amp; CI/CD" data-en="GitHub Actions &amp; CI/CD">GitHub Actions &amp; CI/CD</h3><p data-lang="zh">workflow YAML、matrix、secrets、與 nf-core/snakemake pipeline 自動測試範例。</p><p data-lang="en">workflow YAML, matrix builds, secrets, and auto-testing nf-core/snakemake pipelines.</p></a>
+  <a href="reproducibility.html" class="hub-card"><div class="hub-emoji">📜</div><span class="step-num">Advanced</span><h3 data-zh="可重現研究 (Reproducibility)" data-en="Reproducibility for Bioinformatics">可重現研究 (Reproducibility)</h3><p data-lang="zh">conda env lock、renv、Docker、CITATION.cff、Zenodo DOI、README 範本與授權。</p><p data-lang="en">conda env lock, renv, Docker, CITATION.cff, Zenodo DOI, README templates, and licensing.</p></a>
+</div>
+
+<h2 class="hub-section-title"><span>03</span> <span data-zh="延伸學習" data-en="Further Learning">延伸學習</span></h2>
+<div class="hub-steps-grid">
+  <a href="references/index.html" class="hub-card"><div class="hub-emoji">📚</div><span class="step-num">References</span><h3 data-zh="參考資料佐證" data-en="References &amp; Citations">參考資料佐證</h3><p data-lang="zh">官方文件、《Pro Git》書籍、GitHub Docs、bioinformatics reproducibility 論文與 cheat sheet。</p><p data-lang="en">Official docs, the Pro Git book, GitHub Docs, bioinformatics reproducibility papers, and curated cheat sheets.</p></a>
+  <a href="git-quiz/index.html" class="hub-card" target="_blank" rel="noopener"><div class="hub-emoji">📝</div><span class="step-num">Quiz</span><h3 data-zh="互動式考題" data-en="Interactive Quiz">互動式考題</h3><p data-lang="zh">涵蓋 12 個主題的單選、多選、是非題，內建錯題複習、隨機練習與多使用者進度。</p><p data-lang="en">Single-choice, multi-select, and true/false questions across 12 modules — with wrong-answer review, random practice, and multi-user progress.</p></a>
+</div>
+<div style="height:60px"></div>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+</body></html>

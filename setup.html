@@ -1,0 +1,376 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 1: Setup &amp; Config — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html" class="active">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 1 / 9</div>
+<h1 data-zh="安裝與設定 (Setup &amp; Config)" data-en="Setup &amp; Config">安裝與設定 (Setup &amp; Config)</h1>
+<p class="subtitle" data-lang="zh">把 Git 裝好、把身份設好、再選對認證方式——之後三年都不用回頭重做這一步。</p>
+<p class="subtitle" data-lang="en">Install Git, configure your identity, and pick the right auth method — do it once, and you won't have to revisit this step for three years.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Why ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="為什麼要先做 Setup？" data-en="Why start with setup?">為什麼要先做 Setup？</h2>
+<div data-lang="zh">
+<p><strong>Git</strong> 是一個追蹤檔案變化的分散式版本控制系統；<strong>GitHub</strong> 則是把這些 repo 放上雲端、讓多人協作的平台。在開始任何分析專案之前，先做好三件事：(1) 確認本機有 Git；(2) 設定 commit 用的身分（姓名、email）；(3) 設好和 GitHub 之間的認證金鑰（SSH key 或 PAT）。</p>
+<p><strong>為什麼重要？</strong>沒設身分，每次 commit 都會用機器預設值（常常是 <code>user@hostname</code>），論文發表後想引用 commit 時會很尷尬。沒設 SSH/PAT，每次 push 都要打密碼；2021 年 8 月後 GitHub 已停止接受密碼認證，必須使用 SSH 或 Personal Access Token (PAT)。</p>
+</div>
+<div data-lang="en">
+<p><strong>Git</strong> is a distributed version-control system that tracks file history; <strong>GitHub</strong> is a cloud platform that hosts those repos for collaboration. Before any analysis project, do three things: (1) make sure Git is installed locally; (2) set your commit identity (name + email); (3) configure how you authenticate to GitHub (SSH key or PAT).</p>
+<p><strong>Why this matters:</strong> with no identity, every commit uses the system default (often <code>user@hostname</code>), which is embarrassing when a paper cites your commits. With no SSH/PAT, you'll be prompted for a password every push — and since August 2021, GitHub no longer accepts passwords, so you <em>must</em> use SSH or a Personal Access Token (PAT).</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心原則：</strong>Git 設定一次走天涯。整體配置存在 <code>~/.gitconfig</code>（全域）；每個 repo 內也可以有 <code>.git/config</code> 覆寫設定（例如用實驗室 email 而不是個人 email）。</span>
+<span data-lang="en"><strong>Core principle:</strong> Configure Git once, use forever. Global settings live in <code>~/.gitconfig</code>; each repo's <code>.git/config</code> can override them (e.g., use your lab email instead of your personal one).</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Install ===== -->
+<section class="section">
+<div class="section-label" data-zh="安裝" data-en="INSTALL">安裝</div>
+<h2 data-zh="一、依平台安裝 Git" data-en="I. Install Git by Platform">一、依平台安裝 Git</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">🪟</div><h4>Windows</h4>
+<div data-lang="zh"><p>到 <a href="https://git-scm.com/download/win">git-scm.com</a> 下載 <strong>Git for Windows</strong>（含 Git Bash、MinTTY、Git GUI）。安裝時建議：<br>• Default editor: VS Code<br>• Line endings: Checkout Windows, commit Unix<br>• Use bundled OpenSSH。</p></div>
+<div data-lang="en"><p>Download <strong>Git for Windows</strong> from <a href="https://git-scm.com/download/win">git-scm.com</a> (includes Git Bash, MinTTY, Git GUI). Recommended installer choices:<br>• Default editor: VS Code<br>• Line endings: Checkout Windows, commit Unix<br>• Use bundled OpenSSH.</p></div>
+</div>
+<div class="card"><div class="card-icon">🍎</div><h4>macOS</h4>
+<div data-lang="zh"><p>三種方式：(1) <code>xcode-select --install</code>（系統內建）；(2) <code>brew install git</code>（最新版，推薦）；(3) <a href="https://git-scm.com/download/mac">官方 .dmg</a>。Apple Silicon 用 Homebrew 最新版較穩。</p></div>
+<div data-lang="en"><p>Three options: (1) <code>xcode-select --install</code> (system bundled); (2) <code>brew install git</code> (latest version, recommended); (3) <a href="https://git-scm.com/download/mac">official .dmg</a>. On Apple Silicon, Homebrew's latest build is most reliable.</p></div>
+</div>
+<div class="card"><div class="card-icon">🐧</div><h4>Linux / WSL</h4>
+<div data-lang="zh"><p>Ubuntu / Debian：<code>sudo apt install git</code><br>CentOS / RHEL：<code>sudo dnf install git</code><br>conda 環境：<code>conda install -c conda-forge git</code>（HPC 沒 root 時常用）。</p></div>
+<div data-lang="en"><p>Ubuntu/Debian: <code>sudo apt install git</code><br>CentOS/RHEL: <code>sudo dnf install git</code><br>conda env: <code>conda install -c conda-forge git</code> (handy on HPC where you have no root).</p></div>
+</div>
+</div>
+<pre style="margin-top:14px"><span class="comment"># 驗證安裝 / Verify install</span>
+$ git --version
+git version 2.45.0
+</pre>
+</section>
+
+<!-- ===== Section 3: Identity ===== -->
+<section class="section">
+<div class="section-label" data-zh="設定身份" data-en="IDENTITY">設定身份</div>
+<h2 data-zh="二、設定 commit 身份" data-en="II. Configure Your Commit Identity">二、設定 commit 身份</h2>
+<div data-lang="zh">
+<p>Git 把每次 commit 都標記為「誰、什麼時候、做了什麼」。<strong>姓名與 email 一定要設</strong>——email 還是 GitHub 對應作者頭像的關鍵。</p>
+</div>
+<div data-lang="en">
+<p>Every Git commit is tagged with "who, when, what." <strong>You must set your name and email</strong> — the email is also how GitHub links commits to your profile avatar.</p>
+</div>
+<pre><span class="comment"># 全域設定（所有 repo 共用） / Global (applies to all repos)</span>
+$ git config --global user.name <span class="str">"Charlene Yang"</span>
+$ git config --global user.email <span class="str">"charlene@lab.edu"</span>
+
+<span class="comment"># 在單一 repo 內覆寫（例如：用實驗室 email） / Override per-repo</span>
+$ <span class="func">cd</span> ~/projects/my-paper
+$ git config user.email <span class="str">"charlene@university.edu"</span>
+
+<span class="comment"># 查看現有設定 / View current config</span>
+$ git config --list --show-origin
+$ git config user.email
+</pre>
+<div class="callout tip"><span class="callout-icon">🔒</span><div>
+<span data-lang="zh"><strong>隱私小技巧：</strong>GitHub 提供 <code>noreply</code> email（在 <a href="https://github.com/settings/emails">設定頁</a> 找到 <code>1234567+username@users.noreply.github.com</code>），不想公開個人 email 時用它做 <code>user.email</code> 即可。</span>
+<span data-lang="en"><strong>Privacy tip:</strong> GitHub offers a <code>noreply</code> email (find <code>1234567+username@users.noreply.github.com</code> in your <a href="https://github.com/settings/emails">email settings</a>). Use that as <code>user.email</code> if you don't want your personal email exposed in commits.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Editor / Pager / Aliases ===== -->
+<section class="section">
+<div class="section-label" data-zh="體驗優化" data-en="QUALITY OF LIFE">體驗優化</div>
+<h2 data-zh="三、編輯器、預設分支與 alias" data-en="III. Editor, Default Branch, and Aliases">三、編輯器、預設分支與 alias</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🖋️ <span data-zh="預設編輯器" data-en="Default editor">預設編輯器</span></h4>
+<pre style="margin:0"><span class="comment"># 用 VS Code / Use VS Code</span>
+$ git config --global core.editor <span class="str">"code --wait"</span>
+
+<span class="comment"># 用 nano（簡單） / Use nano</span>
+$ git config --global core.editor nano</pre>
+<p data-lang="zh" style="font-size:.85rem;color:var(--c-ink-light);margin-top:8px">寫 commit message 或 rebase 時會打開。預設是 <code>vi</code>，新手常被卡住。</p>
+<p data-lang="en" style="font-size:.85rem;color:var(--c-ink-light);margin-top:8px">Used when writing commit messages or doing interactive rebases. Default is <code>vi</code>, which often traps newcomers.</p>
+</div>
+<div class="card"><h4>🌱 <span data-zh="預設分支名稱" data-en="Default branch name">預設分支名稱</span></h4>
+<pre style="margin:0"><span class="comment"># 把預設分支改為 main / Set default branch to main</span>
+$ git config --global init.defaultBranch main</pre>
+<p data-lang="zh" style="font-size:.85rem;color:var(--c-ink-light);margin-top:8px">GitHub 自 2020 年起預設用 <code>main</code>。本機若還是 <code>master</code>，會跟雲端不一致。</p>
+<p data-lang="en" style="font-size:.85rem;color:var(--c-ink-light);margin-top:8px">GitHub has used <code>main</code> by default since 2020. If your local default is still <code>master</code>, you'll diverge from cloud naming.</p>
+</div>
+</div>
+
+<h4 style="margin-top:18px" data-zh="實用 alias 範例" data-en="Useful aliases">實用 alias 範例</h4>
+<pre><span class="comment"># 把常用指令縮短 / Shorten common commands</span>
+$ git config --global alias.st status
+$ git config --global alias.co checkout
+$ git config --global alias.br branch
+$ git config --global alias.lg <span class="str">"log --oneline --graph --decorate --all"</span>
+$ git config --global alias.last <span class="str">"log -1 HEAD"</span>
+
+<span class="comment"># 之後就可以 / Now you can</span>
+$ git st        <span class="comment"># = git status</span>
+$ git lg        <span class="comment"># 漂亮的分支圖</span>
+</pre>
+</section>
+
+<!-- ===== Section 5: Auth — SSH vs PAT ===== -->
+<section class="section">
+<div class="section-label" data-zh="認證" data-en="AUTHENTICATION">認證</div>
+<h2 data-zh="四、GitHub 認證：SSH 還是 PAT？" data-en="IV. GitHub Auth: SSH or PAT?">四、GitHub 認證：SSH 還是 PAT？</h2>
+
+<div class="decision-tree">
+<h4>🌳 <span data-zh="認證方式決策流程" data-en="Auth method decision tree">認證方式決策流程</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>長期在同一台電腦工作？<span class="dt-arrow">→ 是 →</span> 用 <strong>SSH key</strong>（一勞永逸）。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>需要從 HPC / 共用伺服器存取，但不能放私鑰？<span class="dt-arrow">→ 是 →</span> 用 <strong>PAT</strong>（搭配 credential helper 暫存）。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>要在腳本 / CI 中自動 push？<span class="dt-arrow">→ 是 →</span> 用 <strong>Fine-grained PAT</strong> 或 <strong>GitHub Actions token</strong>，限制範圍與 repo。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>機構強制兩階段驗證？<span class="dt-arrow">→ 是 →</span> SSH 或 PAT 都需要——但仍能順利使用，不需要每次輸入 OTP。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Working long-term on the same machine? <span class="dt-arrow">→ Yes →</span> Use an <strong>SSH key</strong> (one-time setup).</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Need access from HPC / shared servers where you can't store a private key? <span class="dt-arrow">→ Yes →</span> Use a <strong>PAT</strong> (with a credential helper for caching).</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Pushing from scripts / CI? <span class="dt-arrow">→ Yes →</span> Use a <strong>fine-grained PAT</strong> or a <strong>GitHub Actions token</strong> scoped to specific repos.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>2FA enforced by your institution? <span class="dt-arrow">→ Yes →</span> SSH or PAT both work — no need to type OTPs every time.</div></div>
+</div>
+</div>
+
+<table class="comp-table">
+<thead><tr>
+<th data-zh="特性" data-en="Feature">特性</th>
+<th>SSH</th>
+<th>PAT (HTTPS)</th>
+</tr></thead>
+<tbody>
+<tr><td data-zh="設定難度"><strong data-zh="設定" data-en="Setup">設定</strong></td><td data-lang="zh">中（產 key、加到 GitHub）</td><td data-lang="zh">低（產 token、貼到 prompt）</td><td data-lang="en">Medium (generate key, register on GitHub)</td><td data-lang="en">Low (generate token, paste at prompt)</td></tr>
+<tr><td><strong data-zh="日常使用" data-en="Day-to-day">日常使用</strong></td><td data-lang="zh">無感（一次設定，永遠不問）</td><td data-lang="zh">第一次後由 credential helper 快取</td><td data-lang="en">Frictionless (set once, never asked)</td><td data-lang="en">Cached by credential helper after first use</td></tr>
+<tr><td><strong data-zh="跨機器" data-en="Across machines">跨機器</strong></td><td data-lang="zh">每台機器要產自己的 key</td><td data-lang="zh">同一個 token 可以用多台機器（但不建議）</td><td data-lang="en">Each machine needs its own key</td><td data-lang="en">One token can be reused (but not recommended)</td></tr>
+<tr><td><strong data-zh="範圍控制" data-en="Scoping">範圍控制</strong></td><td data-lang="zh">綁定整個帳號</td><td data-lang="zh">Fine-grained PAT 可指定 repo / 權限</td><td data-lang="en">Bound to whole account</td><td data-lang="en">Fine-grained PAT can target specific repos/permissions</td></tr>
+<tr><td><strong data-zh="HPC / 防火牆" data-en="HPC / firewalls">HPC / 防火牆</strong></td><td data-lang="zh">有時 port 22 被擋（用 port 443 SSH 解）</td><td data-lang="zh">幾乎都通（HTTPS 443）</td><td data-lang="en">Port 22 sometimes blocked (use SSH over 443)</td><td data-lang="en">Usually works (HTTPS 443)</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 6: SSH Setup Interactive ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="SSH key 設定 5 步流程" data-en="SSH Key Setup: 5-Step Walkthrough">SSH key 設定 5 步流程</h2>
+<div data-lang="zh"><p>點下方步驟卡片，看每一步在做什麼。實際操作時請在你的本機 terminal 執行。</p></div>
+<div data-lang="en"><p>Click each step card to see what it does. Run the commands in your local terminal.</p></div>
+
+<div id="sshSteps" class="interactive-panel">
+  <div class="ssh-step-grid">
+    <button class="ssh-step active" data-step="1"><div class="ss-num">1</div><div class="ss-title" data-zh="產生 key" data-en="Generate key">產生 key</div></button>
+    <button class="ssh-step" data-step="2"><div class="ss-num">2</div><div class="ss-title" data-zh="啟動 agent" data-en="Start agent">啟動 agent</div></button>
+    <button class="ssh-step" data-step="3"><div class="ss-num">3</div><div class="ss-title" data-zh="加入 agent" data-en="Add to agent">加入 agent</div></button>
+    <button class="ssh-step" data-step="4"><div class="ss-num">4</div><div class="ss-title" data-zh="複製公鑰" data-en="Copy pubkey">複製公鑰</div></button>
+    <button class="ssh-step" data-step="5"><div class="ss-num">5</div><div class="ss-title" data-zh="測試連線" data-en="Test connection">測試連線</div></button>
+  </div>
+  <div id="sshDetail" class="ssh-detail"></div>
+</div>
+</section>
+
+<!-- ===== Section 7: Code ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整程式碼" data-en="CODE">完整程式碼</div>
+<h2 data-zh="完整設定範例" data-en="Complete Setup Script">完整設定範例</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'ssh')">SSH (recommended)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'pat')">PAT (HTTPS)</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'win')">Windows 額外</button>
+</div>
+<div class="code-tab-content active" id="ssh"><pre><span class="comment"># 1. 設定身份 / Identity</span>
+git config --global user.name <span class="str">"Your Name"</span>
+git config --global user.email <span class="str">"you@example.com"</span>
+git config --global init.defaultBranch main
+git config --global core.editor <span class="str">"code --wait"</span>
+git config --global pull.rebase <span class="kw">false</span>     <span class="comment"># pull = merge (safer for newcomers)</span>
+
+<span class="comment"># 2. 產生 SSH key (ed25519 為現代推薦) / Generate SSH key</span>
+ssh-keygen -t ed25519 -C <span class="str">"you@example.com"</span>
+<span class="comment"># 一路按 enter，密碼可空 / Accept defaults</span>
+
+<span class="comment"># 3. 啟動 ssh-agent 並加入 key</span>
+eval <span class="str">"$(ssh-agent -s)"</span>
+ssh-add ~/.ssh/id_ed25519
+
+<span class="comment"># 4. 複製公鑰 / Copy public key</span>
+<span class="comment"># macOS:</span>
+pbcopy &lt; ~/.ssh/id_ed25519.pub
+<span class="comment"># Linux:</span>
+xclip -sel clip &lt; ~/.ssh/id_ed25519.pub
+<span class="comment"># Windows (Git Bash):</span>
+clip &lt; ~/.ssh/id_ed25519.pub
+
+<span class="comment"># 5. 在 GitHub Settings → SSH keys 加入 → 測試</span>
+ssh -T git@github.com
+<span class="comment"># Hi USERNAME! You've successfully authenticated...</span></pre></div>
+
+<div class="code-tab-content" id="pat"><pre><span class="comment"># 1. 設定身份（同上）/ Identity (same as SSH)</span>
+git config --global user.name <span class="str">"Your Name"</span>
+git config --global user.email <span class="str">"you@example.com"</span>
+
+<span class="comment"># 2. 啟用 credential helper（讓 PAT 不用每次輸入）</span>
+<span class="comment">#    macOS:</span>
+git config --global credential.helper osxkeychain
+<span class="comment">#    Windows:</span>
+git config --global credential.helper manager
+<span class="comment">#    Linux:</span>
+git config --global credential.helper <span class="str">"cache --timeout=86400"</span>
+
+<span class="comment"># 3. 到 GitHub Settings → Developer settings → Personal access tokens → </span>
+<span class="comment">#    Fine-grained tokens → 點 Generate new token</span>
+<span class="comment">#    勾選需要的 scopes: repo, workflow ...</span>
+
+<span class="comment"># 4. 第一次 push 時，使用者名輸入 GitHub 帳號，密碼貼上 PAT</span>
+git push origin main
+<span class="comment"># Username: charlene717</span>
+<span class="comment"># Password: ghp_xxxxxxxxxxxxxxxxxxxx</span>
+<span class="comment"># （helper 會記住，下次不問）</span></pre></div>
+
+<div class="code-tab-content" id="win"><pre><span class="comment"># Windows 特有設定 / Windows-specific config</span>
+
+<span class="comment"># 換行符號（避免 Linux/Windows 混亂）</span>
+git config --global core.autocrlf <span class="kw">true</span>
+
+<span class="comment"># 大小寫敏感（Windows 預設不敏感，跨平台時建議開）</span>
+git config --global core.ignorecase <span class="kw">false</span>
+
+<span class="comment"># 用 OpenSSH（內建在 Win 10+） / Use bundled OpenSSH</span>
+git config --global core.sshCommand <span class="str">"C:/Windows/System32/OpenSSH/ssh.exe"</span>
+
+<span class="comment"># 中文檔名顯示正常 / Display Chinese filenames</span>
+git config --global core.quotepath <span class="kw">false</span></pre></div>
+</div>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>常見地雷：</strong>不要把 <code>~/.ssh/id_ed25519</code>（私鑰）上傳到任何地方；只能上傳 <code>~/.ssh/id_ed25519.pub</code>（公鑰）。Token 一旦外洩，<strong>立刻去 GitHub Settings 撤銷</strong>，否則任何人都能假冒你 push。</span>
+<span data-lang="en"><strong>Common pitfalls:</strong> never upload <code>~/.ssh/id_ed25519</code> (the private key) anywhere — only ever the <code>.pub</code> file. If a token leaks, <strong>revoke it immediately</strong> in GitHub Settings; otherwise anyone can push as you.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 8: Bioinformatics callout ===== -->
+<section class="section">
+<div class="section-label" data-zh="生資現場" data-en="IN PRACTICE">生資現場</div>
+<h2 data-zh="生物資訊實驗室常見場景" data-en="Common Bioinformatics Lab Scenarios">生物資訊實驗室常見場景</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🖥️ <span data-zh="多台機器：個人 NB + HPC 帳號" data-en="Multiple machines: laptop + HPC account">多台機器：個人 NB + HPC 帳號</span></h4>
+<div data-lang="zh"><p>每台機器都產自己的 SSH key（不要共享私鑰），全部加進 GitHub 帳號的 SSH keys 頁面。Label 加機器名稱（如 <code>laptop-2026</code>, <code>HPC-login01</code>），日後撤銷比較方便。</p></div>
+<div data-lang="en"><p>Generate a fresh SSH key on each machine (don't share private keys). Add all of them to your GitHub SSH keys page, with labels like <code>laptop-2026</code> or <code>HPC-login01</code> so you can revoke individually later.</p></div>
+</div>
+<div class="card"><h4>🔐 <span data-zh="HPC 沒法外連 GitHub port 22" data-en="HPC blocks GitHub port 22">HPC 沒法外連 GitHub port 22</span></h4>
+<div data-lang="zh"><p>在 <code>~/.ssh/config</code> 加入：</p>
+<pre style="font-size:.78rem;margin:6px 0">Host github.com
+  Hostname ssh.github.com
+  Port 443
+  User git</pre>
+<p>之後 <code>ssh -T git@github.com</code> 就會走 HTTPS port，多數 firewall 都放行。</p></div>
+<div data-lang="en"><p>Add to <code>~/.ssh/config</code>:</p>
+<pre style="font-size:.78rem;margin:6px 0">Host github.com
+  Hostname ssh.github.com
+  Port 443
+  User git</pre>
+<p>Then <code>ssh -T git@github.com</code> uses HTTPS port 443, which firewalls usually allow.</p></div>
+</div>
+<div class="card"><h4>🧪 <span data-zh="不同 repo 用不同 email（個人 vs 實驗室）" data-en="Different emails per repo (personal vs lab)">不同 repo 用不同 email</span></h4>
+<div data-lang="zh"><p>在每個 repo 內：<code>git config user.email lab@uni.edu</code>。或在 <code>~/.gitconfig</code> 用 <code>[includeIf "gitdir:~/work/"]</code> 條件式 include 不同設定檔。</p></div>
+<div data-lang="en"><p>Per-repo: <code>git config user.email lab@uni.edu</code>. Or in <code>~/.gitconfig</code>, use <code>[includeIf "gitdir:~/work/"]</code> to conditionally include a different config file.</p></div>
+</div>
+<div class="card"><h4>🤝 <span data-zh="實驗室帳號 vs 個人帳號" data-en="Lab account vs personal account">實驗室帳號 vs 個人帳號</span></h4>
+<div data-lang="zh"><p>建議：個人 GitHub 留 portfolio；實驗室專案放到 lab organization（如 <code>my-lab/scRNA-pipeline</code>）。離職後 organization 仍保留 repo，所有人 commit 歷史完整。</p></div>
+<div data-lang="en"><p>Recommendation: keep your personal GitHub for portfolio work; put lab projects in a GitHub Organization (e.g., <code>my-lab/scRNA-pipeline</code>). When members leave, the org keeps the repo, and everyone's commit history stays intact.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 9: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">1. 從 2021 年 8 月起，從本機 push 到 GitHub 時，HTTPS 連線不能再使用什麼？</p>
+<p data-lang="en">1. Since August 2021, what is no longer accepted when pushing to GitHub over HTTPS?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. SSH key</span><span data-lang="en">A. SSH key</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. Personal Access Token (PAT)</span><span data-lang="en">B. Personal Access Token (PAT)</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 帳號密碼（password）</span><span data-lang="en">C. Account password</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. GitHub Actions token</span><span data-lang="en">D. GitHub Actions token</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">2. 你剛產生 SSH key，下列哪一個檔案<strong>絕對不能</strong>外傳？</p>
+<p data-lang="en">2. You just generated an SSH key. Which file must <strong>never</strong> be shared?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>~/.ssh/id_ed25519.pub</code></span><span data-lang="en">A. <code>~/.ssh/id_ed25519.pub</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>~/.ssh/id_ed25519</code>（私鑰）</span><span data-lang="en">B. <code>~/.ssh/id_ed25519</code> (private key)</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>~/.ssh/known_hosts</code></span><span data-lang="en">C. <code>~/.ssh/known_hosts</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>~/.gitconfig</code></span><span data-lang="en">D. <code>~/.gitconfig</code></span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. 你的個人 NB 和實驗室 HPC 都要連到同一個 GitHub 帳號，最好的 SSH 設定方式是？</p>
+<p data-lang="en">3. Both your laptop and lab HPC need to connect to the same GitHub account. Best SSH practice?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 把 NB 的私鑰 scp 到 HPC，共用同一把 key</span><span data-lang="en">A. scp the laptop's private key to HPC, share the same key</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 每次都改用 HTTPS + PAT</span><span data-lang="en">B. Always use HTTPS + PAT instead</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 兩台各自產 key，全都加到 GitHub SSH keys 頁面、用 label 區分</span><span data-lang="en">C. Generate separate keys on each machine and add both to GitHub with descriptive labels</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 不可能，GitHub 一個帳號只能配一把 SSH key</span><span data-lang="en">D. Impossible — only one SSH key per GitHub account is allowed</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav"><div class="placeholder"></div>
+<a href="repo-basics.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 2: 儲存庫基礎 (Repository Basics)" data-en="Step 2: Repository Basics">Step 2: 儲存庫基礎 (Repository Basics)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.ssh-step-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.ssh-step{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:14px 8px;cursor:pointer;transition:var(--transition);font-family:inherit;text-align:center}
+.ssh-step:hover{border-color:var(--c-accent);transform:translateY(-2px)}
+.ssh-step.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent-dark);box-shadow:0 4px 12px rgba(26,107,90,.25)}
+.ssh-step .ss-num{font-family:var(--font-mono);font-size:1.3rem;font-weight:700;margin-bottom:4px}
+.ssh-step .ss-title{font-size:.82rem}
+.ssh-detail{background:var(--c-surface-alt);border-radius:var(--radius);padding:18px 22px;border-left:4px solid var(--c-accent);min-height:160px}
+.ssh-detail h4{margin:0 0 8px;color:var(--c-accent-dark)}
+.ssh-detail pre{margin:8px 0 0;font-size:.85rem}
+@media(max-width:680px){.ssh-step-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// SSH walkthrough
+const SSH_STEPS={
+  zh:[
+    {t:'1. 產生 ed25519 key',d:'<p><code>ed25519</code> 是現代推薦演算法（比 RSA 更短、更快、更安全）。指令會問你想存到哪——一路按 Enter 接受預設即可。passphrase 可空白，但建議設一個以防電腦遺失。</p><pre>$ ssh-keygen -t ed25519 -C "you@example.com"</pre>'},
+    {t:'2. 啟動 ssh-agent',d:'<p>agent 是背景程式，幫你保管 key passphrase。不啟動 agent 的話，每次 push 都要輸入。</p><pre>$ eval "$(ssh-agent -s)"\nAgent pid 12345</pre>'},
+    {t:'3. 把 key 加入 agent',d:'<p>把剛產生的私鑰交給 agent 管理。之後本機應用程式（Git, VS Code）會自動用它認證。</p><pre>$ ssh-add ~/.ssh/id_ed25519</pre>'},
+    {t:'4. 複製公鑰到 GitHub',d:'<p>到 GitHub <strong>Settings → SSH and GPG keys → New SSH key</strong>，貼上 <code>id_ed25519.pub</code> 內容。Title 寫機器名稱（<code>my-laptop-2026</code>）方便日後管理。</p><pre># macOS\n$ pbcopy &lt; ~/.ssh/id_ed25519.pub\n# Linux\n$ xclip -sel clip &lt; ~/.ssh/id_ed25519.pub\n# Windows Git Bash\n$ clip &lt; ~/.ssh/id_ed25519.pub</pre>'},
+    {t:'5. 測試連線',d:'<p>看到 "Hi <em>username</em>!" 就成功了。若被警告 unknown host，輸入 <code>yes</code> 把 GitHub 加入 known_hosts。</p><pre>$ ssh -T git@github.com\nHi charlene717! You\'ve successfully authenticated, but GitHub does not provide shell access.</pre>'}
+  ],
+  en:[
+    {t:'1. Generate an ed25519 key',d:'<p><code>ed25519</code> is the modern recommended algorithm (shorter, faster, more secure than RSA). Accept the default file path. A passphrase is optional but recommended in case your laptop is lost.</p><pre>$ ssh-keygen -t ed25519 -C "you@example.com"</pre>'},
+    {t:'2. Start ssh-agent',d:'<p>The agent is a background process that holds your decrypted key. Without it, you\'d be asked for your passphrase on every push.</p><pre>$ eval "$(ssh-agent -s)"\nAgent pid 12345</pre>'},
+    {t:'3. Add key to agent',d:'<p>Hand the private key to the agent. Your local apps (Git, VS Code) will then auto-authenticate.</p><pre>$ ssh-add ~/.ssh/id_ed25519</pre>'},
+    {t:'4. Copy pubkey to GitHub',d:'<p>Go to <strong>Settings → SSH and GPG keys → New SSH key</strong> on GitHub and paste the contents of <code>id_ed25519.pub</code>. Title it with the machine name (e.g., <code>my-laptop-2026</code>) so you can revoke per device later.</p><pre># macOS\n$ pbcopy &lt; ~/.ssh/id_ed25519.pub\n# Linux\n$ xclip -sel clip &lt; ~/.ssh/id_ed25519.pub\n# Windows Git Bash\n$ clip &lt; ~/.ssh/id_ed25519.pub</pre>'},
+    {t:'5. Test the connection',d:'<p>Seeing "Hi <em>username</em>!" means success. If warned about an unknown host, type <code>yes</code> to add GitHub to known_hosts.</p><pre>$ ssh -T git@github.com\nHi charlene717! You\'ve successfully authenticated, but GitHub does not provide shell access.</pre>'}
+  ]
+};
+function renderSSH(){const L=I18n.get();const idx=document.querySelector('.ssh-step.active').dataset.step-1;const s=SSH_STEPS[L][idx];document.getElementById('sshDetail').innerHTML='<h4>'+s.t+'</h4>'+s.d;}
+document.querySelectorAll('.ssh-step').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.ssh-step').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderSSH();}));
+document.addEventListener('langchange',renderSSH);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(renderSSH,80));
+
+// Quiz
+const QF={zh:{q1_y:'2021/8/13 起 GitHub 全面停止 password 認證，必須改用 PAT 或 SSH。',q1_n:'正確答案已標示。',q2_y:'私鑰絕對不能外流——洩漏等於把帳號交出去。',q2_n:'正確答案已標示。',q3_y:'每台機器各自一把 key 才是最佳實踐——遺失某台時只撤銷對應的 key 即可。',q3_n:'正確答案已標示。'},en:{q1_y:'GitHub stopped accepting passwords for Git operations on Aug 13, 2021 — use PAT or SSH instead.',q1_n:'Correct answer is highlighted.',q2_y:'Never share the private key — a leak is equivalent to handing over your account.',q2_n:'Correct answer is highlighted.',q3_y:'Per-machine keys are best practice — losing one device only requires revoking that key.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

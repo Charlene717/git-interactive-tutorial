@@ -1,0 +1,482 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 6: Merging &amp; Rebasing — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html" class="active">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 6 / 9</div>
+<h1 data-zh="合併與 Rebase (Merging &amp; Rebasing)" data-en="Merging &amp; Rebasing">合併與 Rebase (Merging &amp; Rebasing)</h1>
+<p class="subtitle" data-lang="zh">分支開好之後，要把工作整合回來——merge 保留歷史，rebase 重寫歷史，cherry-pick 是外科手術；衝突總會出現，學會冷靜處理。</p>
+<p class="subtitle" data-lang="en">Once you've branched, you have to integrate work back. Merge preserves history; rebase rewrites it; cherry-pick is surgical. Conflicts will happen — learn to handle them calmly.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="為什麼整合分支是門學問？" data-en="Why integration is its own skill">為什麼整合分支是門學問？</h2>
+<div data-lang="zh">
+<p>分支只是準備工作；真正的價值是把分支裡的成果<strong>整合回主線</strong>。Git 提供兩條主路：<code>merge</code>（保留兩條分支的完整歷史，並用一個 merge commit 把它們接起來）與 <code>rebase</code>（把你的 commit「搬」到目標分支頂端，看起來像線性開發）。各有取捨。</p>
+<p>還有外科手術用的 <code>cherry-pick</code>：只把某幾個 commit 複製到另一條分支（例如把 hotfix 同時套到 main 和 release/v1）。最後，無論用哪一種，<strong>衝突遲早會發生</strong>——當兩條分支改了同一行，Git 沒辦法自動決定誰對，這時候要你手動處理。</p>
+</div>
+<div data-lang="en">
+<p>Branching is just preparation; the value comes from <strong>integrating work back into the mainline</strong>. Git gives you two main paths: <code>merge</code> (preserves both branches' history and stitches them with a merge commit) and <code>rebase</code> (replays your commits on top of the target branch so history looks linear). Each has trade-offs.</p>
+<p>For surgical operations there's <code>cherry-pick</code>: copy specific commits from one branch onto another (handy when a hotfix needs to land on both <code>main</code> and <code>release/v1</code>). And whichever path you choose, <strong>conflicts will eventually happen</strong> — when both branches edit the same line, Git can't decide which version wins, and asks you to resolve it.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心心法：</strong>merge 永遠是「加法」（不破壞歷史）；rebase 是「重寫」（產生新的 SHA）。學會看 <code>git log --graph --oneline --all</code>，你就能從圖形分辨兩種結果。</span>
+<span data-lang="en"><strong>Core idea:</strong> merge is always additive (never rewrites history); rebase replays and produces brand-new SHAs. Learn to read <code>git log --graph --oneline --all</code> — its shape tells you instantly which strategy was used.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Merge fundamentals ===== -->
+<section class="section">
+<div class="section-label" data-zh="MERGE 基礎" data-en="MERGE">MERGE 基礎</div>
+<h2 data-zh="一、merge 的三種樣貌" data-en="I. The Three Faces of Merge">一、merge 的三種樣貌</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">➡️</div><h4>Fast-forward (ff)</h4>
+<div data-lang="zh"><p>主分支自從你開分支後<strong>沒有再前進</strong>。Git 只需把指標往前挪——不會產生新的 commit，歷史完全線性。</p></div>
+<div data-lang="en"><p>The target branch hasn't moved since you branched off. Git simply slides the pointer forward — no merge commit, perfectly linear history.</p></div>
+</div>
+<div class="card"><div class="card-icon">🔀</div><h4>3-way merge</h4>
+<div data-lang="zh"><p>兩條分支<strong>都各自前進過</strong>。Git 找到共同祖先 + 兩端，自動產生一個有「兩個父 commit」的 merge commit。</p></div>
+<div data-lang="en"><p>Both branches advanced. Git finds the common ancestor plus both tips and creates a merge commit with two parents.</p></div>
+</div>
+<div class="card"><div class="card-icon">📦</div><h4>no-ff merge</h4>
+<div data-lang="zh"><p>明明可以 ff，但你用 <code>--no-ff</code> 強迫產生 merge commit——讓「這幾個 commit 屬於同一個 feature」在歷史上看得出來。</p></div>
+<div data-lang="en"><p>Even when ff is possible, <code>--no-ff</code> forces a merge commit so the history visibly groups "these commits belonged to one feature."</p></div>
+</div>
+</div>
+
+<pre style="margin-top:14px"><span class="comment"># ff merge（target 沒前進過） / Fast-forward</span>
+$ git switch main
+$ git merge feature
+Updating a1b2c3..d4e5f6
+Fast-forward
+
+<span class="comment"># 強制保留分支痕跡 / Always create a merge commit</span>
+$ git merge --no-ff feature -m <span class="str">"Merge feature/qc-filter into main"</span>
+
+<span class="comment"># 把 feature 的所有 commit 壓成一個 staged 變更（尚未 commit）</span>
+$ git merge --squash feature
+$ git commit -m <span class="str">"Add QC filter module (squashed 8 WIP commits)"</span>
+</pre>
+
+<h4 style="margin-top:18px" data-zh="ASCII 對照" data-en="Before / After">ASCII 對照</h4>
+<pre style="font-size:.82rem"><span class="comment">--- 之前 / Before ---</span>
+main:    A---B---C
+                  \
+feature:           D---E
+
+<span class="comment">--- ff merge ---</span>           <span class="comment">--- 3-way merge (no-ff) ---</span>
+main:    A---B---C---D---E      main:    A---B---C-------M   (M 有兩個父)
+                                                  \     /
+                                feature:           D---E
+
+<span class="comment">--- squash merge ---</span>
+main:    A---B---C---S          (S 包含 D+E 的內容，但只有一個父，feature 分支不在歷史上)
+</pre>
+</section>
+
+<!-- ===== Section 3: Rebase fundamentals ===== -->
+<section class="section">
+<div class="section-label" data-zh="REBASE 基礎" data-en="REBASE">REBASE 基礎</div>
+<h2 data-zh="二、rebase：把 commit 搬家" data-en="II. Rebase: Replaying Commits">二、rebase：把 commit 搬家</h2>
+<div data-lang="zh">
+<p><code>git rebase</code> 的本質是「把你這邊的 commit 一個一個重新套用到新的基底上」。原本的 commit 並沒有被改——而是被<strong>放棄</strong>了，Git 用相同的變更內容 + 新的父節點，產生<strong>新的 SHA</strong>。從 <code>git log</code> 看會以為時間順序變了，事實上是<strong>整段歷史被重寫了</strong>。</p>
+</div>
+<div data-lang="en">
+<p><code>git rebase</code> takes each of your commits and re-applies it on top of a new base. The originals aren't modified — they're <strong>abandoned</strong>, and Git creates <strong>new commits</strong> (same diffs, new parent) with <strong>brand-new SHAs</strong>. Reading <code>git log</code> afterward, it looks like time was reordered; in reality, that segment of history has been rewritten.</p>
+</div>
+<pre><span class="comment"># 1. 標準 rebase（在 feature 上，把 commits 搬到最新 main 之上）</span>
+$ git switch feature
+$ git rebase main
+<span class="comment"># Successfully rebased and updated refs/heads/feature.</span>
+
+<span class="comment"># 2. 互動式 rebase：清理最近 5 個 commit</span>
+$ git rebase -i HEAD~5
+<span class="comment"># 編輯器會打開，每行一個 commit，動作關鍵字可改：</span>
+<span class="comment">#   pick   = 保留</span>
+<span class="comment">#   reword = 改 commit message</span>
+<span class="comment">#   edit   = 暫停讓你改檔案</span>
+<span class="comment">#   squash = 合併到上一個 commit (保留 messages)</span>
+<span class="comment">#   fixup  = 合併到上一個 commit (丟棄 message)</span>
+<span class="comment">#   drop   = 刪除這個 commit</span>
+<span class="comment">#   調換順序 = 直接剪下貼上整行</span>
+</pre>
+
+<div class="callout danger"><span class="callout-icon">⛔</span><div>
+<span data-lang="zh"><strong>黃金法則（Golden Rule of Rebase）：</strong>絕對<u>不要</u>對已經 push 到共用分支的 commit 做 rebase。rebase 會改 SHA，協作者本地的 history 還是舊 SHA，下次 pull 會打架；運氣不好整個 repo 都會錯亂。Rebase 只用在<strong>自己的、還沒 push</strong> 的 branch。</span>
+<span data-lang="en"><strong>The golden rule of rebase:</strong> <u>never</u> rebase commits you've already pushed to a shared branch. Rebase changes the SHAs, your collaborators still hold the old ones, and their next pull will fight you. Rebase is for <strong>your own branches that haven't been pushed</strong>.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Comparison table ===== -->
+<section class="section">
+<div class="section-label" data-zh="比較" data-en="COMPARE">比較</div>
+<h2 data-zh="三、merge vs rebase 一覽" data-en="III. Merge vs Rebase at a Glance">三、merge vs rebase 一覽</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="面向" data-en="Aspect">面向</th>
+<th>merge</th>
+<th>rebase</th>
+</tr></thead>
+<tbody>
+<tr><td><strong data-zh="歷史" data-en="History">歷史</strong>
+  <td data-lang="zh">保留真實時間軸（含分支圖）</td><td data-lang="en">Preserves the real timeline (branches visible)</td>
+  <td data-lang="zh">線性、乾淨</td><td data-lang="en">Linear and clean</td></tr>
+<tr><td><strong>SHA</strong>
+  <td data-lang="zh">不變</td><td data-lang="en">Unchanged</td>
+  <td data-lang="zh"><strong>全部新的</strong></td><td data-lang="en"><strong>All new</strong></td></tr>
+<tr><td><strong data-zh="安全性" data-en="Safety">安全性</strong>
+  <td data-lang="zh">永遠安全</td><td data-lang="en">Always safe</td>
+  <td data-lang="zh">對共用分支危險（會破壞他人 history）</td><td data-lang="en">Dangerous on shared branches (breaks collaborators' history)</td></tr>
+<tr><td><strong data-zh="使用時機" data-en="When to use">使用時機</strong>
+  <td data-lang="zh">把已完成的 feature 整合回 main</td><td data-lang="en">Integrate finished features into main</td>
+  <td data-lang="zh">在 push 之前清理自己的 local commits</td><td data-lang="en">Clean up local commits before pushing</td></tr>
+<tr><td><strong data-zh="衝突處理" data-en="Conflicts">衝突處理</strong>
+  <td data-lang="zh">一次解決</td><td data-lang="en">Resolve once</td>
+  <td data-lang="zh">每個被搬的 commit 都可能要解一次</td><td data-lang="en">Each replayed commit may conflict separately</td></tr>
+</tbody></table>
+</section>
+
+<!-- ===== Section 5: Cherry-pick ===== -->
+<section class="section">
+<div class="section-label" data-zh="CHERRY-PICK" data-en="CHERRY-PICK">CHERRY-PICK</div>
+<h2 data-zh="四、cherry-pick：只搬一個 commit" data-en="IV. cherry-pick — Move a single commit">四、cherry-pick：只搬一個 commit</h2>
+<div data-lang="zh">
+<p><code>git cherry-pick &lt;sha&gt;</code> 把另一條分支上的某一個（或幾個）commit「複製」到目前分支。最常見的場景：<strong>hotfix</strong> 在 <code>main</code> 寫完，要同時套到 <code>release/v1</code> 分支上——cherry-pick 是最乾淨的做法。</p>
+</div>
+<div data-lang="en">
+<p><code>git cherry-pick &lt;sha&gt;</code> copies one (or several) commits from another branch onto your current branch. Classic use case: a <strong>hotfix</strong> landed on <code>main</code> needs to be applied to <code>release/v1</code> too — cherry-pick is the cleanest tool.</p>
+</div>
+<pre><span class="comment"># 把單一 commit 套到目前分支 / Apply a single commit</span>
+$ git switch release/v1
+$ git cherry-pick a1b2c3d
+
+<span class="comment"># 一次套多個 / Apply multiple commits</span>
+$ git cherry-pick a1b2c3d e4f5g6h
+
+<span class="comment"># 套一個區間（不含 start，包含 end） / A range</span>
+$ git cherry-pick a1b2c3d..e4f5g6h
+
+<span class="comment"># -x: 在 commit message 裡記下原始 SHA（建議！）</span>
+$ git cherry-pick -x a1b2c3d
+<span class="comment"># 結果 message 多一行：(cherry picked from commit a1b2c3d)</span>
+
+<span class="comment"># -n: 只套變更，不自動 commit（讓你修改後再 commit）</span>
+$ git cherry-pick -n a1b2c3d
+</pre>
+</section>
+
+<!-- ===== Section 6: Conflict resolution ===== -->
+<section class="section">
+<div class="section-label" data-zh="衝突解決" data-en="CONFLICTS">衝突解決</div>
+<h2 data-zh="五、衝突來了怎麼辦？" data-en="V. What to do when a conflict appears">五、衝突來了怎麼辦？</h2>
+<div data-lang="zh">
+<p>當兩條分支改了<strong>同一個檔案的同一行</strong>，merge / rebase / cherry-pick 都會暫停。<code>git status</code> 會顯示 <code>both modified: path/to/file</code>，檔案內部會出現衝突標記：</p>
+</div>
+<div data-lang="en">
+<p>When two branches edit <strong>the same line of the same file</strong>, merge/rebase/cherry-pick all pause. <code>git status</code> shows <code>both modified: path/to/file</code> and the file itself contains conflict markers:</p>
+</div>
+<pre><span class="comment"># 衝突標記長這樣 / Conflict markers</span>
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+threshold = 0.05      <span class="comment"># 目前分支（main）的版本</span>
+=======
+threshold = 0.01      <span class="comment"># 另一邊（feature）的版本</span>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/strict-qc
+
+<span class="comment"># 標準解決流程 / Standard workflow</span>
+<span class="comment"># 1. 打開檔案，手動編輯（選擇/合併兩邊內容、刪掉 &lt;&lt;&lt; === &gt;&gt;&gt; 標記）</span>
+<span class="comment"># 2. 標記為已解決</span>
+$ git add path/to/file
+<span class="comment"># 3a. 如果是 merge：</span>
+$ git commit       <span class="comment"># Git 已準備好預設的 merge message</span>
+<span class="comment"># 3b. 如果是 rebase：</span>
+$ git rebase --continue
+<span class="comment"># 3c. 如果是 cherry-pick：</span>
+$ git cherry-pick --continue
+
+<span class="comment"># 放棄整個操作 / Abort and bail out</span>
+$ git merge --abort
+$ git rebase --abort
+$ git cherry-pick --abort
+</pre>
+
+<div class="callout tip"><span class="callout-icon">🛠️</span><div>
+<span data-lang="zh"><strong>工具加持：</strong><code>git mergetool</code> 可呼叫 vimdiff / meld / kdiff3 等三面板比較工具。VS Code 內建衝突解決介面，按鈕直接選「Accept Current」「Accept Incoming」「Accept Both」，比手動刪標記快很多。</span>
+<span data-lang="en"><strong>Tooling helps:</strong> <code>git mergetool</code> launches a three-pane diff (vimdiff / meld / kdiff3). VS Code's built-in conflict UI gives you "Accept Current / Incoming / Both" buttons — much faster than deleting markers by hand.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 7: Interactive Animator ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="六、merge vs rebase 動畫" data-en="VI. Merge vs Rebase Animator">六、merge vs rebase 動畫</h2>
+<div data-lang="zh"><p>起始狀態：<code>main</code> 有 3 個 commit（A→B→C），<code>feature</code> 從 B 分出去做了 2 個 commit（D→E）。按下按鈕看兩種策略各自會發生什麼。</p></div>
+<div data-lang="en"><p>Starting state: <code>main</code> has 3 commits (A→B→C); <code>feature</code> branched off B with 2 more (D→E). Press a button to see what each strategy produces.</p></div>
+
+<div class="interactive-panel">
+  <div class="anim-controls">
+    <button class="anim-btn active" id="modeMerge"><span data-zh="MERGE 模式" data-en="MERGE mode">MERGE 模式</span></button>
+    <button class="anim-btn" id="modeRebase"><span data-zh="REBASE 模式" data-en="REBASE mode">REBASE 模式</span></button>
+    <button class="anim-btn play" id="playBtn"><span data-zh="▶ 播放" data-en="▶ Play">▶ 播放</span></button>
+    <button class="anim-btn reset" id="resetBtn"><span data-zh="↻ 重設" data-en="↻ Reset">↻ 重設</span></button>
+  </div>
+  <div class="anim-stage">
+    <div class="anim-row"><span class="branch-label main-lbl">main</span>
+      <div class="commit" data-id="A">A</div>
+      <div class="commit" data-id="B">B</div>
+      <div class="commit" data-id="C">C</div>
+      <div class="commit slot" data-id="X1"></div>
+      <div class="commit slot" data-id="X2"></div>
+      <div class="commit slot" data-id="X3"></div>
+    </div>
+    <div class="anim-row"><span class="branch-label feat-lbl">feature</span>
+      <div class="commit ghost"></div>
+      <div class="commit ghost"></div>
+      <div class="commit feat" data-id="D">D</div>
+      <div class="commit feat" data-id="E">E</div>
+    </div>
+    <div class="anim-caption" id="animCaption" data-zh="按 ▶ 播放看 MERGE 結果" data-en="Press ▶ Play to see the MERGE result">按 ▶ 播放看 MERGE 結果</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== Section 8: Decision tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="決策" data-en="DECISION">決策</div>
+<h2 data-zh="七、該 merge 還是 rebase？" data-en="VII. Should I merge or rebase?">七、該 merge 還是 rebase？</h2>
+
+<div class="decision-tree">
+<h4>🌳 <span data-zh="merge 或 rebase 決策樹" data-en="Merge-vs-rebase decision tree">merge 或 rebase 決策樹</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>這些 commit 已經 push 到共用分支了嗎？<span class="dt-arrow">→ 是 →</span> 一律 <strong>merge</strong>（rebase 會破壞別人的歷史）。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>要保留「這是分支的工作」這個事實？<span class="dt-arrow">→ 是 →</span> 用 <strong>merge --no-ff</strong>，讓分支痕跡留在歷史上。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>你的 local 有一堆 WIP 雜亂 commit，想在開 PR 前整理乾淨？<span class="dt-arrow">→ 是 →</span> <strong>rebase -i</strong> 把它們壓成一兩個有意義的 commit。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>團隊政策要求 main 上不能有 merge commit？<span class="dt-arrow">→ 是 →</span> 用 <strong>rebase</strong> 或在 GitHub 上選 <strong>Squash and merge</strong>。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Have those commits been pushed to a shared branch? <span class="dt-arrow">→ Yes →</span> Always <strong>merge</strong> (rebase would break others' history).</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Do you want history to show "this work belonged to a branch"? <span class="dt-arrow">→ Yes →</span> Use <strong>merge --no-ff</strong> to keep the branch shape visible.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>You have messy WIP commits locally and want to tidy them up before opening a PR? <span class="dt-arrow">→ Yes →</span> Use <strong>rebase -i</strong> to squash them into one or two meaningful commits.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Team policy forbids merge commits on <code>main</code>? <span class="dt-arrow">→ Yes →</span> Use <strong>rebase</strong>, or pick <strong>"Squash and merge"</strong> on GitHub.</div></div>
+</div>
+</div>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>不確定時——用 merge。</strong>merge 永遠是安全的；rebase 是 power tool，請只在<strong>自己的 private branch</strong> 上使用。</span>
+<span data-lang="en"><strong>When in doubt, merge.</strong> Merge is always safe; rebase is a power tool — reserve it for your own private branches.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整指令" data-en="CODE">完整指令</div>
+<h2 data-zh="八、常用情境程式碼" data-en="VIII. Common Scenarios">八、常用情境程式碼</h2>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'basic-merge')">Basic merge</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'rebase-flow')">Rebase workflow</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'resolve')">Resolve conflict</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'interactive')">Interactive rebase</button>
+</div>
+<div class="code-tab-content active" id="basic-merge"><pre><span class="comment"># 把 feature 合回 main / Merge feature back into main</span>
+$ git switch main
+$ git pull                              <span class="comment"># 確認 main 是最新</span>
+$ git merge --no-ff feature             <span class="comment"># 保留分支結構</span>
+<span class="comment"># 編輯 merge commit message → 儲存 → 完成</span>
+
+<span class="comment"># 推上去 / Push</span>
+$ git push origin main
+
+<span class="comment"># 清理 / Clean up the local branch</span>
+$ git branch -d feature                 <span class="comment"># -d 只刪已 merge 的；安全</span>
+<span class="comment"># 若還要刪遠端分支</span>
+$ git push origin --delete feature</pre></div>
+
+<div class="code-tab-content" id="rebase-flow"><pre><span class="comment"># 在 PR 開出去之前，把 feature rebase 到最新 origin/main 之上</span>
+$ git switch feature
+$ git fetch origin
+$ git rebase origin/main
+
+<span class="comment"># 若途中有衝突——解完 → add → continue</span>
+<span class="comment"># 全部結束後（注意：歷史被改了，必須 force-push）</span>
+$ git push --force-with-lease origin feature
+<span class="comment">#         ^^^^^^^^^^^^^^^^^ 比 --force 安全：</span>
+<span class="comment">#         如果遠端有別人新的 commit 你不知道，會拒絕</span>
+
+<span class="comment"># ⚠️ 只在「只有你自己」的分支上 force-push！</span></pre></div>
+
+<div class="code-tab-content" id="resolve"><pre><span class="comment"># 假設正在 merge，發生衝突</span>
+$ git merge feature
+Auto-merging analysis/qc.py
+CONFLICT (content): Merge conflict in analysis/qc.py
+Automatic merge failed; fix conflicts and then commit.
+
+<span class="comment"># 1. 看看哪些檔案有衝突</span>
+$ git status
+        both modified:   analysis/qc.py
+
+<span class="comment"># 2. 編輯檔案：把 &lt;&lt;&lt;HEAD ... === ... &gt;&gt;&gt;feature 改成最終想要的內容</span>
+$ code analysis/qc.py
+
+<span class="comment"># 3. 標記為已解決</span>
+$ git add analysis/qc.py
+
+<span class="comment"># 4. 完成 merge（rebase 用 --continue，cherry-pick 同樣）</span>
+$ git commit                 <span class="comment"># merge</span>
+<span class="comment"># 或</span>
+$ git rebase --continue
+$ git cherry-pick --continue
+
+<span class="comment"># 不想處理了 → 全部退回原狀</span>
+$ git merge --abort</pre></div>
+
+<div class="code-tab-content" id="interactive"><pre><span class="comment"># 整理最近 5 個 commit / Clean up last 5 commits</span>
+$ git rebase -i HEAD~5
+
+<span class="comment"># 編輯器會彈出（從舊到新）:</span>
+pick   a1b2c3d  WIP: add scaffold
+pick   d4e5f6g  WIP: fix typo
+pick   h7i8j9k  WIP: more fixes
+pick   l0m1n2o  WIP: actually working now
+pick   p3q4r5s  WIP: cleanup
+
+<span class="comment"># 改成這樣（4 個 fixup 進第一個，並重新命名）：</span>
+reword a1b2c3d  feat(qc): add adaptive QC threshold module
+fixup  d4e5f6g  WIP: fix typo
+fixup  h7i8j9k  WIP: more fixes
+fixup  l0m1n2o  WIP: actually working now
+fixup  p3q4r5s  WIP: cleanup
+<span class="comment"># → 儲存 → Git 自動執行，最後變成一個漂亮 commit</span>
+
+<span class="comment"># 其他常用動作:</span>
+<span class="comment">#   edit   = 暫停讓你改檔案/拆 commit</span>
+<span class="comment">#   squash = 合併且保留 message（與下方合）</span>
+<span class="comment">#   drop   = 丟掉這個 commit</span>
+<span class="comment">#   調換 pick 行的順序 = 重新排序 commit</span></pre></div>
+</div>
+</section>
+
+<!-- ===== Section 10: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 你目前在 <code>feature</code> 分支上，執行 <code>git rebase main</code>。會發生什麼事？</p>
+<p data-lang="en">1. You're on <code>feature</code> and run <code>git rebase main</code>. What happens?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. main 的 commit 被搬到 feature 之上，main 上的 SHA 全變</span><span data-lang="en">A. main's commits are moved on top of feature, and main's SHAs change</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. feature 的 commit 被重新套用到最新 main 的頂端，並產生新的 SHA</span><span data-lang="en">B. Your feature commits are re-applied on top of the latest main, with new SHAs</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 產生一個 merge commit，feature 和 main 都不變</span><span data-lang="en">C. A merge commit is created; neither branch changes</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. main 被切換為目前分支</span><span data-lang="en">D. main becomes the current branch</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. merge 時出現衝突，正確的處理順序是？</p>
+<p data-lang="en">2. A conflict appears during merge. Correct sequence?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 立刻執行 <code>git merge --abort</code>，重 clone</span><span data-lang="en">A. Run <code>git merge --abort</code> immediately and re-clone</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 直接 <code>git commit -m "fix"</code> 略過衝突</span><span data-lang="en">B. Run <code>git commit -m "fix"</code> and skip the conflict</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 編輯檔案、刪除衝突標記、<code>git add</code>，再 <code>git commit</code>（或 <code>git rebase --continue</code>）</span><span data-lang="en">C. Edit the file, remove markers, <code>git add</code>, then <code>git commit</code> (or <code>git rebase --continue</code>)</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 用 <code>git reset --hard</code> 把衝突檔案蓋掉</span><span data-lang="en">D. Run <code>git reset --hard</code> to overwrite the conflicted file</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">3. 你昨天已經把 <code>feature</code> push 上 GitHub，今天用 <code>rebase -i</code> 把 5 個 commit squash 成 1 個，然後再 push。結果？</p>
+<p data-lang="en">3. You pushed <code>feature</code> to GitHub yesterday; today you squash 5 commits into 1 with <code>rebase -i</code> and push again. Result?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 正常 push，無副作用</span><span data-lang="en">A. Pushes normally, no side effects</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. Git 自動合併新舊歷史</span><span data-lang="en">B. Git auto-merges old and new history</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 需要 force-push；如果別人也基於這個分支工作，他們的 history 會錯亂——對共用分支是壞習慣</span><span data-lang="en">C. You need a force-push; if anyone else based work on that branch, their history breaks — bad practice on shared branches</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 上游分支會被刪除</span><span data-lang="en">D. The upstream branch will be deleted</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="branching.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 5: 分支 (Branching)" data-en="Step 5: Branching">Step 5: 分支 (Branching)</span></a>
+<a href="remotes.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 7: 遠端與 GitHub 同步 (Remotes &amp;amp; GitHub Sync)" data-en="Step 7: Remotes &amp;amp; GitHub Sync">Step 7: 遠端與 GitHub 同步 (Remotes &amp; GitHub Sync)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.anim-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.anim-btn{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:8px 16px;cursor:pointer;font-family:inherit;font-size:.88rem;transition:var(--transition);font-weight:600}
+.anim-btn:hover{border-color:var(--c-accent);transform:translateY(-1px)}
+.anim-btn.active{background:var(--c-accent);color:#fff;border-color:var(--c-accent-dark)}
+.anim-btn.play{background:#1a8a5a;color:#fff;border-color:#127046}
+.anim-btn.play:hover{background:#127046}
+.anim-btn.reset{background:var(--c-surface-alt);color:var(--c-ink-light)}
+.anim-stage{background:var(--c-surface-alt);border-radius:var(--radius);padding:24px 18px;border-left:4px solid var(--c-accent);position:relative;overflow-x:auto}
+.anim-row{display:flex;align-items:center;gap:10px;margin:10px 0;min-height:54px;position:relative}
+.branch-label{font-family:var(--font-mono);font-size:.82rem;font-weight:700;min-width:64px;text-align:right;padding-right:6px}
+.main-lbl{color:#1a6b5a}
+.feat-lbl{color:#b85c00}
+.commit{width:48px;height:48px;border-radius:50%;background:var(--c-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:.95rem;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .6s cubic-bezier(.4,0,.2,1);position:relative;flex-shrink:0}
+.commit.feat{background:#e08a3c}
+.commit.ghost{background:transparent;box-shadow:none;pointer-events:none}
+.commit.slot{background:transparent;border:2px dashed var(--c-border-light);color:transparent;box-shadow:none}
+.commit.filled{background:#1a6b5a;color:#fff;border:none;animation:pop .5s ease}
+.commit.filled.feat-new{background:#e08a3c}
+.commit.merge-c{background:linear-gradient(135deg,#1a6b5a 50%,#e08a3c 50%);color:#fff;animation:pop .5s ease}
+.commit.fade{opacity:.25;filter:grayscale(.5)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.anim-caption{margin-top:14px;font-size:.9rem;color:var(--c-ink-light);font-style:italic;text-align:center;min-height:1.4em}
+@media(max-width:680px){.commit{width:40px;height:40px;font-size:.8rem}.branch-label{min-width:50px;font-size:.72rem}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Merge vs Rebase animator
+let animMode='merge';
+const captions={
+  zh:{idle_m:'按 ▶ 播放看 MERGE 結果',idle_r:'按 ▶ 播放看 REBASE 結果',
+      m_done:'✅ 產生 merge commit M（兩個父：C 與 E），feature 分支仍在歷史中',
+      r_done:'✅ feature 的 D、E 被重新套用為 D′、E′（新 SHA）；原本的 D、E 已被放棄'},
+  en:{idle_m:'Press ▶ Play to see the MERGE result',idle_r:'Press ▶ Play to see the REBASE result',
+      m_done:'✅ Merge commit M created (two parents: C and E); feature branch stays visible in history',
+      r_done:'✅ feature\'s D, E are re-applied as D′, E′ (new SHAs); the originals are abandoned'}};
+function setMode(m){animMode=m;document.getElementById('modeMerge').classList.toggle('active',m==='merge');document.getElementById('modeRebase').classList.toggle('active',m==='rebase');resetAnim();}
+function resetAnim(){
+  document.querySelectorAll('.commit.slot').forEach(s=>{s.className='commit slot';s.dataset.id=s.dataset.id||'';s.textContent='';});
+  document.querySelectorAll('.commit[data-id="D"],.commit[data-id="E"]').forEach(c=>{c.classList.remove('fade');c.style.opacity='1';});
+  const cap=document.getElementById('animCaption');const L=(window.I18n&&I18n.get)?I18n.get():'en';
+  cap.textContent=captions[L][animMode==='merge'?'idle_m':'idle_r'];
+  cap.dataset.zh=captions.zh[animMode==='merge'?'idle_m':'idle_r'];
+  cap.dataset.en=captions.en[animMode==='merge'?'idle_m':'idle_r'];
+}
+function playAnim(){
+  const slots=document.querySelectorAll('.commit.slot');const cap=document.getElementById('animCaption');
+  const L=(window.I18n&&I18n.get)?I18n.get():'en';
+  if(animMode==='merge'){
+    // fill one merge commit M after C
+    setTimeout(()=>{const s=slots[0];s.classList.add('filled','merge-c');s.textContent='M';},400);
+    setTimeout(()=>{cap.textContent=captions[L].m_done;cap.dataset.zh=captions.zh.m_done;cap.dataset.en=captions.en.m_done;},900);
+  }else{
+    // fade D, E; place D', E' after C
+    document.querySelector('.commit[data-id="D"]').classList.add('fade');
+    document.querySelector('.commit[data-id="E"]').classList.add('fade');
+    setTimeout(()=>{const s=slots[0];s.classList.add('filled','feat-new');s.textContent="D′";},400);
+    setTimeout(()=>{const s=slots[1];s.classList.add('filled','feat-new');s.textContent="E′";},800);
+    setTimeout(()=>{cap.textContent=captions[L].r_done;cap.dataset.zh=captions.zh.r_done;cap.dataset.en=captions.en.r_done;},1300);
+  }
+}
+document.getElementById('modeMerge').addEventListener('click',()=>setMode('merge'));
+document.getElementById('modeRebase').addEventListener('click',()=>setMode('rebase'));
+document.getElementById('playBtn').addEventListener('click',playAnim);
+document.getElementById('resetBtn').addEventListener('click',resetAnim);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(resetAnim,80));
+
+// Quiz
+const QF={zh:{q1_y:'rebase 是「把你的 commit 搬家」，所以 feature 的 commit 被重做（新 SHA）；main 完全不變。',q1_n:'正確答案已標示。',q2_y:'順序：編輯 → 刪標記 → add → commit / continue。',q2_n:'正確答案已標示。',q3_y:'已 push 的分支若再 rebase，必須 force-push，而 force-push 對共用分支會破壞別人的 history。',q3_n:'正確答案已標示。'},en:{q1_y:'Rebase replays your commits — feature gets new SHAs; main is untouched.',q1_n:'Correct answer is highlighted.',q2_y:'Workflow: edit → remove markers → add → commit / --continue.',q2_n:'Correct answer is highlighted.',q3_y:'Once pushed, rebasing forces a force-push, which corrupts collaborators\' history on a shared branch.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=(window.I18n&&I18n.get)?I18n.get():'en';fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

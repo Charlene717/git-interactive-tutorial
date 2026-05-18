@@ -1,0 +1,448 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Step 2: Repo Basics — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html" class="active">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">STEP 2 / 9</div>
+<h1 data-zh="儲存庫基礎 (Repository Basics)" data-en="Repository Basics">儲存庫基礎 (Repository Basics)</h1>
+<p class="subtitle" data-lang="zh">Git 最核心的心智模型——工作區、暫存區、儲存庫——以及四個每天都會用到的指令：status、add、commit、log。本章全程離線，還用不到 GitHub。</p>
+<p class="subtitle" data-lang="en">The Git mental model — working directory, staging area, repository — plus the four commands you'll use every day: status, add, commit, log. Everything here is offline; GitHub isn't needed yet.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="為什麼需要 repo？" data-en="Why do we need a repo?">為什麼需要 repo？</h2>
+<div data-lang="zh">
+<p>一個 <strong>repository (repo)</strong> 就是一個被 Git 追蹤的資料夾——裡面有你的程式、腳本、報告，還有一個隱藏的 <code>.git/</code> 子目錄，存放所有歷史紀錄。每次你 commit，Git 就把當下整個專案的 snapshot 壓縮存到 <code>.git/</code>，並用一個 SHA-1 hash 當作這次 snapshot 的「身分證」。</p>
+<p><strong>本機 (local) vs 遠端 (remote)：</strong>本章只討論本機 repo——你的電腦上的資料夾。<strong>整個 Step 2 不需要連網，也不需要 GitHub 帳號。</strong>等到 Step 7（Remotes）我們才會把本機 repo 推上 GitHub。先把本機流程練熟，遠端只是「再多一個 push」。</p>
+</div>
+<div data-lang="en">
+<p>A <strong>repository (repo)</strong> is simply a folder that Git tracks — your code, scripts, and reports, plus a hidden <code>.git/</code> subdirectory that stores all history. Every commit packs the whole project's snapshot into <code>.git/</code> and identifies it with a SHA-1 hash that acts as the snapshot's "ID card."</p>
+<p><strong>Local vs remote:</strong> this chapter is entirely about local repos — folders on your own machine. <strong>You don't need internet or a GitHub account for any of Step 2.</strong> We'll push to GitHub in Step 7 (Remotes). Master the local workflow first; the remote is just "one extra push."</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>核心原則：</strong>Git 的全部魔法都在 <code>.git/</code> 這個資料夾。刪掉它，這個資料夾就退回一般檔案夾；複製整個專案（含 <code>.git/</code>）到隨身碟，就帶走了完整的版本歷史。</span>
+<span data-lang="en"><strong>Core principle:</strong> all of Git's magic lives in <code>.git/</code>. Delete it and the folder reverts to a plain directory; copy the whole project (including <code>.git/</code>) to a USB stick and you've taken the entire history with you.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: Three Areas ===== -->
+<section class="section">
+<div class="section-label" data-zh="三大區域" data-en="THREE AREAS">三大區域</div>
+<h2 data-zh="一、Git 三大區域：工作區 / 暫存區 / 儲存庫" data-en="I. The Three Areas: Working / Staging / Repository">一、Git 三大區域：工作區 / 暫存區 / 儲存庫</h2>
+<div data-lang="zh"><p>這是 Git 最關鍵的心智模型——所有疑難雜症都從「我的檔案到底在哪一區？」開始。一個檔案的修改要進入版本歷史，必須走過這三區：</p></div>
+<div data-lang="en"><p>This is the most critical mental model in Git — every troubleshooting question starts with "which area is this file in?" To enter the version history, a change must travel through three areas:</p></div>
+
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">📂</div><h4>1. <span data-zh="工作區 (Working Directory)" data-en="Working Directory">工作區 (Working Directory)</span></h4>
+<div data-lang="zh"><p>就是你資料夾裡看得到、編輯器打得開的檔案。改了 <code>analysis.R</code> 卻還沒做任何 git 指令時，它就只在工作區。Git 知道有變動（因為它有上一次 commit 的版本可比），但<strong>還沒準備保存</strong>。</p></div>
+<div data-lang="en"><p>Just the files you see in the folder and open in your editor. If you edit <code>analysis.R</code> but haven't run any git command, the change lives only in the working directory. Git notices the change (it has the last commit to compare against) but <strong>hasn't been told to save it</strong>.</p></div>
+</div>
+<div class="card"><div class="card-icon">📥</div><h4>2. <span data-zh="暫存區 (Staging / Index)" data-en="Staging Area (Index)">暫存區 (Staging / Index)</span></h4>
+<div data-lang="zh"><p><code>git add &lt;file&gt;</code> 會把改動移到暫存區。可以把暫存區想成「<strong>下一次 commit 的購物車</strong>」——你挑幾個檔案丟進去，準備一起結帳。同一次工作可以做很多次 add，把不同的邏輯改動分成數個 commit。</p></div>
+<div data-lang="en"><p><code>git add &lt;file&gt;</code> moves the change into the staging area. Think of it as a <strong>shopping cart for the next commit</strong> — you pick which files go in, then check out. You can <code>add</code> multiple times in one session, splitting different logical changes into separate commits.</p></div>
+</div>
+<div class="card"><div class="card-icon">🗄️</div><h4>3. <span data-zh="儲存庫 (Repository / .git/)" data-en="Repository (.git/)">儲存庫 (Repository / .git/)</span></h4>
+<div data-lang="zh"><p><code>git commit -m "..."</code> 把購物車內所有東西結帳——做出一個新的 snapshot 永久存進 <code>.git/</code>，並產生一個 SHA hash 當作這個 commit 的 ID。commit 進去後就<strong>不會輕易消失</strong>（Git 的時光機能力靠的就是這個）。</p></div>
+<div data-lang="en"><p><code>git commit -m "..."</code> checks the cart out — creates a new snapshot permanently stored in <code>.git/</code>, identified by a SHA hash. Once committed, the snapshot <strong>almost never disappears</strong> (this is what makes Git's time-travel possible).</p></div>
+</div>
+</div>
+
+<pre style="margin-top:14px"><span class="comment"># 三區流程 / The 3-area flow</span>
+   <span class="kw">[Working Dir]</span>  ──── git add ────▶  <span class="kw">[Staging]</span>  ──── git commit ────▶  <span class="kw">[Repository]</span>
+   edit FASTQ_qc.R       stage selected hunks      snapshot saved (SHA: a3f9c1...)
+</pre>
+</section>
+
+<!-- ===== Section 3: Creating a repo ===== -->
+<section class="section">
+<div class="section-label" data-zh="建立 repo" data-en="CREATE">建立 repo</div>
+<h2 data-zh="二、兩種建立 repo 的方式：init vs clone" data-en="II. Two Ways to Create a Repo: init vs clone">二、兩種建立 repo 的方式：init vs clone</h2>
+<div data-lang="zh"><p>你只會碰到兩種情境：（A）我已經有一堆檔案，想開始追蹤——用 <code>init</code>；（B）我要拿別人雲端上的 repo——用 <code>clone</code>。</p></div>
+<div data-lang="en"><p>You'll only ever face two scenarios: (A) I already have files and want to start tracking them — use <code>init</code>; (B) I want a copy of someone's cloud repo — use <code>clone</code>.</p></div>
+
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'init-flow')">git init</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'clone-flow')">git clone</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'clone-opts')">clone 進階選項</button>
+</div>
+<div class="code-tab-content active" id="init-flow"><pre><span class="comment"># 在既有資料夾啟動版本控制 / Start tracking an existing folder</span>
+$ <span class="func">cd</span> ~/projects/scRNA-paper
+$ git init
+Initialized empty Git repository in /home/charlene/projects/scRNA-paper/.git/
+
+<span class="comment"># 看看裡面有什麼 / Peek inside</span>
+$ ls -la
+.git/   analysis.R   data/   README.md
+
+<span class="comment"># 此時 git status 會顯示所有檔案都是 "untracked"</span>
+$ git status
+On branch main
+No commits yet
+Untracked files:
+  analysis.R
+  data/
+  README.md</pre></div>
+
+<div class="code-tab-content" id="clone-flow"><pre><span class="comment"># 從 GitHub 取得完整 repo（含所有歷史）/ Get a full copy from GitHub</span>
+$ git clone git@github.com:satijalab/seurat.git
+Cloning into 'seurat'...
+remote: Counting objects: 12453, done.
+Receiving objects: 100% (12453/12453), 28.4 MiB | 5.21 MiB/s, done.
+
+<span class="comment"># 進去看看 / Enter the folder</span>
+$ <span class="func">cd</span> seurat
+$ git log --oneline | head -3
+3a8f2c1 (HEAD -> main, origin/main) v5.0.1 release
+b7e91d4 fix: handle empty cell barcodes
+f12a3b8 docs: update README</pre></div>
+
+<div class="code-tab-content" id="clone-opts"><pre><span class="comment"># Shallow clone — 只抓最新 1 個 commit（省時、省空間） / Latest snapshot only</span>
+$ git clone --depth 1 git@github.com:nf-core/rnaseq.git
+<span class="comment"># 適合：只是要跑 pipeline，不需要歷史。檔案小 60%~95%</span>
+
+<span class="comment"># 帶子模組一起 clone / Include submodules</span>
+$ git clone --recurse-submodules git@github.com:lab/pipeline.git
+<span class="comment"># 適合：repo 用 git submodule 把工具當依賴，例如包了 Seurat 特定版本</span>
+
+<span class="comment"># 只 clone 單一分支（譬如 dev）/ Clone a single branch</span>
+$ git clone --branch dev --single-branch git@github.com:lab/project.git
+<span class="comment"># 適合：分支極多的 repo，只關心 dev 那一條</span></pre></div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">📝</span><div>
+<span data-lang="zh"><strong>命名建議：</strong>repo 資料夾名稱建議用 <code>kebab-case</code>（如 <code>scrna-aging-paper</code>），避免空格、大寫、和中文字——跨平台、跨終端都不會出狀況。</span>
+<span data-lang="en"><strong>Naming tip:</strong> use <code>kebab-case</code> for repo folder names (e.g., <code>scrna-aging-paper</code>) — no spaces, no uppercase, no non-ASCII. It travels safely across platforms and shells.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Core 4 commands ===== -->
+<section class="section">
+<div class="section-label" data-zh="日常四大指令" data-en="DAILY DRIVERS">日常四大指令</div>
+<h2 data-zh="三、每天必用：status / add / commit / log" data-en="III. The Daily Four: status / add / commit / log">三、每天必用：status / add / commit / log</h2>
+
+<div class="card-grid cols-2">
+<div class="card"><h4>🔎 <code>git status</code></h4>
+<div data-lang="zh"><p>每次操作前先打它——告訴你「現在我的三區長什麼樣」。看懂這個輸出，Git 就懂一半了。</p></div>
+<div data-lang="en"><p>Run before any operation — it tells you "what does my 3-area state look like right now?" Master this output and you've learned half of Git.</p></div>
+<pre style="font-size:.78rem;margin:6px 0">$ git status
+On branch main
+Changes to be committed:    <span class="comment"># 已 add，在暫存區</span>
+  modified: scripts/qc.R
+
+Changes not staged for commit:  <span class="comment"># 改了但沒 add</span>
+  modified: scripts/de_analysis.R
+
+Untracked files:            <span class="comment"># Git 沒看過的新檔</span>
+  results/figure1.pdf</pre>
+</div>
+
+<div class="card"><h4>➕ <code>git add</code></h4>
+<div data-lang="zh"><p>把改動丟進暫存區。三種常見用法：</p></div>
+<div data-lang="en"><p>Move changes into staging. Three common forms:</p></div>
+<pre style="font-size:.78rem;margin:6px 0"><span class="comment"># 加單一檔 / single file</span>
+$ git add scripts/qc.R
+
+<span class="comment"># 加全部變動 / everything in CWD</span>
+$ git add .
+
+<span class="comment"># Patch 模式：互動式挑要不要 add 每段 hunk</span>
+$ git add -p scripts/qc.R
+<span class="comment"># 適合：一個檔案有多種邏輯改動，想分開 commit</span></pre>
+</div>
+
+<div class="card"><h4>💾 <code>git commit</code></h4>
+<div data-lang="zh"><p>把暫存區結帳，產生一個 snapshot。<code>-m</code> 直接給 message；不給的話會打開編輯器。</p></div>
+<div data-lang="en"><p>Check out the staging cart, producing a snapshot. <code>-m</code> supplies the message inline; without it your editor opens.</p></div>
+<pre style="font-size:.78rem;margin:6px 0"><span class="comment"># 標準寫法 / standard</span>
+$ git commit -m <span class="str">"qc: drop cells with &lt;200 genes"</span>
+
+<span class="comment"># 一次 stage 所有已追蹤改動 + commit</span>
+<span class="comment"># （注意：不會加新檔案 untracked files）</span>
+$ git commit -am <span class="str">"refactor de pipeline"</span>
+
+<span class="comment"># Amend：修改最後一個 commit（補檔或改 message）</span>
+$ git add forgotten.R
+$ git commit --amend --no-edit</pre>
+</div>
+
+<div class="card"><h4>📜 <code>git log</code></h4>
+<div data-lang="zh"><p>查看歷史 commit。預設輸出很長，加旗標讓它變實用：</p></div>
+<div data-lang="en"><p>View commit history. The default is verbose — these flags make it useful:</p></div>
+<pre style="font-size:.78rem;margin:6px 0"><span class="comment"># 一行一個 commit / one line per commit</span>
+$ git log --oneline
+a3f9c1f (HEAD -&gt; main) qc: drop low-quality cells
+b7e91d4 init: import paper repo
+
+<span class="comment"># 看分支圖 / visualize branches</span>
+$ git log --oneline --graph --all --decorate
+
+<span class="comment"># 篩特定作者 / 特定路徑</span>
+$ git log --author=<span class="str">"Charlene"</span> -- scripts/qc.R</pre>
+</div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">✍️</span><div>
+<span data-lang="zh"><strong>好的 commit message 慣例：</strong>第一行 ≤ 50 字，動詞開頭（<code>add</code>, <code>fix</code>, <code>refactor</code>, <code>docs</code>），描述「這個 commit 做了什麼」而非「我做了什麼」。例：<code>fix: handle empty FASTQ files in qc step</code>。</span>
+<span data-lang="en"><strong>Good commit-message convention:</strong> first line ≤ 50 chars, lead with a verb (<code>add</code>, <code>fix</code>, <code>refactor</code>, <code>docs</code>), describe what the commit does, not what you did. Example: <code>fix: handle empty FASTQ files in qc step</code>.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 5: Interactive Three-Areas Widget ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動模擬" data-en="INTERACTIVE">互動模擬</div>
+<h2 data-zh="四、互動三區動畫：看檔案怎麼跑" data-en="IV. Interactive: Watch Files Travel the Three Areas">四、互動三區動畫：看檔案怎麼跑</h2>
+<div data-lang="zh"><p>點下面的按鈕，看 <code>qc.R</code> 怎麼從工作區→暫存區→儲存庫。每按一次 "Edit file" 就會在工作區產生一個黃色（已修改）方塊。</p></div>
+<div data-lang="en"><p>Click the buttons to watch <code>qc.R</code> travel from working → staging → repo. Each "Edit file" click drops a yellow (modified) box into the working area.</p></div>
+
+<div id="threeAreas" class="interactive-panel">
+  <div class="ta-controls">
+    <button class="ta-btn ta-edit" onclick="taEdit()"><span data-zh="✏️ Edit file" data-en="✏️ Edit file">✏️ Edit file</span></button>
+    <button class="ta-btn ta-add" onclick="taAdd()">git add</button>
+    <button class="ta-btn ta-commit" onclick="taCommit()">git commit</button>
+    <button class="ta-btn ta-reset" onclick="taReset()"><span data-zh="↺ Reset" data-en="↺ Reset">↺ Reset</span></button>
+  </div>
+  <div class="ta-grid">
+    <div class="ta-col"><div class="ta-col-head">📂 <span data-zh="工作區" data-en="Working Dir">工作區</span></div><div class="ta-zone" id="taWork"></div></div>
+    <div class="ta-col"><div class="ta-col-head">📥 <span data-zh="暫存區" data-en="Staging">暫存區</span></div><div class="ta-zone" id="taStage"></div></div>
+    <div class="ta-col"><div class="ta-col-head">🗄️ <span data-zh="儲存庫" data-en="Repository">儲存庫</span></div><div class="ta-zone" id="taRepo"></div></div>
+  </div>
+  <div class="ta-log" id="taLog"></div>
+</div>
+</section>
+
+<!-- ===== Section 6: Decision Tree ===== -->
+<section class="section">
+<div class="section-label" data-zh="該用哪個？" data-en="WHICH ONE?">該用哪個？</div>
+<h2 data-zh="五、init 還是 clone？決策樹" data-en="V. init or clone? A Decision Tree">五、init 還是 clone？決策樹</h2>
+
+<div class="decision-tree">
+<h4>🌳 <span data-zh="開啟 repo 流程圖" data-en="Repo-starting decision tree">開啟 repo 流程圖</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>已經有 GitHub 上的 repo，想抓下來用？<span class="dt-arrow">→ 是 →</span> <strong>git clone &lt;url&gt;</strong>（含完整歷史 + 自動設好 origin remote）。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>本機只有一堆檔案，還沒上雲端？<span class="dt-arrow">→ 是 →</span> <strong>git init</strong>，做幾個 commit，之後想 push 時再去 GitHub 建空 repo + <code>git remote add origin</code>。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>要加入別人的開源專案開發？<span class="dt-arrow">→ 是 →</span> 先在 GitHub 介面 <strong>fork</strong> 到自己帳號，再 <code>git clone</code> 你的 fork（不是原專案）。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>要 clone 但只要最新版（譬如下載 nf-core pipeline 跑一次）？<span class="dt-arrow">→ 是 →</span> <strong>git clone --depth 1</strong>，可以省下大量磁碟和時間。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>Want a copy of an existing GitHub repo? <span class="dt-arrow">→ Yes →</span> <strong>git clone &lt;url&gt;</strong> (gets full history and auto-configures the <code>origin</code> remote).</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Local-only files, not in the cloud yet? <span class="dt-arrow">→ Yes →</span> <strong>git init</strong>, make a few commits, then later create an empty GitHub repo and <code>git remote add origin</code>.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Contributing to someone else's open-source project? <span class="dt-arrow">→ Yes →</span> <strong>Fork</strong> on GitHub first, then <code>git clone</code> <em>your</em> fork (not the original).</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Cloning just to run the latest version (e.g., downloading an nf-core pipeline)? <span class="dt-arrow">→ Yes →</span> <strong>git clone --depth 1</strong> — saves a lot of disk and time.</div></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 7: First-commit flows ===== -->
+<section class="section">
+<div class="section-label" data-zh="完整流程" data-en="WORKFLOWS">完整流程</div>
+<h2 data-zh="六、典型第一個 commit 範例" data-en="VI. Typical First-Commit Workflows">六、典型第一個 commit 範例</h2>
+
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'flow-new')">Brand-new project</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'flow-clone')">Cloning a paper repo</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'flow-bio')">Bioinformatics example</button>
+</div>
+
+<div class="code-tab-content active" id="flow-new"><pre><span class="comment"># 全新本機專案：從零到第一個 commit / From nothing to first commit</span>
+$ <span class="func">mkdir</span> ~/projects/my-thesis
+$ <span class="func">cd</span> ~/projects/my-thesis
+
+<span class="comment"># 啟動 Git / initialize</span>
+$ git init
+Initialized empty Git repository in /home/charlene/projects/my-thesis/.git/
+
+<span class="comment"># 建幾個檔案 / create some files</span>
+$ <span class="func">echo</span> <span class="str">"# My Thesis"</span> &gt; README.md
+$ <span class="func">echo</span> <span class="str">"library(Seurat)"</span> &gt; analysis.R
+
+<span class="comment"># 看 Git 怎麼看 / inspect</span>
+$ git status   <span class="comment"># 兩個檔案都是 untracked</span>
+
+<span class="comment"># 一次加入並 commit / stage all + commit</span>
+$ git add .
+$ git commit -m <span class="str">"init: project skeleton"</span>
+[main (root-commit) a3f9c1f] init: project skeleton
+ 2 files changed, 2 insertions(+)</pre></div>
+
+<div class="code-tab-content" id="flow-clone"><pre><span class="comment"># 抓論文程式碼下來研究 / Pull a paper's code to study</span>
+$ git clone https://github.com/satijalab/azimuth.git
+Cloning into 'azimuth'...
+
+$ <span class="func">cd</span> azimuth
+
+<span class="comment"># 看一下歷史結構 / poke at history</span>
+$ git log --oneline | head -5
+$ git branch -a              <span class="comment"># 列出所有分支</span>
+
+<span class="comment"># 建一個自己的 working 分支，避免動到 main</span>
+$ git switch -c my-experiments
+<span class="comment"># （Step 5 會詳談分支——這裡先讓你看到 clone 之後常見的下一步）</span></pre></div>
+
+<div class="code-tab-content" id="flow-bio"><pre><span class="comment"># 真實情境：開始一個 scRNA-seq 分析專案 / Start a scRNA-seq project</span>
+$ <span class="func">mkdir</span> ~/projects/scrna-aging-2026
+$ <span class="func">cd</span> ~/projects/scrna-aging-2026
+
+$ git init
+$ git branch -M main          <span class="comment"># 確保預設分支叫 main</span>
+
+<span class="comment"># 標準資料夾結構 / standard layout</span>
+$ <span class="func">mkdir</span> -p data scripts results docs
+$ <span class="func">echo</span> <span class="str">"# scRNA Aging 2026"</span> &gt; README.md
+$ <span class="func">touch</span> scripts/01_qc.R scripts/02_clustering.R
+
+<span class="comment"># 重要：data/ 是大檔，不該被 commit</span>
+<span class="comment"># 先建 .gitignore（Step 9 會詳細討論）</span>
+$ <span class="func">cat</span> &gt; .gitignore &lt;&lt; EOF
+data/
+results/*.h5ad
+results/*.pdf
+.Rhistory
+.RData
+EOF
+
+$ git status               <span class="comment"># data/ 不再出現了！</span>
+$ git add .
+$ git commit -m <span class="str">"init: project skeleton with .gitignore"</span></pre></div>
+</div>
+</section>
+
+<!-- ===== Section 8: Warnings ===== -->
+<section class="section">
+<div class="section-label" data-zh="地雷區" data-en="PITFALLS">地雷區</div>
+<h2 data-zh="七、常見地雷 ⚠️" data-en="VII. Common Pitfalls">七、常見地雷 ⚠️</h2>
+
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>不要在另一個 git repo 內 git init！</strong>會產生巢狀 <code>.git/</code>，外層 repo 完全看不到內層的歷史，未來 push 會崩。先 <code>git status</code> 確認自己不在某個既有 repo 裡（會印 <code>fatal: not a git repository</code> 才安全 init）。</span>
+<span data-lang="en"><strong>Never <code>git init</code> inside another git repo!</strong> You'll create a nested <code>.git/</code>; the outer repo can't see the inner history, and pushes will break. Run <code>git status</code> first — if it prints <code>fatal: not a git repository</code>, you're safe to init.</span>
+</div></div>
+
+<div class="callout warn"><span class="callout-icon">🚨</span><div>
+<span data-lang="zh"><strong>不要刪 <code>.git/</code> 資料夾！</strong>從 clone 來的 repo 裡的 <code>.git/</code> 含有所有 commit、所有分支、所有 tag——刪了就退回成普通檔案夾，<strong>本機歷史完全消失</strong>（除非雲端還有）。看到 <code>.git/</code> 又大又雜，請忍住不要清理。</span>
+<span data-lang="en"><strong>Never delete <code>.git/</code>!</strong> The <code>.git/</code> in a cloned repo holds every commit, every branch, every tag — delete it and the folder reverts to a plain directory with <strong>all local history gone</strong> (unless the cloud copy survives). If <code>.git/</code> looks bulky and messy, resist the urge to tidy it.</span>
+</div></div>
+
+<div class="callout warn"><span class="callout-icon">📌</span><div>
+<span data-lang="zh"><strong><code>git commit -am</code> 不會加新檔案！</strong>它只把<strong>已追蹤</strong>檔案的修改一次 stage + commit。新建的檔案還是要先 <code>git add</code>。</span>
+<span data-lang="en"><strong><code>git commit -am</code> doesn't add new files!</strong> It only stages and commits modifications to <strong>already-tracked</strong> files. New files still need <code>git add</code> first.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+
+<div class="quiz-q" data-answer="0">
+<p data-lang="zh">1. 你剛在編輯器裡改了 <code>qc.R</code> 但還沒下任何 git 指令。這個改動現在在哪一區？</p>
+<p data-lang="en">1. You just edited <code>qc.R</code> in your editor but haven't run any git command yet. Which area holds the change?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 工作區 (Working Directory)</span><span data-lang="en">A. Working Directory</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 暫存區 (Staging / Index)</span><span data-lang="en">B. Staging Area (Index)</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 儲存庫 (.git/)</span><span data-lang="en">C. Repository (.git/)</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 已經被 git 自動 commit 了</span><span data-lang="en">D. Git auto-committed it already</span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. <code>git commit -am "fix qc"</code> 會做什麼？</p>
+<p data-lang="en">2. What does <code>git commit -am "fix qc"</code> do?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 把工作區所有檔案（含全新檔）一次 stage 並 commit</span><span data-lang="en">A. Stage every file in the working dir (including brand-new ones) and commit</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 只 commit 暫存區，並修改上一個 commit 的訊息</span><span data-lang="en">B. Commit the staging area and amend the previous commit's message</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 把<strong>已追蹤</strong>檔案的修改一次 stage 並 commit，不會加 untracked 新檔</span><span data-lang="en">C. Stage modifications to <strong>tracked</strong> files and commit — does NOT add untracked new files</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 丟棄所有未暫存改動（reset --hard）</span><span data-lang="en">D. Discard all unstaged changes (like reset --hard)</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">3. 你用 <code>git clone --depth 1</code> 抓了一個 repo。可以查到 2020 年的某個 commit 嗎？</p>
+<p data-lang="en">3. You cloned a repo with <code>git clone --depth 1</code>. Can you look up a commit from 2020?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 可以，所有歷史都在本機</span><span data-lang="en">A. Yes — all history is local</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 不行，shallow clone 只抓最新 1 個 commit，沒有舊歷史</span><span data-lang="en">B. No — a shallow clone fetches only the latest 1 commit; old history is missing</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 可以，但要先 <code>git fetch --tags</code></span><span data-lang="en">C. Yes, but only after <code>git fetch --tags</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 取決於分支數量</span><span data-lang="en">D. It depends on how many branches the repo has</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="setup.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="Step 1: 安裝與設定 (Setup &amp;amp; Config)" data-en="Step 1: Setup &amp;amp; Config">Step 1: 安裝與設定 (Setup &amp; Config)</span></a>
+<a href="inspecting.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="Step 3: 檢視變更 (Inspecting Changes)" data-en="Step 3: Inspecting Changes">Step 3: 檢視變更 (Inspecting Changes)</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.ta-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.ta-btn{background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);padding:8px 14px;cursor:pointer;font-family:inherit;font-size:.88rem;transition:var(--transition)}
+.ta-btn:hover{border-color:var(--c-accent);transform:translateY(-1px)}
+.ta-btn.ta-edit:hover{background:#fff4cc}
+.ta-btn.ta-add:hover{background:#d6f0d4}
+.ta-btn.ta-commit:hover{background:#cfe2ff}
+.ta-btn.ta-reset:hover{background:#f5e0e0}
+.ta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.ta-col{background:var(--c-surface-alt);border-radius:var(--radius);padding:10px;min-height:170px;border:1px dashed var(--c-border-light);display:flex;flex-direction:column}
+.ta-col-head{font-weight:600;font-size:.92rem;margin-bottom:8px;text-align:center;color:var(--c-accent-dark)}
+.ta-zone{flex:1;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.ta-file{font-family:var(--font-mono);font-size:.78rem;padding:8px 10px;border-radius:6px;border:1px solid;transition:all .35s ease;animation:taSlide .35s ease}
+.ta-file.modified{background:#fff4cc;border-color:#e6c64a;color:#7a5a00}
+.ta-file.staged{background:#d6f0d4;border-color:#4ea84e;color:#1f5e1f}
+.ta-file.committed{background:#cfe2ff;border-color:#5587e6;color:#1f3a85}
+@keyframes taSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ta-log{background:#0e1a14;color:#b6e8c7;font-family:var(--font-mono);font-size:.78rem;border-radius:var(--radius);padding:10px 14px;min-height:60px;max-height:140px;overflow-y:auto;white-space:pre-wrap}
+.ta-log .l-cmd{color:#79e0a8}
+.ta-log .l-info{color:#a4c4ff}
+.ta-log .l-warn{color:#ffd27a}
+@media(max-width:680px){.ta-grid{grid-template-columns:1fr;gap:8px}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// ===== Three-areas interactive widget =====
+let TA={work:[],stage:[],repo:[],counter:0};
+const TA_FILES=['qc.R','de_analysis.R','clustering.R','plot_umap.R','load_data.R'];
+function taLog(msg,cls){const el=document.getElementById('taLog');const line=document.createElement('div');line.className=cls||'l-info';line.textContent=msg;el.appendChild(line);el.scrollTop=el.scrollHeight;}
+function taRender(){
+  const zones={work:document.getElementById('taWork'),stage:document.getElementById('taStage'),repo:document.getElementById('taRepo')};
+  for(const k in zones){zones[k].innerHTML=TA[k].map(f=>`<div class="ta-file ${f.state}">${f.name}</div>`).join('');}
+}
+function taEdit(){
+  const name=TA_FILES[TA.counter%TA_FILES.length];TA.counter++;
+  TA.work.push({name,state:'modified'});
+  taLog('$ vim '+name,'l-cmd');
+  taLog('   '+name+' modified (yellow → working dir)');
+  taRender();
+}
+function taAdd(){
+  if(TA.work.length===0){taLog('   nothing to add (working dir clean)','l-warn');return;}
+  taLog('$ git add .','l-cmd');
+  TA.work.forEach(f=>{f.state='staged';TA.stage.push(f);});
+  const n=TA.work.length;TA.work=[];
+  taLog('   '+n+' file(s) → staging area (green)');
+  taRender();
+}
+function taCommit(){
+  if(TA.stage.length===0){taLog('   nothing to commit (staging empty)','l-warn');return;}
+  const hash=Math.random().toString(16).slice(2,9);
+  taLog('$ git commit -m "..."','l-cmd');
+  TA.stage.forEach(f=>{f.state='committed';TA.repo.push(f);});
+  const n=TA.stage.length;TA.stage=[];
+  taLog('   ['+hash+'] '+n+' file(s) → repository (blue)');
+  taRender();
+}
+function taReset(){TA={work:[],stage:[],repo:[],counter:0};document.getElementById('taLog').innerHTML='';taLog('# state reset — try clicking "Edit file" first','l-warn');taRender();}
+document.addEventListener('DOMContentLoaded',()=>{taLog('# Click "Edit file" to drop a yellow file into the working area.','l-warn');});
+
+// ===== Quiz =====
+const QF={zh:{q1_y:'沒下任何指令前，修改只在你的硬碟上——也就是工作區。Git 看得到，但還沒被告知要保存。',q1_n:'正確答案已標示。回顧三區圖。',q2_y:'正解。<code>-a</code> 等於對所有<strong>已追蹤</strong>檔案做 add，新檔案仍需手動 add。',q2_n:'正確答案已標示。',q3_y:'正解。Shallow clone 用 <code>--depth N</code> 只抓最近 N 個 commit；要看舊歷史得先 <code>git fetch --unshallow</code>。',q3_n:'正確答案已標示。'},en:{q1_y:'Before any git command runs, the change lives only on your disk — the working directory. Git can see it, but has not been told to save it.',q1_n:'Correct answer is highlighted. Revisit the 3-area diagram.',q2_y:'Correct. <code>-a</code> means "add every <strong>tracked</strong> file"; new untracked files still need an explicit <code>git add</code>.',q2_n:'Correct answer is highlighted.',q3_y:'Correct. A shallow clone with <code>--depth N</code> fetches only the last N commits; older history requires <code>git fetch --unshallow</code>.',q3_n:'Correct answer is highlighted.'}};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=(window.I18n&&I18n.get)?I18n.get():'en';fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.innerHTML=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>

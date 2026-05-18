@@ -1,0 +1,419 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reproducibility for Bioinformatics — Git Tutorial</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<nav class="top-nav"><div class="top-nav-inner">
+  <a href="index.html" class="top-nav-brand"><span>🌿</span> <span data-zh="Git / GitHub 教學" data-en="Git / GitHub Tutorial">Git / GitHub 教學</span></a>
+  <ul class="top-nav-links">
+    <li><a href="setup.html">Setup</a></li><li><a href="repo-basics.html">Repo</a></li><li><a href="inspecting.html">Inspect</a></li><li><a href="undoing.html">Undo</a></li><li><a href="branching.html">Branch</a></li><li><a href="merge-rebase.html">Merge</a></li><li><a href="remotes.html">Remote</a></li><li><a href="collaboration.html">PR</a></li><li><a href="gitignore-lfs.html">LFS</a></li><li><a href="workflows.html">Flow</a></li><li><a href="actions.html">Actions</a></li><li><a href="reproducibility.html" class="active">Repro</a></li>
+    <li><a href="references/index.html" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div></nav>
+<div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+<header class="page-hero"><div class="step-badge">ADVANCED 3 / 3</div>
+<h1 data-zh="生資可重現研究 (Reproducibility)" data-en="Reproducibility for Bioinformatics">生資可重現研究 (Reproducibility)</h1>
+<p class="subtitle" data-lang="zh">Git 只解決了「程式碼在哪？」這個問題——這一章告訴你剩下 80% 怎麼補齊：環境、容器、資料、文件、典藏。</p>
+<p class="subtitle" data-lang="en">Git solves "where's the code?" — this final chapter covers the other 80%: environments, containers, data, documentation, and archival.</p>
+</header>
+<main class="content-wrap">
+
+<!-- ===== Section 1: Overview ===== -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="可重現研究的四個層次" data-en="Four Levels of Reproducibility">可重現研究的四個層次</h2>
+<div data-lang="zh">
+<p>版本控制只是可重現研究的一根支柱。Peng (2011) 與 Sandve (2013) 把可重現性拆成四個層次，由易到難：</p>
+<ul>
+<li><strong>同程式、同資料、同結果</strong>（可重跑）——最低門檻，但很多論文連這都做不到。</li>
+<li><strong>同程式、<em>不同</em>資料、預期結果</strong>（穩健性）——能換一批樣本仍給出合理輸出。</li>
+<li><strong>同程式、未來電腦、同結果</strong>（運算可重現）——五年後的人能不能跑出來？</li>
+<li><strong>另一組人獨立驗證</strong>（可複製）——黃金標準。</li>
+</ul>
+<p>Git/GitHub 解決「程式碼在哪」；本章處理剩下 80%：環境、容器、資料、文件與長期典藏。</p>
+</div>
+<div data-lang="en">
+<p>Version control is just one pillar of reproducible research. Peng (2011) and Sandve (2013) define four levels of reproducibility, from easiest to hardest:</p>
+<ul>
+<li><strong>Same code, same data, same result</strong> (re-runnable) — the floor, but many papers fail even here.</li>
+<li><strong>Same code, <em>different</em> data, expected result</strong> (robust) — does it still behave sensibly on a different sample set?</li>
+<li><strong>Same code, future computer, same result</strong> (computationally reproducible) — can someone rerun it in five years?</li>
+<li><strong>Verified independently by another team</strong> (replicable) — the gold standard.</li>
+</ul>
+<p>Git/GitHub answers "where's the code?"; this chapter covers the other 80%: environments, containers, data, documentation, and archival.</p>
+</div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>實用原則：</strong>你不需要一次達到第四層。先確保「同人、同機、半年後」還能重跑——這已經淘汰掉超過一半的論文了。</span>
+<span data-lang="en"><strong>Practical principle:</strong> you don't have to hit level four on day one. Just ensure that <em>you yourself</em> can rerun the analysis on the same machine six months later — that alone already beats half the published literature.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 2: The Stack ===== -->
+<section class="section">
+<div class="section-label" data-zh="可重現研究堆疊" data-en="STACK">可重現研究堆疊</div>
+<h2 data-zh="可重現研究的六大層" data-en="The Reproducibility Stack">可重現研究的六大層</h2>
+<div class="card-grid cols-3">
+<div class="card"><div class="card-icon">📦</div><h4 data-zh="程式碼" data-en="Code">程式碼</h4>
+<div data-lang="zh"><p>Git + GitHub + semver tags (<code>v1.0.0</code>)。每一個 commit 都有 SHA，可以被精確引用。</p></div>
+<div data-lang="en"><p>Git + GitHub + semver tags (<code>v1.0.0</code>). Every commit has a SHA you can cite precisely.</p></div>
+</div>
+<div class="card"><div class="card-icon">🧪</div><h4 data-zh="環境" data-en="Environment">環境</h4>
+<div data-lang="zh"><p>conda lockfile、<code>renv.lock</code>、Docker、Singularity——把「我用了哪些套件」凍結成檔案。</p></div>
+<div data-lang="en"><p>conda lockfile, <code>renv.lock</code>, Docker, Singularity — freeze "which packages did I use" into a file.</p></div>
+</div>
+<div class="card"><div class="card-icon">📊</div><h4 data-zh="資料" data-en="Data">資料</h4>
+<div data-lang="zh"><p>SRA / ENA / GEO / Zenodo accession + checksums。資料本身不入 Git，但<strong>引用</strong>要清楚。</p></div>
+<div data-lang="en"><p>SRA/ENA/GEO/Zenodo accessions + checksums. Data itself stays out of Git, but the <strong>reference</strong> must be explicit.</p></div>
+</div>
+<div class="card"><div class="card-icon">📜</div><h4 data-zh="Pipeline 編排" data-en="Pipeline orchestration">Pipeline 編排</h4>
+<div data-lang="zh"><p>Snakemake / Nextflow / nf-core——讓「跑一鍵就完成」變成正式合約。</p></div>
+<div data-lang="en"><p>Snakemake / Nextflow / nf-core — turn "one-command full rerun" into a formal contract.</p></div>
+</div>
+<div class="card"><div class="card-icon">📄</div><h4 data-zh="論文" data-en="Manuscript">論文</h4>
+<div data-lang="zh"><p><code>CITATION.cff</code>、README、Methods 章節直接連到 commit SHA 或 release tag。</p></div>
+<div data-lang="en"><p><code>CITATION.cff</code>, README, and a Methods section that links straight to a commit SHA or release tag.</p></div>
+</div>
+<div class="card"><div class="card-icon">🌐</div><h4 data-zh="長期典藏" data-en="Archive">長期典藏</h4>
+<div data-lang="zh"><p>Zenodo DOI、Software Heritage——確保 GitHub 哪天消失，你的研究還在。</p></div>
+<div data-lang="en"><p>Zenodo DOI, Software Heritage — so that if GitHub disappears tomorrow, your work survives.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ===== Section 3: Env pinning ===== -->
+<section class="section">
+<div class="section-label" data-zh="環境鎖定" data-en="ENV PINNING">環境鎖定</div>
+<h2 data-zh="一、鎖定環境（conda / pip / renv）" data-en="I. Pinning Environments (conda / pip / renv)">一、鎖定環境（conda / pip / renv）</h2>
+<table class="comp-table">
+<thead><tr>
+<th data-zh="工具" data-en="Tool">工具</th>
+<th data-zh="鎖定指令" data-en="Pin command">鎖定指令</th>
+<th data-zh="特性" data-en="Notes">特性</th>
+</tr></thead>
+<tbody>
+<tr><td><strong>conda (lite)</strong></td><td><code>conda env export --from-history &gt; environment.yml</code></td><td data-lang="zh">只記錄你明確安裝的套件，跨 OS 可用，<strong>推薦</strong>。</td><td data-lang="en">Records only what you explicitly installed; cross-OS portable; <strong>recommended</strong>.</td></tr>
+<tr><td><strong>conda (full)</strong></td><td><code>conda env export &gt; environment.yml</code></td><td data-lang="zh">過度鎖定（含 OS-specific build hash），同事換 OS 就掛。</td><td data-lang="en">Over-pins with OS-specific build hashes; breaks if a collaborator switches OS.</td></tr>
+<tr><td><strong>conda-lock</strong></td><td><code>conda-lock -f environment.yml</code></td><td data-lang="zh">產生每個 OS 的精確 lockfile，重現性最高。</td><td data-lang="en">Generates per-OS exact lockfiles — highest fidelity reproduction.</td></tr>
+<tr><td><strong>pip</strong></td><td><code>pip freeze &gt; requirements.txt</code></td><td data-lang="zh">或用 <code>pip-compile</code> / Poetry / uv 鎖定。</td><td data-lang="en">Or use <code>pip-compile</code> / Poetry / uv for proper locking.</td></tr>
+<tr><td><strong>R / renv</strong></td><td><code>renv::snapshot()</code></td><td data-lang="zh">寫出 <code>renv.lock</code>，含精確版本與 CRAN/Bioconductor 來源。<code>renv::restore()</code> 重建。</td><td data-lang="en">Writes <code>renv.lock</code> with exact versions and CRAN/Bioconductor sources. <code>renv::restore()</code> rebuilds.</td></tr>
+</tbody></table>
+<div class="callout warn"><span class="callout-icon">⚠️</span><div>
+<span data-lang="zh"><strong>務必 commit lockfile：</strong>沒進 Git，等於沒做。 <code>environment.yml</code>、<code>renv.lock</code>、<code>requirements.txt</code> 都要進 repo。</span>
+<span data-lang="en"><strong>Always commit lockfiles:</strong> if it's not in Git, it doesn't exist. Commit <code>environment.yml</code>, <code>renv.lock</code>, and <code>requirements.txt</code> to the repo.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 4: Containers ===== -->
+<section class="section">
+<div class="section-label" data-zh="容器" data-en="CONTAINERS">容器</div>
+<h2 data-zh="二、容器：Docker &amp; Singularity" data-en="II. Containers: Docker &amp; Singularity">二、容器：Docker &amp; Singularity</h2>
+<div class="card-grid cols-2">
+<div class="card"><h4>🐳 Docker</h4>
+<div data-lang="zh"><p>把 OS、工具、程式碼打包成不可變的映像檔（image），標識為 SHA digest。<strong>同樣的映像在任何 Docker 環境下都跑出相同結果。</strong>適合本地、雲端、CI。</p></div>
+<div data-lang="en"><p>Bundles OS + tools + code into an immutable image identified by a SHA digest. <strong>The same image yields the same result in any Docker environment.</strong> Great for laptops, cloud, and CI.</p></div>
+</div>
+<div class="card"><h4>🛡️ Singularity / Apptainer</h4>
+<div data-lang="zh"><p>HPC 友善：<strong>不需要 root</strong> 也能跑（Docker 要 root，學校 cluster 通常不給）。可直接從 Docker Hub 拉映像並轉換，學術圈最常見。</p></div>
+<div data-lang="en"><p>HPC-friendly: <strong>runs without root</strong> (Docker requires root, which academic clusters rarely grant). Can pull and convert Docker images directly; the de facto standard in academia.</p></div>
+</div>
+</div>
+<div data-lang="zh"><p style="margin-top:14px"><strong>標準工作流程：</strong>(1) 在 repo 內寫 <code>Dockerfile</code>；(2) <code>docker build</code> 建立映像；(3) push 到 Docker Hub 或 GitHub Container Registry (GHCR)；(4) pipeline config 指定映像版本。配合 Git tag——<code>Dockerfile</code> 在 tag <code>v1.0.0</code>，映像也 tag 為 <code>myrepo:1.0.0</code>，任何人都能重建。</p></div>
+<div data-lang="en"><p style="margin-top:14px"><strong>Standard workflow:</strong> (1) write a <code>Dockerfile</code> in the repo; (2) <code>docker build</code> to create the image; (3) push to Docker Hub or GitHub Container Registry (GHCR); (4) reference the image version in the pipeline config. Pair with Git tags — <code>Dockerfile</code> lives at tag <code>v1.0.0</code>, image is tagged <code>myrepo:1.0.0</code>, anyone can recreate.</p></div>
+</section>
+
+<!-- ===== Section 5: Data &amp; checksums ===== -->
+<section class="section">
+<div class="section-label" data-zh="資料與雜湊" data-en="DATA">資料與雜湊</div>
+<h2 data-zh="三、資料與檔案完整性 (checksums)" data-en="III. Data &amp; Checksums">三、資料與檔案完整性 (checksums)</h2>
+<div data-lang="zh">
+<p>Step 9 已經說過：原始定序資料絕對不要進 Git。但你必須<strong>清楚標示資料在哪、版本是什麼</strong>：</p>
+<ul>
+<li><strong>公開資料：</strong>引用 accession number——SRA (<code>SRP123456</code>)、GEO (<code>GSE171524</code>)、ENA、ArrayExpress、TCGA、HCA。</li>
+<li><strong>自製資料：</strong>投稿前同步存到 Zenodo / Figshare 並取得 DOI，論文引用 DOI。</li>
+<li><strong>檔案 checksums：</strong>把 <code>md5sum</code> 或 <code>sha256sum</code> 結果存在 <code>data/checksums.txt</code>，任何下載者都能驗證檔案是否完整。</li>
+</ul>
+</div>
+<div data-lang="en">
+<p>From Step 9: raw sequencing data must <em>never</em> enter Git. But you must <strong>declare where the data lives and what version it is</strong>:</p>
+<ul>
+<li><strong>Public data:</strong> cite the accession — SRA (<code>SRP123456</code>), GEO (<code>GSE171524</code>), ENA, ArrayExpress, TCGA, HCA.</li>
+<li><strong>Your own data:</strong> before submission, deposit on Zenodo / Figshare to obtain a DOI; the paper cites the DOI.</li>
+<li><strong>File checksums:</strong> store <code>md5sum</code> or <code>sha256sum</code> output in <code>data/checksums.txt</code>; anyone downloading can verify integrity.</li>
+</ul>
+</div>
+<pre><span class="comment"># 產生 checksums / Generate checksums</span>
+$ sha256sum data/raw/*.fastq.gz &gt; data/checksums.txt
+
+<span class="comment"># 下載者驗證 / Verify after download</span>
+$ sha256sum -c data/checksums.txt
+data/raw/sample01_R1.fastq.gz: OK
+data/raw/sample01_R2.fastq.gz: OK
+</pre>
+</section>
+
+<!-- ===== Section 6: CITATION.cff &amp; Zenodo ===== -->
+<section class="section">
+<div class="section-label" data-zh="引用與典藏" data-en="CITATION">引用與典藏</div>
+<h2 data-zh="四、CITATION.cff 與 Zenodo DOI" data-en="IV. CITATION.cff and Zenodo DOI">四、CITATION.cff 與 Zenodo DOI</h2>
+<div data-lang="zh"><p>把 <code>CITATION.cff</code>（Citation File Format，YAML）放在 repo 根目錄，GitHub 會自動在 repo 頁面側邊欄產生「Cite this repository」按鈕，輸出 BibTeX / APA 等格式。</p></div>
+<div data-lang="en"><p>Place a <code>CITATION.cff</code> (Citation File Format, YAML) at the repo root and GitHub auto-renders a "Cite this repository" button on the side panel that produces BibTeX / APA / etc.</p></div>
+<pre><span class="comment"># CITATION.cff 範例 / Example</span>
+cff-version: 1.2.0
+message: <span class="str">"If you use this software, please cite as below."</span>
+authors:
+  - family-names: Yang
+    given-names: Charlene
+    orcid: https://orcid.org/0000-0000-0000-0000
+title: <span class="str">"scRNA-seq Pipeline"</span>
+version: 1.4.2
+doi: 10.5281/zenodo.12345678
+date-released: 2026-05-14
+</pre>
+<div data-lang="zh"><p><strong>Zenodo + GitHub 整合：</strong>到 <a href="https://zenodo.org/account/settings/github/">zenodo.org</a> 啟用整合，勾選想要典藏的 repo——之後每個 GitHub Release 都會<strong>自動</strong>送一份到 Zenodo 並取得 DOI。論文引用這個 DOI（不要引 GitHub URL，URL 可能改）。</p></div>
+<div data-lang="en"><p><strong>Zenodo + GitHub integration:</strong> visit <a href="https://zenodo.org/account/settings/github/">zenodo.org</a>, enable the integration, and toggle the repos you want archived. Every subsequent GitHub Release is <strong>automatically</strong> snapshotted to Zenodo with its own DOI. Your paper cites the DOI — never a bare GitHub URL, which can move.</p></div>
+<div class="callout tip"><span class="callout-icon">💡</span><div>
+<span data-lang="zh"><strong>時機：</strong>論文被接受後，下 <code>git tag v1.0.0</code>、<code>gh release create v1.0.0</code>——Zenodo 自動發 DOI。論文 Methods 寫「Code: <em>10.5281/zenodo.XXXXX</em>」就完成了。</span>
+<span data-lang="en"><strong>Timing:</strong> when the paper is accepted, <code>git tag v1.0.0</code>, then <code>gh release create v1.0.0</code> — Zenodo issues the DOI automatically. Your Methods section just says "Code: <em>10.5281/zenodo.XXXXX</em>" and you're done.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 7: Interactive checklist ===== -->
+<section class="section">
+<div class="section-label" data-zh="互動評估" data-en="INTERACTIVE">互動評估</div>
+<h2 data-zh="可重現性檢查表（互動式）" data-en="Reproducibility Checklist (Interactive)">可重現性檢查表（互動式）</h2>
+<div data-lang="zh"><p>勾選你已經做到的項目，看看你的 repo 處在哪一級。10 項皆達 = 黃金標準。</p></div>
+<div data-lang="en"><p>Check the items you've already done and see what tier your repo is at. 10 / 10 = gold standard.</p></div>
+<div id="repCheck" class="interactive-panel">
+  <div class="rep-grid">
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="程式碼放在 GitHub" data-en="Code on GitHub">程式碼放在 GitHub</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="有 semver tag（v1.0.0）" data-en="Has a semver tag (v1.0.0)">有 semver tag</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="environment.yml 已 commit" data-en="environment.yml committed">environment.yml 已 commit</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="有 lockfile（conda-lock / renv.lock）" data-en="Lockfile present (conda-lock / renv.lock)">有 lockfile</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh=".gitignore 隔絕資料檔" data-en=".gitignore excludes data">.gitignore 隔絕資料檔</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="有 Dockerfile" data-en="Has a Dockerfile">有 Dockerfile</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="CI 通過（綠勾）" data-en="CI passing (green check)">CI 通過</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="README 含引用方式" data-en="README has citation block">README 含引用方式</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="Zenodo DOI" data-en="Zenodo DOI">Zenodo DOI</span></label>
+    <label class="rep-item"><input type="checkbox" data-w="10"><span data-zh="CITATION.cff 存在" data-en="CITATION.cff present">CITATION.cff 存在</span></label>
+  </div>
+  <div class="rep-score-wrap">
+    <div class="rep-bar-bg"><div id="repBar" class="rep-bar"></div></div>
+    <div id="repScore" class="rep-score">0% — <span data-zh="尚未開始" data-en="not started">尚未開始</span></div>
+  </div>
+</div>
+</section>
+
+<!-- ===== Section 8: README + decision tree + code tabs ===== -->
+<section class="section">
+<div class="section-label" data-zh="README 範本" data-en="README">README 範本</div>
+<h2 data-zh="五、讓別人能重現的 README" data-en="V. A README that Lets Others Reproduce">五、讓別人能重現的 README</h2>
+<div data-lang="zh">
+<p>好的 README 是「論文外的補充材料」，要回答這些問題：</p>
+<ol>
+<li><strong>這是什麼？</strong>一段話描述用途與輸入/輸出。</li>
+<li><strong>怎麼安裝？</strong>一行：<code>conda env create -f environment.yml</code> 或 <code>docker pull myrepo:1.0.0</code>。</li>
+<li><strong>怎麼快速試？</strong>一條指令跑通一個小範例。</li>
+<li><strong>資料從哪來？</strong>accession + DOI。</li>
+<li><strong>怎麼引用？</strong>BibTeX 或 Zenodo DOI。</li>
+<li><strong>授權？</strong>學術程式碼用 <strong>MIT</strong> 或 <strong>BSD-2</strong>（寬鬆）；要強制下游 open source 用 <strong>GPL-3</strong>；想加上專利條款用 <strong>Apache-2</strong>。</li>
+</ol>
+</div>
+<div data-lang="en">
+<p>A good README is the "supplementary material" to your paper. It must answer:</p>
+<ol>
+<li><strong>What is this?</strong> A short paragraph on purpose and I/O.</li>
+<li><strong>How do I install?</strong> One-liner: <code>conda env create -f environment.yml</code> or <code>docker pull myrepo:1.0.0</code>.</li>
+<li><strong>Quick start?</strong> One command runs a small test case.</li>
+<li><strong>Where's the data?</strong> Accessions + DOI.</li>
+<li><strong>How do I cite?</strong> BibTeX or Zenodo DOI.</li>
+<li><strong>License?</strong> Academic code: <strong>MIT</strong> or <strong>BSD-2</strong> (permissive). Want copyleft? <strong>GPL-3</strong>. Want a patent clause? <strong>Apache-2</strong>.</li>
+</ol>
+</div>
+
+<div class="decision-tree">
+<h4>🌳 <span data-zh="決策樹：我的專案需要哪一級可重現性？" data-en="Decision tree: what level of reproducibility do I need?">決策樹</span></h4>
+<div data-lang="zh">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>一次性的探索分析？<span class="dt-arrow">→ 是 →</span> Git repo + <code>environment.yml</code> 就夠。</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>會被論文引用？<span class="dt-arrow">→ 是 →</span> 加 <code>CITATION.cff</code> + Zenodo DOI + tag release。</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>整個實驗室都會用的 pipeline？<span class="dt-arrow">→ 是 →</span> 加 Docker image + CI 測試 + versioned release。</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>對外公開的 tool（lab 外的人會用）？<span class="dt-arrow">→ 是 →</span> 以上全部 + 完整文件 + semver + changelog。</div></div>
+</div>
+<div data-lang="en">
+<div class="dt-node"><span class="dt-q">Q1:</span><div>One-shot exploratory analysis? <span class="dt-arrow">→ Yes →</span> Git repo + <code>environment.yml</code> is plenty.</div></div>
+<div class="dt-node"><span class="dt-q">Q2:</span><div>Going to be cited in a paper? <span class="dt-arrow">→ Yes →</span> Add <code>CITATION.cff</code> + Zenodo DOI + tag a release.</div></div>
+<div class="dt-node"><span class="dt-q">Q3:</span><div>Pipeline for the whole lab to use? <span class="dt-arrow">→ Yes →</span> Add a Docker image + CI tests + versioned releases.</div></div>
+<div class="dt-node"><span class="dt-q">Q4:</span><div>Public tool with users outside the lab? <span class="dt-arrow">→ Yes →</span> All of the above + thorough docs + semver + changelog.</div></div>
+</div>
+</div>
+
+<h3 style="margin-top:22px" data-zh="完整程式碼範例" data-en="Code Templates">完整程式碼範例</h3>
+<div class="code-tabs"><div class="code-tab-btns">
+  <button class="code-tab-btn active" onclick="switchTab(this,'env')">Setup reproducible env</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'rel')">Tag &amp; archive a release</button>
+  <button class="code-tab-btn" onclick="switchTab(this,'rdm')">README skeleton</button>
+</div>
+<div class="code-tab-content active" id="env"><pre><span class="comment"># --- conda (portable) ---</span>
+$ conda env export --from-history &gt; environment.yml
+$ git add environment.yml &amp;&amp; git commit -m <span class="str">"chore: pin conda env"</span>
+
+<span class="comment"># --- conda-lock (exact, per-OS) ---</span>
+$ conda-lock -f environment.yml -p linux-64 -p osx-arm64
+
+<span class="comment"># --- R / renv ---</span>
+&gt; renv::init()
+&gt; renv::snapshot()    <span class="comment"># writes renv.lock</span>
+&gt; renv::restore()     <span class="comment"># colleague rebuilds env</span>
+
+<span class="comment"># --- Dockerfile skeleton ---</span>
+FROM mambaorg/micromamba:1.5
+COPY environment.yml /tmp/env.yml
+RUN micromamba install -y -n base -f /tmp/env.yml &amp;&amp; \
+    micromamba clean -a -y
+COPY . /pipeline
+WORKDIR /pipeline
+CMD [<span class="str">"snakemake"</span>, <span class="str">"--cores"</span>, <span class="str">"4"</span>]</pre></div>
+
+<div class="code-tab-content" id="rel"><pre><span class="comment"># 1. 標記 release / Tag a release</span>
+$ git tag -a v1.0.0 -m <span class="str">"v1.0.0 — paper submission snapshot"</span>
+$ git push origin v1.0.0
+
+<span class="comment"># 2. 用 gh CLI 建立 GitHub Release（觸發 Zenodo）</span>
+$ gh release create v1.0.0 \
+    --title <span class="str">"v1.0.0 — paper submission"</span> \
+    --notes-file CHANGELOG.md
+
+<span class="comment"># 3. Zenodo 自動歸檔 → DOI</span>
+<span class="comment">#   檢查 https://zenodo.org/account/settings/github/</span>
+<span class="comment">#   找到 repo 對應的 DOI 徽章，貼回 README</span>
+
+<span class="comment"># 4. 更新 CITATION.cff 加上 doi 與 version</span>
+$ git commit -am <span class="str">"docs: update CITATION.cff with v1.0.0 DOI"</span></pre></div>
+
+<div class="code-tab-content" id="rdm"><pre><span class="comment"># scRNA-seq Pipeline
+
+A Snakemake pipeline for single-cell RNA-seq QC, normalization, and clustering.
+
+## Install
+
+```bash
+conda env create -f environment.yml
+conda activate scrna-pipe
+```
+
+Or with Docker:
+
+```bash
+docker pull ghcr.io/charlene/scrna-pipe:1.0.0
+```
+
+## Quick start
+
+```bash
+snakemake --use-conda --cores 8 --config sample=test
+```
+
+## Data
+
+- Test data: GEO accession GSE171524
+- Custom dataset: Zenodo DOI 10.5281/zenodo.12345678
+
+## Citation
+
+If you use this pipeline, please cite:
+&gt; Yang C. (2026). scRNA-seq Pipeline (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.12345678
+
+See CITATION.cff for BibTeX.
+
+## License
+
+MIT — see LICENSE.</span></pre></div>
+</div>
+
+<div class="callout tip"><span class="callout-icon">🧪</span><div>
+<span data-lang="zh"><strong>生資現場：</strong>當審稿人問「我可以用我的資料重跑嗎？」——如果你的 CI workflow 已經用一個迷你測試資料集跑通，這個問題已經有答案了。</span>
+<span data-lang="en"><strong>In practice:</strong> when a reviewer asks "can I rerun this on my data?" — if your CI workflow already runs on a tiny test dataset, that question is already answered.</span>
+</div></div>
+</section>
+
+<!-- ===== Section 9: Quiz ===== -->
+<section class="quiz-section">
+<h3>📝 <span data-zh="自我檢測" data-en="Self-Check">自我檢測</span></h3>
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">1. 你想讓別人重現你的 R 套件環境，應該 commit 哪個檔案？</p>
+<p data-lang="en">1. You want others to recreate your exact R package environment. Which file do you commit?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>requirements.txt</code></span><span data-lang="en">A. <code>requirements.txt</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>renv.lock</code></span><span data-lang="en">B. <code>renv.lock</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>Dockerfile</code>（only）</span><span data-lang="en">C. <code>Dockerfile</code> only</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>.gitignore</code></span><span data-lang="en">D. <code>.gitignore</code></span></div>
+</div><div class="quiz-feedback" id="fb1"></div></div>
+
+<div class="quiz-q" data-answer="2">
+<p data-lang="zh">2. 標記 release <code>v1.0.0</code> 後，要讓它在論文中可被引用，最好的做法是？</p>
+<p data-lang="en">2. After tagging release <code>v1.0.0</code>, what's the best way to make it citable in a paper?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. 在論文中直接貼 GitHub URL</span><span data-lang="en">A. Paste the bare GitHub URL into the paper</span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. 把 commit SHA 寫進 methods 即可</span><span data-lang="en">B. Just write the commit SHA in the methods</span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. 啟用 Zenodo 整合——每個 GitHub Release 自動取得 DOI</span><span data-lang="en">C. Enable Zenodo integration — every GitHub Release auto-gets a DOI</span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. 把整個 repo 壓縮上傳到期刊網站</span><span data-lang="en">D. Zip the whole repo and upload it to the journal site</span></div>
+</div><div class="quiz-feedback" id="fb2"></div></div>
+
+<div class="quiz-q" data-answer="1">
+<p data-lang="zh">3. 想讓別人能在不同 OS 上重建你的 conda 環境，最佳指令是？</p>
+<p data-lang="en">3. To make others recreate your conda environment portably across OSes, which command should you use?</p>
+<div class="quiz-options">
+<div class="quiz-opt" data-idx="0"><span data-lang="zh">A. <code>conda env export &gt; environment.yml</code></span><span data-lang="en">A. <code>conda env export &gt; environment.yml</code></span></div>
+<div class="quiz-opt" data-idx="1"><span data-lang="zh">B. <code>conda env export --from-history &gt; environment.yml</code></span><span data-lang="en">B. <code>conda env export --from-history &gt; environment.yml</code></span></div>
+<div class="quiz-opt" data-idx="2"><span data-lang="zh">C. <code>pip freeze &gt; requirements.txt</code></span><span data-lang="en">C. <code>pip freeze &gt; requirements.txt</code></span></div>
+<div class="quiz-opt" data-idx="3"><span data-lang="zh">D. <code>conda list</code> 截圖貼到 README</span><span data-lang="en">D. Screenshot of <code>conda list</code> in the README</span></div>
+</div><div class="quiz-feedback" id="fb3"></div></div>
+</section>
+
+<nav class="page-nav">
+<a href="actions.html"><span class="nav-dir" data-zh="← 上一步" data-en="← Previous">← 上一步</span><span class="nav-title" data-zh="GitHub Actions &amp;amp; CI/CD（生物資訊版）" data-en="GitHub Actions &amp;amp; CI/CD for Bioinformatics">GitHub Actions &amp; CI/CD（生物資訊版）</span></a>
+<a href="references/index.html"><span class="nav-dir" data-zh="下一步 →" data-en="Next →">下一步 →</span><span class="nav-title" data-zh="參考資料佐證" data-en="References &amp; Citations">參考資料佐證</span></a>
+</nav>
+</main>
+<footer class="site-footer">© Charlene — Git / GitHub for Bioinformatics Interactive Tutorial</footer>
+<script src="i18n.js"></script>
+<style>
+.rep-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 18px;margin-bottom:18px}
+.rep-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);cursor:pointer;transition:var(--transition);font-size:.92rem}
+.rep-item:hover{border-color:var(--c-accent)}
+.rep-item input{width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;flex-shrink:0}
+.rep-item input:checked + span{color:var(--c-accent-dark);font-weight:600}
+.rep-score-wrap{margin-top:14px}
+.rep-bar-bg{height:18px;background:var(--c-surface-alt);border-radius:9px;overflow:hidden;border:1px solid var(--c-border-light)}
+.rep-bar{height:100%;width:0%;background:linear-gradient(90deg,#e57373,#ffb74d 30%,#fff176 60%,#81c784 80%,var(--c-accent));transition:width .35s ease;border-radius:9px}
+.rep-score{margin-top:10px;font-family:var(--font-mono);font-size:1rem;font-weight:600;color:var(--c-ink)}
+@media(max-width:680px){.rep-grid{grid-template-columns:1fr}}
+</style>
+<script>
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('progressBar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100+'%';});
+function switchTab(b,id){const p=b.closest('.code-tabs');p.querySelectorAll('.code-tab-btn').forEach(x=>x.classList.remove('active'));p.querySelectorAll('.code-tab-content').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(id).classList.add('active');}
+
+// Reproducibility checklist
+const REP_TIERS={
+  zh:[{max:30,label:'尚未可重現',cls:''},{max:70,label:'部分可重現',cls:''},{max:100,label:'黃金標準 🏆',cls:''}],
+  en:[{max:30,label:'not reproducible',cls:''},{max:70,label:'partially reproducible',cls:''},{max:100,label:'gold standard 🏆',cls:''}]
+};
+function updateRep(){
+  const boxes=document.querySelectorAll('#repCheck input[type=checkbox]');
+  let score=0;boxes.forEach(b=>{if(b.checked)score+=+b.dataset.w;});
+  document.getElementById('repBar').style.width=score+'%';
+  const L=I18n.get();const tiers=REP_TIERS[L];
+  let tier=tiers[0];for(const t of tiers){if(score<=t.max){tier=t;break;}}
+  if(score===0){tier={label:L==='zh'?'尚未開始':'not started'};}
+  document.getElementById('repScore').innerHTML=score+'% — <span>'+tier.label+'</span>';
+}
+document.querySelectorAll('#repCheck input[type=checkbox]').forEach(b=>b.addEventListener('change',updateRep));
+document.addEventListener('langchange',updateRep);
+document.addEventListener('DOMContentLoaded',()=>setTimeout(updateRep,80));
+
+// Quiz
+const QF={
+  zh:{q1_y:'renv.lock 記錄精確版本與 CRAN/Bioc 來源，是 R 環境重現的標準檔。',q1_n:'正確答案已標示。',q2_y:'Zenodo + GitHub 整合會自動為每個 Release 發 DOI——這才是論文該引用的識別碼。',q2_n:'正確答案已標示。',q3_y:'--from-history 只保留你明確安裝的套件，跨 OS 才能用；少了它會帶到 OS-specific build hash。',q3_n:'正確答案已標示。'},
+  en:{q1_y:'renv.lock pins exact versions and CRAN/Bioc sources — the standard for R environment reproduction.',q1_n:'Correct answer is highlighted.',q2_y:'The Zenodo + GitHub integration mints a DOI for every Release — that\'s the identifier the paper should cite.',q2_n:'Correct answer is highlighted.',q3_y:'--from-history records only what you explicitly installed; without it, OS-specific build hashes leak in and break portability.',q3_n:'Correct answer is highlighted.'}
+};
+document.querySelectorAll('.quiz-q').forEach((q,qi)=>{const ans=+q.dataset.answer;q.querySelectorAll('.quiz-opt').forEach(o=>{o.addEventListener('click',()=>{if(q.classList.contains('answered'))return;q.classList.add('answered');const fb=document.getElementById('fb'+(qi+1));const ok=+o.dataset.idx===ans;o.classList.add(ok?'correct':'wrong');if(!ok)q.querySelectorAll('.quiz-opt')[ans].classList.add('correct');const L=I18n.get();fb.className='quiz-feedback show '+(ok?'correct-fb':'wrong-fb');fb.textContent=(ok?'✅ ':'❌ ')+(QF[L]['q'+(qi+1)+'_'+(ok?'y':'n')]||'');});});});
+</script>
+</body></html>
