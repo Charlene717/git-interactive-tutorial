@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Git / GitHub 參考資料 · References</title>
+<meta name="description" content="Git / GitHub for Bioinformatics Interactive Tutorial 各模組的官方文件、權威書籍、論文、cheat sheet 與可重現研究資源整理。">
+<link rel="stylesheet" href="../styles.css">
+<style>
+.ref-list{list-style:none;padding:0;margin:14px 0 0}
+.ref-list li{padding:14px 16px;background:var(--c-surface-alt);border:1px solid var(--c-border-light);border-radius:var(--radius);margin-bottom:10px;font-size:.92rem;line-height:1.65}
+.ref-list li:hover{background:var(--c-surface);border-color:var(--c-border)}
+.ref-tag{display:inline-block;font-family:var(--font-mono);font-size:.72rem;font-weight:600;padding:2px 8px;border-radius:6px;margin-right:8px;letter-spacing:.5px}
+.ref-tag.paper{background:var(--c-accent-light);color:var(--c-accent-dark)}
+.ref-tag.doc{background:#e3f2fd;color:#1565c0}
+.ref-tag.bench{background:#fff3e0;color:#e65100}
+.ref-tag.db{background:#fce4ec;color:#ad1457}
+.ref-tag.book{background:#f3e5f5;color:#6a1b9a}
+.ref-tag.bestp{background:var(--c-highlight-light);color:#a06a00;border:1px solid var(--c-highlight)}
+.ref-tag.tool{background:#e8f5e9;color:#2e7d32}
+.ref-tag.blog{background:#ede7f6;color:#4527a0}
+.ref-author{color:var(--c-ink);font-weight:600}
+.ref-title{color:var(--c-ink);font-weight:500}
+.ref-meta{color:var(--c-ink-muted);font-size:.85rem;margin-top:4px;display:block}
+.ref-list a{color:var(--c-accent);text-decoration:none;border-bottom:1px dotted var(--c-accent)}
+.ref-list a:hover{color:var(--c-accent-dark);border-bottom-style:solid}
+.errata{background:#fef3c7;border-left:4px solid #d97706;border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:18px 22px;margin:18px 0;font-size:.9rem}
+.errata h4{margin:0 0 8px;color:#92400e;font-family:var(--font-display);font-size:1.05rem}
+.errata p{color:#78350f;margin-bottom:8px}
+.errata p:last-child{margin-bottom:0}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:18px 0}
+.toc-grid a{padding:10px 14px;background:var(--c-surface);border:1px solid var(--c-border-light);border-radius:var(--radius);text-decoration:none;color:var(--c-ink);font-size:.88rem;transition:var(--transition);display:flex;align-items:center;gap:8px}
+.toc-grid a:hover{border-color:var(--c-accent);background:var(--c-accent-light);color:var(--c-accent-dark)}
+.toc-grid a .step-tag{font-family:var(--font-mono);font-size:.72rem;color:var(--c-accent);font-weight:600}
+.section-anchor{scroll-margin-top:80px}
+section.section h3{margin-top:18px;font-size:1.05rem;color:var(--c-ink);border-left:3px solid var(--c-accent);padding-left:10px}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+<div class="top-nav-inner">
+  <a href="../index.html" class="top-nav-brand"><span>🌿</span> Git / GitHub 教學</a>
+  <ul class="top-nav-links">
+    <li><a href="../setup.html">Setup</a></li>
+    <li><a href="../repo-basics.html">Repo</a></li>
+    <li><a href="../inspecting.html">Inspect</a></li>
+    <li><a href="../undoing.html">Undo</a></li>
+    <li><a href="../branching.html">Branch</a></li>
+    <li><a href="../merge-rebase.html">Merge</a></li>
+    <li><a href="../remotes.html">Remote</a></li>
+    <li><a href="../collaboration.html">PR</a></li>
+    <li><a href="../gitignore-lfs.html">LFS</a></li>
+    <li><a href="../workflows.html">Flow</a></li>
+    <li><a href="../actions.html">Actions</a></li>
+    <li><a href="../reproducibility.html">Repro</a></li>
+    <li><a href="index.html" class="active" style="font-weight:700" data-zh="📚 參考資料" data-en="📚 References">📚 參考資料</a></li>
+  </ul>
+</div>
+</nav>
+
+<header class="page-hero">
+<div class="step-badge" data-zh="參考資料 · REFERENCES" data-en="REFERENCES">REFERENCES</div>
+<h1 data-zh="學術論文、官方文件與可重現研究資源" data-en="Git & GitHub References Index">Git & GitHub References Index</h1>
+<p class="subtitle" data-lang="zh">為 Git / GitHub for Bioinformatics Tutorial 12 個模組提供原始論文、權威書籍、官方文件、Best Practices 綜述、實用工具與生資 reproducibility 資源的完整佐證。</p>
+<p class="subtitle" data-lang="en">References, citations, and sources for the Git & GitHub Interactive Tutorial — papers, official documents, and benchmarks with DOI / URL links.</p>
+</header>
+
+<main class="content-wrap">
+
+<!-- Overview -->
+<section class="section">
+<div class="section-label" data-zh="概覽" data-en="OVERVIEW">概覽</div>
+<h2 data-zh="如何使用這份資料？" data-en="How to use this page">如何使用這份資料？</h2>
+<p data-lang="zh">本頁針對教學中提到的每個指令、工具、規範與生物資訊應用場景，整理權威出處供讀者深入查閱。引用標籤含義：</p>
+<p data-lang="en">For every command, tool, specification, and bioinformatics use case mentioned in the tutorial, this page collects authoritative sources for deeper reading. Citation tag meanings:</p>
+<div class="card-grid cols-3">
+  <div class="card"><div class="card-icon" style="background:var(--c-accent-light)">📄</div><h4>Paper</h4><p data-lang="zh">同行評審論文 · 含 DOI</p><p data-lang="en">Peer-reviewed papers with DOIs</p></div>
+  <div class="card"><div class="card-icon" style="background:#e3f2fd">📘</div><h4>Doc</h4><p data-lang="zh">官方文件、man page、reference</p><p data-lang="en">Official documentation, man pages, references</p></div>
+  <div class="card"><div class="card-icon" style="background:#f3e5f5">📚</div><h4>Book</h4><p data-lang="zh">線上免費書籍與權威教材</p><p data-lang="en">Free online books and authoritative textbooks</p></div>
+  <div class="card"><div class="card-icon" style="background:var(--c-highlight-light)">⭐</div><h4>Best Practice</h4><p data-lang="zh">業界 / community 推薦做法</p><p data-lang="en">Industry- and community-recommended practices</p></div>
+  <div class="card"><div class="card-icon" style="background:#fff3e0">📊</div><h4>Benchmark</h4><p data-lang="zh">方法評比 / 系統性調查</p><p data-lang="en">Method comparisons and systematic surveys</p></div>
+  <div class="card"><div class="card-icon" style="background:#e8f5e9">🔧</div><h4>Tool</h4><p data-lang="zh">CLI 工具 / GitHub Action / 套件</p><p data-lang="en">CLI tools, GitHub Actions, packages</p></div>
+  <div class="card"><div class="card-icon" style="background:#ede7f6">✍️</div><h4>Blog / Guide</h4><p data-lang="zh">權威部落格、社群教學</p><p data-lang="en">Authoritative blogs and community tutorials</p></div>
+  <div class="card"><div class="card-icon" style="background:#fce4ec">🗄️</div><h4>Database / Hub</h4><p data-lang="zh">套件庫、註冊中心、Hub</p><p data-lang="en">Package libraries, registries, hubs</p></div>
+</div>
+
+<h3 data-zh="本頁目錄" data-en="Table of contents">本頁目錄</h3>
+<div class="toc-grid">
+  <a href="#bestpractices"><span class="step-tag">★</span><span data-zh="可重現研究綜述" data-en="Reproducibility Reviews">可重現研究綜述</span></a>
+  <a href="#books"><span class="step-tag">📚</span><span data-zh="權威書籍" data-en="Authoritative Books">權威書籍</span></a>
+  <a href="#cheatsheets"><span class="step-tag">⚡</span><span data-zh="速查表與互動教學" data-en="Cheat Sheets & Interactive">速查表與互動教學</span></a>
+  <a href="#setup"><span class="step-tag">Step 1</span><span>Setup &amp; Config</span></a>
+  <a href="#repo"><span class="step-tag">Step 2</span><span>Repo Basics</span></a>
+  <a href="#inspect"><span class="step-tag">Step 3</span><span>Inspecting</span></a>
+  <a href="#undo"><span class="step-tag">Step 4</span><span>Undoing</span></a>
+  <a href="#branch"><span class="step-tag">Step 5</span><span>Branching</span></a>
+  <a href="#merge"><span class="step-tag">Step 6</span><span>Merge / Rebase</span></a>
+  <a href="#remote"><span class="step-tag">Step 7</span><span>Remotes</span></a>
+  <a href="#pr"><span class="step-tag">Step 8</span><span>Collaboration</span></a>
+  <a href="#lfs"><span class="step-tag">Step 9</span><span>.gitignore / LFS</span></a>
+  <a href="#flow"><span class="step-tag">Adv.</span><span>Workflows</span></a>
+  <a href="#actions"><span class="step-tag">Adv.</span><span>Actions / CI</span></a>
+  <a href="#repro"><span class="step-tag">Adv.</span><span>Reproducibility</span></a>
+  <a href="#bioinfo"><span class="step-tag">Bio</span><span data-zh="生資 pipeline" data-en="Bioinfo Pipelines">生資 pipeline</span></a>
+  <a href="#errata"><span class="step-tag">!</span><span data-zh="教學註記與細節" data-en="Tutorial Notes & Details">教學註記與細節</span></a>
+</div>
+</section>
+
+<!-- ===================== Best Practices ===================== -->
+<section class="section section-anchor" id="bestpractices">
+<div class="section-label" data-zh="綜論" data-en="OVERVIEW">綜論</div>
+<h2 data-zh="⭐ 可重現研究與 Git/GitHub 綜述論文" data-en="⭐ Reproducible Research & Git/GitHub Reviews">⭐ 可重現研究與 Git/GitHub 綜述論文</h2>
+<p data-lang="zh">把 Git/GitHub 放在「科學可重現性」脈絡下的權威綜述。建議先讀 Wilson 與 Sandve 二文，能對全流程的設計取捨建立全景觀。</p>
+<p data-lang="en">Authoritative reviews that situate Git/GitHub within the context of scientific reproducibility. Read Wilson and Sandve first — together they build a panoramic view of the design trade-offs across the entire workflow.</p>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag bestp">★ BEST</span>
+    <span class="ref-author">Wilson G, Bryan J, Cranston K, Kitzes J, Nederbragt L, Teal TK.</span>
+    <span class="ref-title"> Good enough practices in scientific computing. </span>
+    <em>PLOS Computational Biology</em> 13(6):e1005510 (2017).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1005510" target="_blank" rel="noopener">10.1371/journal.pcbi.1005510</a> · Software Carpentry 創辦團隊的「最低限度」科學運算規範，版本控制是核心建議。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1005510" target="_blank" rel="noopener">10.1371/journal.pcbi.1005510</a> · Minimum-viable scientific computing practices from the Software Carpentry founders; version control is one of the core recommendations.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag paper">PAPER</span>
+    <span class="ref-author">Sandve GK, Nekrutenko A, Taylor J, Hovig E.</span>
+    <span class="ref-title"> Ten Simple Rules for Reproducible Computational Research. </span>
+    <em>PLOS Computational Biology</em> 9(10):e1003285 (2013).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1003285" target="_blank" rel="noopener">10.1371/journal.pcbi.1003285</a> · Rule 4：「Version Control All Custom Scripts」。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1003285" target="_blank" rel="noopener">10.1371/journal.pcbi.1003285</a> · Rule 4 — "Version Control All Custom Scripts."</span></span>
+  </li>
+  <li>
+    <span class="ref-tag paper">PAPER</span>
+    <span class="ref-author">Perez-Riverol Y, Gatto L, Wang R, et al.</span>
+    <span class="ref-title"> Ten Simple Rules for Taking Advantage of Git and GitHub. </span>
+    <em>PLOS Computational Biology</em> 12(7):e1004947 (2016).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1004947" target="_blank" rel="noopener">10.1371/journal.pcbi.1004947</a> · 專為生物資訊新手而寫；本教學章節順序部分參考此文。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1371/journal.pcbi.1004947" target="_blank" rel="noopener">10.1371/journal.pcbi.1004947</a> · Written specifically for bioinformatics newcomers; this tutorial's chapter ordering draws partly from it.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag paper">PAPER</span>
+    <span class="ref-author">Peng RD.</span>
+    <span class="ref-title"> Reproducible Research in Computational Science. </span>
+    <em>Science</em> 334(6060):1226–1227 (2011).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1126/science.1213847" target="_blank" rel="noopener">10.1126/science.1213847</a> · 確立「可重現 ≠ 可重複」的經典 perspective，本教學 Reproducibility 章節引用其四層次模型。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1126/science.1213847" target="_blank" rel="noopener">10.1126/science.1213847</a> · The classic perspective establishing that "reproducible" is not the same as "replicable"; this tutorial's Reproducibility chapter cites its four-tier model.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag bestp">⭐ REVIEW</span>
+    <span class="ref-author">Grüning B, Chilton J, Köster J, Dale R, Soranzo N, et al.</span>
+    <span class="ref-title"> Practical Computational Reproducibility in the Life Sciences. </span>
+    <em>Cell Systems</em> 6(6):631–635 (2018).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1016/j.cels.2018.03.014" target="_blank" rel="noopener">10.1016/j.cels.2018.03.014</a> · Bioconda 創辦人團隊；把版本控制、conda、容器、CI 串成一條 reproducibility pipeline。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1016/j.cels.2018.03.014" target="_blank" rel="noopener">10.1016/j.cels.2018.03.014</a> · From the Bioconda founding team; weaves version control, conda, containers, and CI into a single reproducibility pipeline.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag bench">📊 BENCH</span>
+    <span class="ref-author">Mangul S, Mosqueiro T, Abdill RJ, et al.</span>
+    <span class="ref-title"> Challenges and recommendations to improve the installability and archival stability of omics computational tools. </span>
+    <em>PLOS Biology</em> 17(6):e3000333 (2019).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1371/journal.pbio.3000333" target="_blank" rel="noopener">10.1371/journal.pbio.3000333</a> · 系統性調查：多數 omics 工具難以重現，版本控制+容器化是建議解法。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1371/journal.pbio.3000333" target="_blank" rel="noopener">10.1371/journal.pbio.3000333</a> · Systematic survey showing most omics tools are difficult to reproduce; version control plus containerization is the recommended remedy.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag paper">PAPER</span>
+    <span class="ref-author">Wilson G, Aruliah DA, Brown CT, Chue Hong NP, Davis M, et al.</span>
+    <span class="ref-title"> Best practices for scientific computing. </span>
+    <em>PLOS Biology</em> 12(1):e1001745 (2014).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1371/journal.pbio.1001745" target="_blank" rel="noopener">10.1371/journal.pbio.1001745</a> · Wilson 2017 之前的姊妹文章；版本控制列為最重要實踐之一。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1371/journal.pbio.1001745" target="_blank" rel="noopener">10.1371/journal.pbio.1001745</a> · Predecessor companion piece to Wilson 2017; version control is listed among the most important practices.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag bestp">⭐ FAIR</span>
+    <span class="ref-author">Chue Hong NP, Katz DS, Barker M, et al.</span>
+    <span class="ref-title"> FAIR Principles for Research Software (FAIR4RS Principles) v1.0. </span>
+    Research Data Alliance (2022).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.15497/RDA00068" target="_blank" rel="noopener">10.15497/RDA00068</a> · Findable / Accessible / Interoperable / Reusable 軟體版。</span><span data-lang="en">DOI: <a href="https://doi.org/10.15497/RDA00068" target="_blank" rel="noopener">10.15497/RDA00068</a> · The Findable / Accessible / Interoperable / Reusable principles, adapted for research software.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Books ===================== -->
+<section class="section section-anchor" id="books">
+<div class="section-label" data-zh="權威書籍" data-en="BOOKS">權威書籍</div>
+<h2 data-zh="📚 線上免費書籍與權威教材" data-en="📚 Free Online Books & Authoritative Textbooks">📚 線上免費書籍與權威教材</h2>
+<p data-lang="zh">四本書即可覆蓋 Git/GitHub 從新手到專家所有需求。前兩本完全免費、線上可閱。</p>
+<p data-lang="en">Four books cover everything from beginner to expert in Git/GitHub. The first two are entirely free and readable online.</p>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-author">Chacon S, Straub B.</span>
+    <span class="ref-title"> Pro Git, 2nd Edition. </span>
+    <em>Apress</em> <span data-lang="zh">(2014, 持續更新).</span><span data-lang="en">(2014, continuously updated).</span>
+    <span class="ref-meta"><span data-lang="zh">線上免費全文 <a href="https://git-scm.com/book/en/v2" target="_blank" rel="noopener">git-scm.com/book/en/v2</a> · 繁體中文版 <a href="https://git-scm.com/book/zh-tw/v2" target="_blank" rel="noopener">zh-tw/v2</a> · 官方聖經，從 plumbing/porcelain 兩個層次完整解釋每個指令。</span><span data-lang="en">Free full text online at <a href="https://git-scm.com/book/en/v2" target="_blank" rel="noopener">git-scm.com/book/en/v2</a> · Traditional Chinese edition: <a href="https://git-scm.com/book/zh-tw/v2" target="_blank" rel="noopener">zh-tw/v2</a> · The official "bible," explaining every command at both the plumbing and porcelain levels.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-author">Loeliger J, McCullough M.</span>
+    <span class="ref-title"> Version Control with Git: Powerful Tools and Techniques for Collaborative Software Development, 3rd Edition. </span>
+    <em>O'Reilly Media</em> (2022).
+    <span class="ref-meta"><span data-lang="zh">ISBN-13: 978-1492091196 · 中階使用者標準參考，深入 internals 與 advanced workflow。</span><span data-lang="en">ISBN-13: 978-1492091196 · The standard reference for intermediate users, with deep dives into Git internals and advanced workflows.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-author">Buffalo V.</span>
+    <span class="ref-title"> Bioinformatics Data Skills: Reproducible and Robust Research with Open Source Tools. </span>
+    <em>O'Reilly Media</em> (2015).
+    <span class="ref-meta"><span data-lang="zh">ISBN-13: 978-1449367374 · Ch.5 專講 Git for bioinformatics；本教學 .gitignore 章節部分靈感來源。</span><span data-lang="en">ISBN-13: 978-1449367374 · Chapter 5 is dedicated to Git for bioinformatics; partial inspiration for this tutorial's .gitignore chapter.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-author">Cottrell A.</span>
+    <span class="ref-title"> Learn Git in a Month of Lunches. </span>
+    <em>Manning Publications</em> (2016).
+    <span class="ref-meta"><span data-lang="zh">ISBN-13: 978-1617292415 · 工作手冊風格，每章 30 分鐘，最適合新手。</span><span data-lang="en">ISBN-13: 978-1617292415 · A workbook-style guide with 30-minute chapters; ideal for beginners.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-author">Scopatz A, Huff KD.</span>
+    <span class="ref-title"> Effective Computation in Physics: Field Guide to Research with Python. </span>
+    <em>O'Reilly Media</em> (2015).
+    <span class="ref-meta"><span data-lang="zh">ISBN-13: 978-1491901533 · Ch.16-17 涵蓋 Git workflow，從研究科學家角度切入。</span><span data-lang="en">ISBN-13: 978-1491901533 · Chapters 16-17 cover Git workflows from the perspective of a research scientist.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Cheat sheets ===================== -->
+<section class="section section-anchor" id="cheatsheets">
+<div class="section-label" data-zh="速查與互動" data-en="CHEAT & INTERACTIVE">速查與互動</div>
+<h2 data-zh="⚡ 速查表、互動教學與遊戲" data-en="⚡ Cheat Sheets, Interactive Tutorials & Games">⚡ 速查表、互動教學與遊戲</h2>
+<p data-lang="zh">把這些釘在書籤列。Cheat sheet 印一張 A4，視覺型學習者強烈推薦 Oh My Git! 與 Learn Git Branching。</p>
+<p data-lang="en">Pin these to your bookmarks bar. Print the cheat sheet on one A4 page; for visual learners, Oh My Git! and Learn Git Branching come strongly recommended.</p>
+
+<h3 data-zh="速查表 (Cheat Sheets)" data-en="Cheat Sheets">速查表 (Cheat Sheets)</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="GitHub Git Cheat Sheet（官方，14 種語言）." data-en="GitHub Git Cheat Sheet (official, 14 languages).">GitHub Git Cheat Sheet（官方，14 種語言）.</span>
+    <span class="ref-meta"><span data-lang="zh">英文版 PDF <a href="https://education.github.com/git-cheat-sheet-education.pdf" target="_blank" rel="noopener">education.github.com</a> · 繁體中文版 <a href="https://training.github.com/downloads/zh_TW/github-git-cheat-sheet/" target="_blank" rel="noopener">training.github.com/zh_TW</a> · 最常被列印的一張 A4，日常 90% 指令在此。</span><span data-lang="en">English PDF at <a href="https://education.github.com/git-cheat-sheet-education.pdf" target="_blank" rel="noopener">education.github.com</a> · Traditional Chinese version at <a href="https://training.github.com/downloads/zh_TW/github-git-cheat-sheet/" target="_blank" rel="noopener">training.github.com/zh_TW</a> · The most-printed A4 sheet; covers 90% of day-to-day commands.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="Atlassian Git Cheat Sheet（含 ASCII 圖示 branching/merging）." data-en="Atlassian Git Cheat Sheet (with ASCII diagrams for branching/merging).">Atlassian Git Cheat Sheet（含 ASCII 圖示 branching/merging）.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet" target="_blank" rel="noopener">atlassian.com/git/tutorials/atlassian-git-cheatsheet</a></span><span data-lang="en"><a href="https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet" target="_blank" rel="noopener">atlassian.com/git/tutorials/atlassian-git-cheatsheet</a></span></span>
+  </li>
+</ul>
+
+<h3 data-zh="互動式學習" data-en="Interactive Learning">互動式學習</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag tool">🔧 GAME</span>
+    <span class="ref-title" data-zh="Oh My Git! — 視覺化卡牌遊戲，邊玩邊學 Git 內部結構。" data-en="Oh My Git! — A visual card game for learning Git internals while you play.">Oh My Git! — 視覺化卡牌遊戲，邊玩邊學 Git 內部結構。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://ohmygit.org/" target="_blank" rel="noopener">ohmygit.org</a> · 開源；強烈推薦給視覺型學習者。</span><span data-lang="en"><a href="https://ohmygit.org/" target="_blank" rel="noopener">ohmygit.org</a> · Open-source; highly recommended for visual learners.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag tool">🔧 SANDBOX</span>
+    <span class="ref-title" data-zh="Learn Git Branching — 瀏覽器內模擬 branching / merging / rebase，無需安裝。" data-en="Learn Git Branching — A browser-based simulator for branching, merging, and rebasing; no install required.">Learn Git Branching — 瀏覽器內模擬 branching / merging / rebase，無需安裝。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://learngitbranching.js.org/" target="_blank" rel="noopener">learngitbranching.js.org</a> · 多語版本含中文。</span><span data-lang="en"><a href="https://learngitbranching.js.org/" target="_blank" rel="noopener">learngitbranching.js.org</a> · Multilingual, with a Chinese version available.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag tool">🔧 SANDBOX</span>
+    <span class="ref-title" data-zh="GitHub Skills — 互動式作業練習常見 GitHub workflow。" data-en="GitHub Skills — Interactive exercises that practise common GitHub workflows.">GitHub Skills — 互動式作業練習常見 GitHub workflow。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://skills.github.com/" target="_blank" rel="noopener">skills.github.com</a></span><span data-lang="en"><a href="https://skills.github.com/" target="_blank" rel="noopener">skills.github.com</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag tool">🔧 VIS</span>
+    <span class="ref-title" data-zh="Visualizing Git — 在瀏覽器即時看每個指令對 commit 圖的影響。" data-en="Visualizing Git — See in real time how each command affects the commit graph, right in your browser.">Visualizing Git — 在瀏覽器即時看每個指令對 commit 圖的影響。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-school.github.io/visualizing-git/" target="_blank" rel="noopener">git-school.github.io/visualizing-git</a></span><span data-lang="en"><a href="https://git-school.github.io/visualizing-git/" target="_blank" rel="noopener">git-school.github.io/visualizing-git</a></span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 1: Setup ===================== -->
+<section class="section section-anchor" id="setup">
+<div class="section-label">Step 1</div>
+<h2 data-zh="⚙️ 安裝與設定 (Setup &amp; Config)" data-en="⚙️ Setup & Config">⚙️ 安裝與設定 (Setup &amp; Config)</h2>
+<p data-lang="zh">Git 安裝、身份設定、SSH key vs Personal Access Token (PAT) 認證流程。</p>
+<p data-lang="en">Git installation, identity configuration, and the SSH key vs Personal Access Token (PAT) authentication flow.</p>
+
+<h3 data-zh="Git 安裝與 git config 文件" data-en="Git installation & git config docs">Git 安裝與 git config 文件</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="Git Official Downloads — Windows / macOS / Linux 安裝包。" data-en="Git Official Downloads — installers for Windows, macOS, and Linux.">Git Official Downloads — Windows / macOS / Linux 安裝包。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git-scm.com/downloads</a> · 含逐步教學。</span><span data-lang="en"><a href="https://git-scm.com/downloads" target="_blank" rel="noopener">git-scm.com/downloads</a> · Includes step-by-step tutorials.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-config(1) Manual — 所有 config keys 完整 reference。" data-en="git-config(1) Manual — the complete reference for every config key.">git-config(1) Manual — 所有 config keys 完整 reference。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-config" target="_blank" rel="noopener">git-scm.com/docs/git-config</a> · 條件式 <code>includeIf "gitdir:..."</code> 範例。</span><span data-lang="en"><a href="https://git-scm.com/docs/git-config" target="_blank" rel="noopener">git-scm.com/docs/git-config</a> · Examples of conditional <code>includeIf "gitdir:..."</code> rules.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.1.6 — First-Time Git Setup.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup" target="_blank" rel="noopener">git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup</a></span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup" target="_blank" rel="noopener">git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup</a></span></span>
+  </li>
+</ul>
+
+<h3 data-zh="GitHub 認證：SSH 與 PAT" data-en="GitHub Authentication: SSH and PAT">GitHub 認證：SSH 與 PAT</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="Connecting to GitHub with SSH — 從產 key 到測試的官方手冊。" data-en="Connecting to GitHub with SSH — the official handbook covering everything from key generation to testing.">Connecting to GitHub with SSH — 從產 key 到測試的官方手冊。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh" target="_blank" rel="noopener">docs.github.com / authentication / connecting-with-ssh</a></span><span data-lang="en"><a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh" target="_blank" rel="noopener">docs.github.com / authentication / connecting-with-ssh</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="Managing Personal Access Tokens — 含 fine-grained PAT 教學。" data-en="Managing Personal Access Tokens — includes a fine-grained PAT walkthrough.">Managing Personal Access Tokens — 含 fine-grained PAT 教學。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank" rel="noopener">docs.github.com / managing-your-personal-access-tokens</a></span><span data-lang="en"><a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank" rel="noopener">docs.github.com / managing-your-personal-access-tokens</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ BLOG</span>
+    <span class="ref-author">Cory Wilson.</span>
+    <span class="ref-title"> Token authentication requirements for Git operations. </span>
+    <em>GitHub Blog</em>（Aug 2021）.
+    <span class="ref-meta"><span data-lang="zh"><a href="https://github.blog/security/application-security/token-authentication-requirements-for-git-operations/" target="_blank" rel="noopener">github.blog</a> · 2021/8/13 起 password 認證被全面停用的官方公告。</span><span data-lang="en"><a href="https://github.blog/security/application-security/token-authentication-requirements-for-git-operations/" target="_blank" rel="noopener">github.blog</a> · The official announcement that password authentication was fully deprecated as of Aug 13, 2021.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="Using SSH over the HTTPS port（port 443 解 firewall 封鎖）." data-en="Using SSH over the HTTPS port (port 443 workaround for firewall blocks).">Using SSH over the HTTPS port（port 443 解 firewall 封鎖）.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port" target="_blank" rel="noopener">docs.github.com / using-ssh-over-the-https-port</a> · HPC port 22 被擋時的官方解法。</span><span data-lang="en"><a href="https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port" target="_blank" rel="noopener">docs.github.com / using-ssh-over-the-https-port</a> · The official workaround for when HPC environments block port 22.</span></span>
+  </li>
+</ul>
+
+<h3 data-zh="SSH key 演算法" data-en="SSH Key Algorithms">SSH key 演算法</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag paper">PAPER</span>
+    <span class="ref-author">Bernstein DJ, Duif N, Lange T, Schwabe P, Yang BY.</span>
+    <span class="ref-title"> High-speed high-security signatures (Ed25519). </span>
+    <em>Journal of Cryptographic Engineering</em> 2:77–89 (2012).
+    <span class="ref-meta"><span data-lang="zh">DOI: <a href="https://doi.org/10.1007/s13389-012-0027-1" target="_blank" rel="noopener">10.1007/s13389-012-0027-1</a> · ed25519 原始論文（OpenSSH 推薦演算法）。</span><span data-lang="en">DOI: <a href="https://doi.org/10.1007/s13389-012-0027-1" target="_blank" rel="noopener">10.1007/s13389-012-0027-1</a> · The original Ed25519 paper (the algorithm recommended by OpenSSH).</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">OpenSSH Manual.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.openssh.com/manual.html" target="_blank" rel="noopener">openssh.com/manual.html</a> · <code>ssh-keygen</code>, <code>ssh-agent</code>, <code>ssh-add</code> 完整參考。</span><span data-lang="en"><a href="https://www.openssh.com/manual.html" target="_blank" rel="noopener">openssh.com/manual.html</a> · Complete reference for <code>ssh-keygen</code>, <code>ssh-agent</code>, and <code>ssh-add</code>.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 2: Repo Basics ===================== -->
+<section class="section section-anchor" id="repo">
+<div class="section-label">Step 2</div>
+<h2 data-zh="📦 儲存庫基礎 (Repository Basics)" data-en="📦 Repository Basics">📦 儲存庫基礎 (Repository Basics)</h2>
+<p data-lang="zh">init / clone、三區概念（working tree / staging / repository）、commit、message 規範。</p>
+<p data-lang="en">init / clone, the three-area model (working tree / staging / repository), committing, and message conventions.</p>
+
+<h3 data-zh="三區模型與 Git internals" data-en="Three-Area Model & Git Internals">三區模型與 Git internals</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.2 — Git Basics.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository" target="_blank" rel="noopener">git-scm.com / Git-Basics</a> · 三區（working / staging / repository）概念權威說明。</span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository" target="_blank" rel="noopener">git-scm.com / Git-Basics</a> · Authoritative explanation of the three-area model: working tree, staging area, and repository.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.10 — Git Internals.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain" target="_blank" rel="noopener">git-scm.com / Git-Internals</a> · blob / tree / commit / tag 四種物件解剖。</span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain" target="_blank" rel="noopener">git-scm.com / Git-Internals</a> · Anatomy of the four object types: blob, tree, commit, and tag.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Kareem M.</span>
+    <span class="ref-title"> Unpacking Git packfiles. </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://codewords.recurse.com/issues/three/unpacking-git-packfiles" target="_blank" rel="noopener">codewords.recurse.com</a> · Recurse Center 文章，深入 Git object database。</span><span data-lang="en"><a href="https://codewords.recurse.com/issues/three/unpacking-git-packfiles" target="_blank" rel="noopener">codewords.recurse.com</a> · Recurse Center article that dives deep into Git's object database.</span></span>
+  </li>
+</ul>
+
+<h3 data-zh="核心指令文件" data-en="Core Command Docs">核心指令文件</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git-init(1) · git-clone(1) · git-add(1) · git-commit(1) · git-status(1).</span>
+    <span class="ref-meta"><span data-lang="zh">
+      <a href="https://git-scm.com/docs/git-init" target="_blank" rel="noopener">init</a> ·
+      <a href="https://git-scm.com/docs/git-clone" target="_blank" rel="noopener">clone</a> ·
+      <a href="https://git-scm.com/docs/git-add" target="_blank" rel="noopener">add</a> ·
+      <a href="https://git-scm.com/docs/git-commit" target="_blank" rel="noopener">commit</a> ·
+      <a href="https://git-scm.com/docs/git-status" target="_blank" rel="noopener">status</a>
+    </span><span data-lang="en"><a href="https://git-scm.com/docs/git-init" target="_blank" rel="noopener">init</a> <a href="https://git-scm.com/docs/git-clone" target="_blank" rel="noopener">clone</a> <a href="https://git-scm.com/docs/git-add" target="_blank" rel="noopener">add</a> <a href="https://git-scm.com/docs/git-commit" target="_blank" rel="noopener">commit</a> <a href="https://git-scm.com/docs/git-status" target="_blank" rel="noopener">status</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git clone — shallow clone &amp; submodule flags.</span>
+    <span class="ref-meta"><span data-lang="zh">完整 <code>--depth</code>, <code>--filter=blob:none</code>, <code>--single-branch</code>, <code>--recurse-submodules</code> 說明：<a href="https://git-scm.com/docs/git-clone" target="_blank" rel="noopener">git-scm.com/docs/git-clone</a>。</span><span data-lang="en">Full documentation of <code>--depth</code>, <code>--filter=blob:none</code>, <code>--single-branch</code>, and <code>--recurse-submodules</code>: <a href="https://git-scm.com/docs/git-clone" target="_blank" rel="noopener">git-scm.com/docs/git-clone</a>.</span></span>
+  </li>
+</ul>
+
+<h3 data-zh="Commit message 規範" data-en="Commit Message Conventions">Commit message 規範</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag bestp">⭐ SPEC</span>
+    <span class="ref-title" data-zh="Conventional Commits 1.0.0 — commit message 結構規範。" data-en="Conventional Commits 1.0.0 — the structural specification for commit messages.">Conventional Commits 1.0.0 — commit message 結構規範。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.conventionalcommits.org/en/v1.0.0/" target="_blank" rel="noopener">conventionalcommits.org/en/v1.0.0</a> · 工具如 semantic-release / commitizen 讀取此格式。</span><span data-lang="en"><a href="https://www.conventionalcommits.org/en/v1.0.0/" target="_blank" rel="noopener">conventionalcommits.org/en/v1.0.0</a> · Tools such as semantic-release and commitizen consume this format.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Chris Beams.</span>
+    <span class="ref-title"> How to Write a Git Commit Message. </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://cbea.ms/git-commit/" target="_blank" rel="noopener">cbea.ms/git-commit</a> · 「7 rules」一文，業界引用率極高。</span><span data-lang="en"><a href="https://cbea.ms/git-commit/" target="_blank" rel="noopener">cbea.ms/git-commit</a> · The famous "7 rules" essay, extremely widely cited in the industry.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 3: Inspecting ===================== -->
+<section class="section section-anchor" id="inspect">
+<div class="section-label">Step 3</div>
+<h2 data-zh="🔍 檢視變更 (Inspecting Changes)" data-en="🔍 Inspecting Changes">🔍 檢視變更 (Inspecting Changes)</h2>
+<p data-lang="zh">log / diff / show / blame / bisect 等查歷史與找問題的工具。</p>
+<p data-lang="en">Tools for examining history and tracking down problems: log, diff, show, blame, bisect, and more.</p>
+
+<h3 data-zh="查詢類指令" data-en="Query Commands">查詢類指令</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-log(1) — 完整旗標 reference。" data-en="git-log(1) — the complete flag reference.">git-log(1) — 完整旗標 reference。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-log" target="_blank" rel="noopener">git-scm.com/docs/git-log</a> · 所有 <code>--pretty</code>, <code>--graph</code>, <code>-S</code> pickaxe 範例。</span><span data-lang="en"><a href="https://git-scm.com/docs/git-log" target="_blank" rel="noopener">git-scm.com/docs/git-log</a> · Examples for every <code>--pretty</code>, <code>--graph</code>, and <code>-S</code> pickaxe flag.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git-diff(1) · git-show(1) · git-blame(1).</span>
+    <span class="ref-meta"><span data-lang="zh">
+      <a href="https://git-scm.com/docs/git-diff" target="_blank" rel="noopener">diff</a> ·
+      <a href="https://git-scm.com/docs/git-show" target="_blank" rel="noopener">show</a> ·
+      <a href="https://git-scm.com/docs/git-blame" target="_blank" rel="noopener">blame</a>
+    </span><span data-lang="en"><a href="https://git-scm.com/docs/git-diff" target="_blank" rel="noopener">diff</a> <a href="https://git-scm.com/docs/git-show" target="_blank" rel="noopener">show</a> <a href="https://git-scm.com/docs/git-blame" target="_blank" rel="noopener">blame</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-bisect(1) — 二分搜尋找出 bug commit。" data-en="git-bisect(1) — binary-search your way to the commit that introduced a bug.">git-bisect(1) — 二分搜尋找出 bug commit。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-bisect" target="_blank" rel="noopener">git-scm.com/docs/git-bisect</a> · debug 神器，自動化 <code>git bisect run</code> 整合 test。</span><span data-lang="en"><a href="https://git-scm.com/docs/git-bisect" target="_blank" rel="noopener">git-scm.com/docs/git-bisect</a> · A debugging superpower; automate with <code>git bisect run</code> hooked into a test command.</span></span>
+  </li>
+</ul>
+
+<h3 data-zh="進階查詢技巧" data-en="Advanced Query Techniques">進階查詢技巧</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Trevor Bramwell.</span>
+    <span class="ref-title"> The Git Pickaxe (-S vs -G). </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.philandstuff.com/2014/02/09/git-pickaxe.html" target="_blank" rel="noopener">philandstuff.com / git-pickaxe</a> · 解釋 pickaxe 內部運作與 -S/-G 差異。</span><span data-lang="en"><a href="https://www.philandstuff.com/2014/02/09/git-pickaxe.html" target="_blank" rel="noopener">philandstuff.com / git-pickaxe</a> · Explains how the pickaxe works internally and the difference between -S and -G.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag tool">🔧 TOOL</span>
+    <span class="ref-title" data-zh="tig — terminal 內互動式 log 瀏覽器。" data-en="tig — an interactive log browser inside the terminal.">tig — terminal 內互動式 log 瀏覽器。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://jonas.github.io/tig/" target="_blank" rel="noopener">jonas.github.io/tig</a> · 純文字介面，HPC 環境內極為實用。</span><span data-lang="en"><a href="https://jonas.github.io/tig/" target="_blank" rel="noopener">jonas.github.io/tig</a> · A pure text interface, extremely useful inside HPC environments.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag tool">🔧 TOOL</span>
+    <span class="ref-title" data-zh="delta — 為 git diff 上色加排版，與 git log/blame 也整合。" data-en="delta — adds colour and layout to git diff and integrates with git log/blame.">delta — 為 git diff 上色加排版，與 git log/blame 也整合。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://github.com/dandavison/delta" target="_blank" rel="noopener">github.com/dandavison/delta</a></span><span data-lang="en"><a href="https://github.com/dandavison/delta" target="_blank" rel="noopener">github.com/dandavison/delta</a></span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 4: Undoing ===================== -->
+<section class="section section-anchor" id="undo">
+<div class="section-label">Step 4</div>
+<h2 data-zh="⏪ 撤銷與時光旅行 (Undoing &amp; Time Travel)" data-en="⏪ Undoing & Time Travel">⏪ 撤銷與時光旅行 (Undoing &amp; Time Travel)</h2>
+<p data-lang="zh">restore / reset / revert / stash / reflog — 學會安全地反悔。</p>
+<p data-lang="en">restore / reset / revert / stash / reflog — learn to undo things safely.</p>
+
+<h3 data-zh="撤銷與恢復" data-en="Undoing & Recovery">撤銷與恢復</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.2.4 — Undoing Things.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things" target="_blank" rel="noopener">git-scm.com / Undoing-Things</a></span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Basics-Undoing-Things" target="_blank" rel="noopener">git-scm.com / Undoing-Things</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-reset(1) — soft / mixed / hard 三模式。" data-en="git-reset(1) — the three modes: soft, mixed, and hard.">git-reset(1) — soft / mixed / hard 三模式。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-reset" target="_blank" rel="noopener">git-scm.com/docs/git-reset</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-reset" target="_blank" rel="noopener">git-scm.com/docs/git-reset</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-revert(1) — 安全的公開歷史撤銷。" data-en="git-revert(1) — the safe way to undo public history.">git-revert(1) — 安全的公開歷史撤銷。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-revert" target="_blank" rel="noopener">git-scm.com/docs/git-revert</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-revert" target="_blank" rel="noopener">git-scm.com/docs/git-revert</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title"><span data-lang="zh">git-restore(1) — Git 2.23+ 取代 <code>checkout &lt;file&gt;</code> 的現代指令。</span><span data-lang="en">git-restore(1) — the modern Git 2.23+ command that replaces <code>checkout &lt;file&gt;</code>.</span></span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-restore" target="_blank" rel="noopener">git-scm.com/docs/git-restore</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-restore" target="_blank" rel="noopener">git-scm.com/docs/git-restore</a></span></span>
+  </li>
+</ul>
+
+<h3 data-zh="暫存與恢復遺失工作" data-en="Stashing & Recovering Lost Work">暫存與恢復遺失工作</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-stash(1) — context switching 工具。" data-en="git-stash(1) — a context-switching tool.">git-stash(1) — context switching 工具。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-stash" target="_blank" rel="noopener">git-scm.com/docs/git-stash</a> · <code>--include-untracked</code> 連新檔一起暫存。</span><span data-lang="en"><a href="https://git-scm.com/docs/git-stash" target="_blank" rel="noopener">git-scm.com/docs/git-stash</a> · Use <code>--include-untracked</code> to stash new files along with tracked changes.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-reflog(1) — 90 天安全網。" data-en="git-reflog(1) — your 90-day safety net.">git-reflog(1) — 90 天安全網。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-reflog" target="_blank" rel="noopener">git-scm.com/docs/git-reflog</a> · <code>gc.reflogExpire=90 days</code>（reachable）/ <code>30 days</code>（unreachable）。</span><span data-lang="en"><a href="https://git-scm.com/docs/git-reflog" target="_blank" rel="noopener">git-scm.com/docs/git-reflog</a> · <code>gc.reflogExpire=90 days</code> for reachable commits / <code>30 days</code> for unreachable ones.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Atlassian.</span>
+    <span class="ref-title" data-zh=" Rewriting History — undo, amend, reflog 一站式教學。" data-en=" Rewriting History — a one-stop tutorial covering undo, amend, and reflog."> Rewriting History — undo, amend, reflog 一站式教學。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.atlassian.com/git/tutorials/rewriting-history" target="_blank" rel="noopener">atlassian.com/git/tutorials/rewriting-history</a></span><span data-lang="en"><a href="https://www.atlassian.com/git/tutorials/rewriting-history" target="_blank" rel="noopener">atlassian.com/git/tutorials/rewriting-history</a></span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 5: Branching ===================== -->
+<section class="section section-anchor" id="branch">
+<div class="section-label">Step 5</div>
+<h2 data-zh="🌿 分支 (Branching)" data-en="🌿 Branching">🌿 分支 (Branching)</h2>
+<p data-lang="zh">branch / switch / checkout、HEAD 指標、輕量級分支的核心概念。</p>
+<p data-lang="en">branch / switch / checkout, the HEAD pointer, and the core concept of lightweight branches.</p>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.3.1 — Branches in a Nutshell.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell" target="_blank" rel="noopener">git-scm.com / Branches-in-a-Nutshell</a> · 「branch = pointer」官方解說。</span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell" target="_blank" rel="noopener">git-scm.com / Branches-in-a-Nutshell</a> · The official "branch = pointer" explanation.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-switch(1) — modern branch switching（Git 2.23+）." data-en="git-switch(1) — modern branch switching (Git 2.23+).">git-switch(1) — modern branch switching（Git 2.23+）.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-switch" target="_blank" rel="noopener">git-scm.com/docs/git-switch</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-switch" target="_blank" rel="noopener">git-scm.com/docs/git-switch</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git-branch(1) — list / create / rename / delete branches.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-branch" target="_blank" rel="noopener">git-scm.com/docs/git-branch</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-branch" target="_blank" rel="noopener">git-scm.com/docs/git-branch</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Atlassian.</span>
+    <span class="ref-title"> Git Branch — concept &amp; visualizations. </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.atlassian.com/git/tutorials/using-branches" target="_blank" rel="noopener">atlassian.com/git/tutorials/using-branches</a></span><span data-lang="en"><a href="https://www.atlassian.com/git/tutorials/using-branches" target="_blank" rel="noopener">atlassian.com/git/tutorials/using-branches</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ BLOG</span>
+    <span class="ref-author" data-zh="Junio Hamano（Git 維護者）." data-en="Junio Hamano (Git maintainer).">Junio Hamano（Git 維護者）.</span>
+    <span class="ref-title"> switch / restore: New commands to split checkout. </span>
+    <em>git mailing list</em> (2019).
+    <span class="ref-meta"><span data-lang="zh"><a href="https://lore.kernel.org/git/xmqq36igetvr.fsf@gitster-ct.c.googlers.com/" target="_blank" rel="noopener">lore.kernel.org/git</a> · 官方解釋為何把 <code>checkout</code> 拆成 <code>switch + restore</code>。</span><span data-lang="en"><a href="https://lore.kernel.org/git/xmqq36igetvr.fsf@gitster-ct.c.googlers.com/" target="_blank" rel="noopener">lore.kernel.org/git</a> · The official rationale for splitting <code>checkout</code> into <code>switch</code> and <code>restore</code>.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 6: Merge / Rebase ===================== -->
+<section class="section section-anchor" id="merge">
+<div class="section-label">Step 6</div>
+<h2 data-zh="🔀 合併與 Rebase" data-en="🔀 Merge & Rebase">🔀 合併與 Rebase</h2>
+<p data-lang="zh">merge（ff / no-ff）、rebase、cherry-pick、衝突解決。</p>
+<p data-lang="en">merge (ff vs no-ff), rebase, cherry-pick, and conflict resolution.</p>
+
+<h3 data-zh="合併與 rebase 文件" data-en="Merge & Rebase Docs">合併與 rebase 文件</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.3.6 — Rebasing.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing" target="_blank" rel="noopener">git-scm.com / Git-Branching-Rebasing</a> · 「黃金法則」原文出處：never rebase published commits。</span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing" target="_blank" rel="noopener">git-scm.com / Git-Branching-Rebasing</a> · The original source of the "golden rule": never rebase published commits.</span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git-merge(1) · git-rebase(1) · git-cherry-pick(1).</span>
+    <span class="ref-meta"><span data-lang="zh">
+      <a href="https://git-scm.com/docs/git-merge" target="_blank" rel="noopener">merge</a> ·
+      <a href="https://git-scm.com/docs/git-rebase" target="_blank" rel="noopener">rebase</a> ·
+      <a href="https://git-scm.com/docs/git-cherry-pick" target="_blank" rel="noopener">cherry-pick</a>
+    </span><span data-lang="en"><a href="https://git-scm.com/docs/git-merge" target="_blank" rel="noopener">merge</a> <a href="https://git-scm.com/docs/git-rebase" target="_blank" rel="noopener">rebase</a> <a href="https://git-scm.com/docs/git-cherry-pick" target="_blank" rel="noopener">cherry-pick</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag bestp">⭐ COMPARE</span>
+    <span class="ref-author">Atlassian.</span>
+    <span class="ref-title"> Merging vs Rebasing. </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.atlassian.com/git/tutorials/merging-vs-rebasing" target="_blank" rel="noopener">atlassian.com/git/tutorials/merging-vs-rebasing</a> · 業界最常引用的對比文章。</span><span data-lang="en"><a href="https://www.atlassian.com/git/tutorials/merging-vs-rebasing" target="_blank" rel="noopener">atlassian.com/git/tutorials/merging-vs-rebasing</a> · The most widely cited comparison article in the industry.</span></span>
+  </li>
+</ul>
+
+<h3 data-zh="衝突解決" data-en="Conflict Resolution">衝突解決</h3>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title" data-zh="Pro Git Ch.3.2 — Basic Branching and Merging（含衝突解決）." data-en="Pro Git Ch.3.2 — Basic Branching and Merging (includes conflict resolution).">Pro Git Ch.3.2 — Basic Branching and Merging（含衝突解決）.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging" target="_blank" rel="noopener">git-scm.com / Basic-Branching-and-Merging</a></span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging" target="_blank" rel="noopener">git-scm.com / Basic-Branching-and-Merging</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title" data-zh="git-mergetool(1) — 整合 vimdiff / meld / kdiff3 等 GUI 工具。" data-en="git-mergetool(1) — integration for GUI tools such as vimdiff, meld, and kdiff3.">git-mergetool(1) — 整合 vimdiff / meld / kdiff3 等 GUI 工具。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/docs/git-mergetool" target="_blank" rel="noopener">git-scm.com/docs/git-mergetool</a></span><span data-lang="en"><a href="https://git-scm.com/docs/git-mergetool" target="_blank" rel="noopener">git-scm.com/docs/git-mergetool</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">VS Code Team.</span>
+    <span class="ref-title"> Resolving merge conflicts in VS Code. </span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://code.visualstudio.com/docs/sourcecontrol/overview#_merge-conflicts" target="_blank" rel="noopener">code.visualstudio.com / merge-conflicts</a> · Accept Current / Incoming / Both 一鍵按鈕。</span><span data-lang="en"><a href="https://code.visualstudio.com/docs/sourcecontrol/overview#_merge-conflicts" target="_blank" rel="noopener">code.visualstudio.com / merge-conflicts</a> · One-click "Accept Current / Incoming / Both" buttons.</span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 7: Remotes ===================== -->
+<section class="section section-anchor" id="remote">
+<div class="section-label">Step 7</div>
+<h2 data-zh="☁️ 遠端與 GitHub 同步 (Remotes &amp; Sync)" data-en="☁️ Remotes & GitHub Sync">☁️ 遠端與 GitHub 同步 (Remotes &amp; Sync)</h2>
+<p data-lang="zh">remote / push / pull / fetch / tracking branches / 認證。</p>
+<p data-lang="en">remote / push / pull / fetch / tracking branches / authentication.</p>
+<ul class="ref-list">
+  <li>
+    <span class="ref-tag book">📚 BOOK</span>
+    <span class="ref-title">Pro Git Ch.2.5 — Working with Remotes.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes" target="_blank" rel="noopener">git-scm.com / Working-with-Remotes</a></span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes" target="_blank" rel="noopener">git-scm.com / Working-with-Remotes</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">git-remote(1) · git-fetch(1) · git-pull(1) · git-push(1).</span>
+    <span class="ref-meta"><span data-lang="zh">
+      <a href="https://git-scm.com/docs/git-remote" target="_blank" rel="noopener">remote</a> ·
+      <a href="https://git-scm.com/docs/git-fetch" target="_blank" rel="noopener">fetch</a> ·
+      <a href="https://git-scm.com/docs/git-pull" target="_blank" rel="noopener">pull</a> ·
+      <a href="https://git-scm.com/docs/git-push" target="_blank" rel="noopener">push</a>
+    </span><span data-lang="en"><a href="https://git-scm.com/docs/git-remote" target="_blank" rel="noopener">remote</a> <a href="https://git-scm.com/docs/git-fetch" target="_blank" rel="noopener">fetch</a> <a href="https://git-scm.com/docs/git-pull" target="_blank" rel="noopener">pull</a> <a href="https://git-scm.com/docs/git-push" target="_blank" rel="noopener">push</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag blog">✍️ GUIDE</span>
+    <span class="ref-author">Atlassian.</span>
+    <span class="ref-title" data-zh=" Syncing with the Remote — fetch / pull / push 概念圖。" data-en=" Syncing with the Remote — conceptual diagrams for fetch, pull, and push."> Syncing with the Remote — fetch / pull / push 概念圖。</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://www.atlassian.com/git/tutorials/syncing" target="_blank" rel="noopener">atlassian.com/git/tutorials/syncing</a></span><span data-lang="en"><a href="https://www.atlassian.com/git/tutorials/syncing" target="_blank" rel="noopener">atlassian.com/git/tutorials/syncing</a></span></span>
+  </li>
+  <li>
+    <span class="ref-tag doc">DOC</span>
+    <span class="ref-title">Tracking branches — Pro Git Ch.3.5 Remote Branches.</span>
+    <span class="ref-meta"><span data-lang="zh"><a href="https://git-scm.com/book/en/v2/Git-Branching-Remote-Branches" target="_blank" rel="noopener">git-scm.com / Remote-Branches</a></span><span data-lang="en"><a href="https://git-scm.com/book/en/v2/Git-Branching-Remote-Branches" target="_blank" rel="noopener">git-scm.com / Remote-Branches</a></span></span>
+  </li>
+</ul>
+</section>
+
+<!-- ===================== Step 8: PR & Collaboration ===================== -->
+<section class="section section-anchor" id="pr">
+<div class="section-label">Step 8</div>
+<h2 data-zh="🤝 GitHub 協作 (Pull Requests &amp; Review)" data-en="🤝 GitHub Collaboration (Pull Requests & Review)">🤝 GitHub 協作 (Pull Requests &amp; Review)</h2>
+<p data-lang="zh">Fork → branch → push → PR → review → merge：GitHub 的核心協作流程。</p>
+<p data-lang="en">Fork → branch → push → PR → review → merge — the core GitHub collaboration workflow.</p>
+
+<h3 data-zh="Pull Request 與 Review" data-en="Pull Requests & Review">Pull Request 與 Review</h3>
+<ul class="ref-list">
+</ul>
+</section>
+
+<!-- ===================== Footnote ===================== -->
+<section class="section">
+<div class="callout tip">
+<span class="callout-icon">📖</span>
+<div>
+<strong data-zh="查找指南：" data-en="How to find a paper:">查找指南：</strong>
+<span data-zh="所有 DOI 連結指向出版社頁面。若需下載 PDF，可搭配 " data-en="DOI links point to publisher pages. For free PDFs, try ">所有 DOI 連結指向出版社頁面。若需下載 PDF，可搭配 </span>
+<a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubMed</a>、
+<a href="https://www.ncbi.nlm.nih.gov/pmc/" target="_blank" rel="noopener">PMC</a>、
+<a href="https://arxiv.org/" target="_blank" rel="noopener">arXiv</a>、
+<a href="https://www.biorxiv.org/" target="_blank" rel="noopener">bioRxiv</a>
+<span data-zh=" 找開放近用版本。" data-en=" for open-access versions."> 找開放近用版本。</span>
+</div>
+</div>
+</section>
+
+<!-- ===================== Errata / Extended Discussion ===================== -->
+<section class="section section-anchor" id="errata">
+<div class="section-label" data-zh="教學註記" data-en="TUTORIAL NOTES">教學註記</div>
+<h2 data-zh="📌 教學註記與細節" data-en="📌 Tutorial Notes & Details">📌 教學註記與細節</h2>
+<p data-lang="zh">以下整理使用 Git / GitHub 工具時值得多注意的細節、政策異動與情境限制；部分屬於勘誤、多數屬於補充說明，協助讀者避免常見陷阱。</p>
+<p data-lang="en">Notes on Git / GitHub tool nuances, policy changes, and context-dependent limitations; some are errata, most are supplementary notes that help readers avoid common pitfalls.</p>
+
+<div class="errata">
+  <span class="errata-label" data-zh="政策更動" data-en="Policy change" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">政策更動 · Policy change</span>
+  <h4 data-zh="預設分支名稱由 master 改為 main（2020-10）" data-en="Default branch renamed from master to main (2020-10)">預設分支名稱由 master 改為 main（2020-10）</h4>
+  <p data-lang="zh">GitHub 於 2020-10-01 起，所有新建 repository 預設分支改為 <code>main</code>。Git 自 2.28 起亦支援 <code>init.defaultBranch</code> 設定。教學中若仍看到 <code>master</code>，請以 <code>git config --global init.defaultBranch main</code> 統一。本地舊 repo 可用 <code>git branch -m master main</code> 並 <code>git push -u origin main</code>，再到 GitHub UI 將預設分支切換並刪除舊 master。</p>
+  <p data-lang="en">Since 2020-10-01, GitHub creates new repositories with <code>main</code> as the default branch. Git 2.28+ also supports <code>init.defaultBranch</code>. If tutorials still show <code>master</code>, standardize with <code>git config --global init.defaultBranch main</code>. For existing repos: <code>git branch -m master main</code>, then <code>git push -u origin main</code>, switch the default in the GitHub UI, and delete the old <code>master</code>.</p>
+  <p data-lang="zh">來源：<a href="https://github.com/github/renaming" target="_blank" rel="noopener">github/renaming · GitHub default branch rename</a> · <a href="https://sfconservancy.org/news/2020/jun/23/gitbranchname/" target="_blank" rel="noopener">Software Freedom Conservancy 公告</a></p>
+  <p data-lang="en">Source: <a href="https://github.com/github/renaming" target="_blank" rel="noopener">github/renaming · GitHub default branch rename</a> · <a href="https://sfconservancy.org/news/2020/jun/23/gitbranchname/" target="_blank" rel="noopener">Software Freedom Conservancy announcement</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="指令分流" data-en="Command split" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">指令分流 · Command split</span>
+  <h4 data-zh="git checkout 拆分為 git switch / git restore（Git 2.23, 2019-08）" data-en="git checkout split into git switch / git restore (Git 2.23, 2019-08)">git checkout 拆分為 git switch / git restore（Git 2.23, 2019-08）</h4>
+  <p data-lang="zh">Git 2.23 起新增兩個語意更清楚的指令：<code>git switch &lt;branch&gt;</code> 用於切換分支、<code>git restore &lt;file&gt;</code> 用於還原工作區檔案。原本 <code>git checkout</code> 同時承擔兩種職責，是 Git 新手最大混淆來源之一。Pro Git 第 2 版仍多以 <code>checkout</code> 示範，但在新教學中建議直接教 <code>switch</code> 與 <code>restore</code>。注意 <code>switch -c</code> 對應舊的 <code>checkout -b</code>。</p>
+  <p data-lang="en">Git 2.23 introduced two semantically cleaner commands: <code>git switch &lt;branch&gt;</code> for branch switching, and <code>git restore &lt;file&gt;</code> for restoring working-tree files. <code>git checkout</code> previously did both, which is a major source of confusion for newcomers. Pro Git 2e still uses <code>checkout</code>; new tutorials should prefer <code>switch</code> and <code>restore</code>. Note <code>switch -c</code> replaces the old <code>checkout -b</code>.</p>
+  <p data-lang="zh">來源：<a href="https://git-scm.com/docs/git-switch" target="_blank" rel="noopener">git-switch 官方文件</a> · <a href="https://github.blog/open-source/git/highlights-from-git-2-23/" target="_blank" rel="noopener">GitHub Blog — Highlights from Git 2.23</a></p>
+  <p data-lang="en">Source: <a href="https://git-scm.com/docs/git-switch" target="_blank" rel="noopener">git-switch official docs</a> · <a href="https://github.blog/open-source/git/highlights-from-git-2-23/" target="_blank" rel="noopener">GitHub Blog — Highlights from Git 2.23</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="安全強制" data-en="Security mandate" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">安全強制 · Security mandate</span>
+  <h4 data-zh="GitHub 取消密碼驗證（2021-08-13）— 改用 PAT 或 SSH key" data-en="GitHub disabled password auth (2021-08-13) — use PAT or SSH key">GitHub 取消密碼驗證（2021-08-13）— 改用 PAT 或 SSH key</h4>
+  <p data-lang="zh">2021-08-13 起，GitHub 在 Git 操作（push/pull/clone over HTTPS）時不再接受帳號密碼驗證。必須改用 <em>Personal Access Token (PAT)</em>、SSH key 或 GitHub CLI (<code>gh auth login</code>) 配合 Git Credential Manager。Fine-grained PAT 自 2022 推出，可限制到特定 repo 與 scope，建議優先於 Classic PAT。若教學仍叫讀者輸入 GitHub 密碼，那是過時資訊。</p>
+  <p data-lang="en">Since 2021-08-13, GitHub no longer accepts account passwords for Git operations (push/pull/clone over HTTPS). Use a <em>Personal Access Token (PAT)</em>, an SSH key, or GitHub CLI (<code>gh auth login</code>) with Git Credential Manager. Fine-grained PATs (since 2022) can be scoped to specific repos and permissions — prefer them over Classic PATs. Any tutorial still asking readers to type their GitHub password is outdated.</p>
+  <p data-lang="zh">來源：<a href="https://github.blog/security/application-security/token-authentication-requirements-for-git-operations/" target="_blank" rel="noopener">GitHub Blog · Token authentication requirements (2020-12)</a> · <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank" rel="noopener">Managing PAT (官方文件)</a></p>
+  <p data-lang="en">Source: <a href="https://github.blog/security/application-security/token-authentication-requirements-for-git-operations/" target="_blank" rel="noopener">GitHub Blog · Token authentication requirements (2020-12)</a> · <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" target="_blank" rel="noopener">Managing PATs (official docs)</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="工具退役" data-en="Tool sunset" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">工具退役 · Tool sunset</span>
+  <h4 data-zh="Atom 編輯器於 2022-12-15 正式 sunset — 改用 VS Code / Pulsar" data-en="Atom editor sunset on 2022-12-15 — switch to VS Code / Pulsar">Atom 編輯器於 2022-12-15 正式 sunset — 改用 VS Code / Pulsar</h4>
+  <p data-lang="zh">GitHub 在 2022-06 宣布 Atom 編輯器將於 2022-12-15 終止維護，相關 GitHub Package（內建 Git 整合）也一併下架。建議改用 <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">VS Code</a>（含 GitLens、Git Graph 等套件）或社群維護的 <a href="https://pulsar-edit.dev/" target="_blank" rel="noopener">Pulsar</a> fork。若舊教學提到「用 Atom 編輯 .gitignore / commit message」，請以 VS Code 取代。</p>
+  <p data-lang="en">GitHub announced in 2022-06 that Atom would be sunset on 2022-12-15, along with its built-in Git integration (GitHub Package). Replace with <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">VS Code</a> (with GitLens, Git Graph, etc.) or the community-maintained <a href="https://pulsar-edit.dev/" target="_blank" rel="noopener">Pulsar</a> fork. Older tutorials suggesting "use Atom to edit .gitignore / commit messages" should be updated to VS Code.</p>
+  <p data-lang="zh">來源：<a href="https://github.blog/news-insights/product-news/sunsetting-atom/" target="_blank" rel="noopener">GitHub Blog · Sunsetting Atom</a></p>
+  <p data-lang="en">Source: <a href="https://github.blog/news-insights/product-news/sunsetting-atom/" target="_blank" rel="noopener">GitHub Blog · Sunsetting Atom</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="補充說明" data-en="Notes" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">補充說明 · Notes</span>
+  <h4 data-zh="GitHub Actions secrets：Repository / Environment / Organization 三層" data-en="GitHub Actions secrets: Repository / Environment / Organization scope">GitHub Actions secrets：Repository / Environment / Organization 三層</h4>
+  <p data-lang="zh">GitHub Actions 的 secrets 有三個層級：Repository（最基本）、Environment（可加 required reviewers 與 wait timer，2020 推出，2024 進一步擴充至 OIDC 條件式存取）、Organization（跨 repo 共用）。生資 pipeline 部署到 production HPC 時建議使用 Environment secrets + required reviewers，避免低權限 PR 直接觸發 production deploy。OIDC 機制可完全免去長期 secrets，建議搭配 AWS / GCP / Azure 使用。</p>
+  <p data-lang="en">GitHub Actions secrets have three scopes: Repository (basic), Environment (adds required reviewers and wait timers; introduced 2020, further expanded with OIDC conditional access in 2024), and Organization (shared across repos). For bioinformatics pipelines deploying to production HPC, use Environment secrets with required reviewers to prevent low-privilege PRs from triggering production deploys. OIDC eliminates long-lived secrets entirely — recommended with AWS / GCP / Azure.</p>
+  <p data-lang="zh">來源：<a href="https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions" target="_blank" rel="noopener">Using secrets in GitHub Actions</a> · <a href="https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect" target="_blank" rel="noopener">OIDC security hardening</a></p>
+  <p data-lang="en">Source: <a href="https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions" target="_blank" rel="noopener">Using secrets in GitHub Actions</a> · <a href="https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect" target="_blank" rel="noopener">OIDC security hardening</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="額度限制" data-en="Quota limit" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">額度限制 · Quota limit</span>
+  <h4 data-zh="Git LFS 免費額度：1 GB 儲存 + 1 GB/月頻寬" data-en="Git LFS free tier: 1 GB storage + 1 GB/month bandwidth">Git LFS 免費額度：1 GB 儲存 + 1 GB/月頻寬</h4>
+  <p data-lang="zh">GitHub 的 Git LFS 免費額度極為有限：1 GB 儲存空間 + 1 GB/月下載頻寬。一個 BAM 檔（30× WGS 約 60–90 GB）就會立刻爆量。超量需購買 data pack（每包 $5/月，50 GB 儲存 + 50 GB 頻寬）。生資建議改用：<strong>Zenodo</strong>（開放 50 GB/dataset 免費 + DOI）、<strong>SRA / GEO</strong>（原始定序資料）、<strong>S3 / GCS</strong>（pipeline intermediates），repo 只放校驗碼與下載腳本。</p>
+  <p data-lang="en">GitHub's Git LFS free tier is very tight: 1 GB storage + 1 GB/month download bandwidth. A single 30× WGS BAM (~60–90 GB) will exceed it immediately. Overages require data packs ($5/month each for 50 GB storage + 50 GB bandwidth). Bioinformatics alternatives: <strong>Zenodo</strong> (free 50 GB/dataset + DOI), <strong>SRA / GEO</strong> (raw sequencing data), <strong>S3 / GCS</strong> (pipeline intermediates) — keep only checksums and download scripts in the repo.</p>
+  <p data-lang="zh">來源：<a href="https://docs.github.com/en/billing/managing-billing-for-git-large-file-storage/about-billing-for-git-large-file-storage" target="_blank" rel="noopener">GitHub LFS billing (官方文件)</a> · <a href="https://about.zenodo.org/" target="_blank" rel="noopener">Zenodo (CERN)</a></p>
+  <p data-lang="en">Source: <a href="https://docs.github.com/en/billing/managing-billing-for-git-large-file-storage/about-billing-for-git-large-file-storage" target="_blank" rel="noopener">GitHub LFS billing (official docs)</a> · <a href="https://about.zenodo.org/" target="_blank" rel="noopener">Zenodo (CERN)</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="工具補充" data-en="Tool note" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">工具補充 · Tool note</span>
+  <h4 data-zh="Jupyter notebook 提交前用 nbstripout 清除 outputs" data-en="Strip Jupyter notebook outputs with nbstripout before committing">Jupyter notebook 提交前用 nbstripout 清除 outputs</h4>
+  <p data-lang="zh">.ipynb 檔案內嵌 base64 編碼的圖像 / 表格 outputs，會讓每次重跑 cell 都產生大量 diff，並可能洩漏中間資料。建議安裝 <a href="https://github.com/kynan/nbstripout" target="_blank" rel="noopener">nbstripout</a> 作為 git filter（<code>nbstripout --install</code>），自動在 staging 時剝除 outputs，pull 後本地仍可重跑。或改用 <a href="https://jupytext.readthedocs.io/" target="_blank" rel="noopener">Jupytext</a> 將 notebook 同步為 .py / .md（純文字 diff 友善，建議與 .ipynb 雙存）。</p>
+  <p data-lang="en">.ipynb files embed base64-encoded image/table outputs, producing huge diffs on every cell rerun and potentially leaking intermediate data. Install <a href="https://github.com/kynan/nbstripout" target="_blank" rel="noopener">nbstripout</a> as a git filter (<code>nbstripout --install</code>) to strip outputs automatically at staging time; outputs are regenerated locally on pull. Alternatively, use <a href="https://jupytext.readthedocs.io/" target="_blank" rel="noopener">Jupytext</a> to sync notebooks to .py / .md for diff-friendly text, ideally paired with .ipynb.</p>
+  <p data-lang="zh">來源：<a href="https://github.com/kynan/nbstripout" target="_blank" rel="noopener">kynan/nbstripout GitHub</a> · <a href="https://jupytext.readthedocs.io/en/latest/" target="_blank" rel="noopener">Jupytext docs</a></p>
+  <p data-lang="en">Source: <a href="https://github.com/kynan/nbstripout" target="_blank" rel="noopener">kynan/nbstripout GitHub</a> · <a href="https://jupytext.readthedocs.io/en/latest/" target="_blank" rel="noopener">Jupytext docs</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="規範補充" data-en="Spec note" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">規範補充 · Spec note</span>
+  <h4 data-zh="Conventional Commits 不會被強制 — 需搭配 commitizen / commitlint" data-en="Conventional Commits is not enforced — pair with commitizen / commitlint">Conventional Commits 不會被強制 — 需搭配 commitizen / commitlint</h4>
+  <p data-lang="zh">Conventional Commits 1.0.0（<code>feat:</code>, <code>fix:</code>, <code>BREAKING CHANGE:</code> 等）是規範，Git 本身不會驗證。要實質強制需：（1）pre-commit hook 跑 <a href="https://commitlint.js.org/" target="_blank" rel="noopener">commitlint</a>；（2）開發者用 <a href="https://commitizen-tools.github.io/commitizen/" target="_blank" rel="noopener">commitizen</a> 互動建立 commit；（3）CI 階段以 GitHub Action 阻擋不合規 PR。配合 <a href="https://semantic-release.gitbook.io/" target="_blank" rel="noopener">semantic-release</a> 可自動依 commit 類型決定 SemVer bump。</p>
+  <p data-lang="en">Conventional Commits 1.0.0 (<code>feat:</code>, <code>fix:</code>, <code>BREAKING CHANGE:</code>, etc.) is a spec — Git does not validate it. To enforce it: (1) run <a href="https://commitlint.js.org/" target="_blank" rel="noopener">commitlint</a> as a pre-commit hook; (2) use <a href="https://commitizen-tools.github.io/commitizen/" target="_blank" rel="noopener">commitizen</a> for interactive commit composition; (3) block non-compliant PRs with a CI GitHub Action. Combined with <a href="https://semantic-release.gitbook.io/" target="_blank" rel="noopener">semantic-release</a>, commit types can automatically drive SemVer bumps.</p>
+  <p data-lang="zh">來源：<a href="https://www.conventionalcommits.org/en/v1.0.0/" target="_blank" rel="noopener">Conventional Commits 1.0.0 規範</a></p>
+  <p data-lang="en">Source: <a href="https://www.conventionalcommits.org/en/v1.0.0/" target="_blank" rel="noopener">Conventional Commits 1.0.0 spec</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="設計選擇" data-en="Design choice" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">設計選擇 · Design choice</span>
+  <h4 data-zh="Submodule vs Subtree：常見混淆與如何選擇" data-en="Submodule vs Subtree: common confusion and how to choose">Submodule vs Subtree：常見混淆與如何選擇</h4>
+  <p data-lang="zh"><strong>Submodule</strong> 只記錄子 repo 的 commit pointer，clone 主 repo 不會自動拉子模組（需 <code>git clone --recursive</code> 或 <code>git submodule update --init</code>），新人最容易踩坑。<strong>Subtree</strong> 把子 repo 內容真的合進主 repo 歷史，clone 即完整。建議：需獨立發版且子 repo 也有自己團隊 → submodule；只是想引入第三方 reference data / 工具且偶爾更新 → subtree。生資 pipeline 內嵌的 reference genome / annotation 通常選 subtree（或外部 fetch）。</p>
+  <p data-lang="en"><strong>Submodule</strong> records only a commit pointer to the sub-repo; cloning the main repo does not pull submodules (needs <code>git clone --recursive</code> or <code>git submodule update --init</code>) — the top source of confusion for newcomers. <strong>Subtree</strong> merges the sub-repo's content into the main repo's history, so a clone is complete. Rule of thumb: separate release cycles with separate teams → submodule; vendoring third-party reference data / tools with occasional updates → subtree. Embedded reference genomes / annotations in bioinformatics pipelines usually use subtree (or external fetching).</p>
+  <p data-lang="zh">來源：<a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules" target="_blank" rel="noopener">Pro Git · Submodules</a> · <a href="https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge" target="_blank" rel="noopener">Pro Git · Subtree Merging</a></p>
+  <p data-lang="en">Source: <a href="https://git-scm.com/book/en/v2/Git-Tools-Submodules" target="_blank" rel="noopener">Pro Git · Submodules</a> · <a href="https://git-scm.com/book/en/v2/Git-Tools-Advanced-Merging#_subtree_merge" target="_blank" rel="noopener">Pro Git · Subtree Merging</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="版本漂移" data-en="Version drift" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">版本漂移 · Version drift</span>
+  <h4 data-zh="ubuntu-latest runner 會自動升級 — 鎖版本避免「上週還好好的」" data-en="ubuntu-latest runner auto-upgrades — pin versions to avoid silent breakage">ubuntu-latest runner 會自動升級 — 鎖版本避免「上週還好好的」</h4>
+  <p data-lang="zh">GitHub Actions 的 <code>ubuntu-latest</code> 標籤每隔數個月會自動指向新版（22.04 → 24.04 已於 2025-01-17 完成），預裝工具、Python 版本、GLIBC 都可能變動，常導致「上週還能跑、這週突然壞」。生資 reproducibility 建議：（1）workflow 鎖死版本（<code>ubuntu-22.04</code>）；（2）actions/checkout、setup-python 等也鎖 major（<code>@v4</code>）；（3）關鍵 release 用 commit SHA 鎖；（4）每年安排升級 sprint 一次性遷移。</p>
+  <p data-lang="en">GitHub Actions' <code>ubuntu-latest</code> label is rebound every few months (22.04 → 24.04 completed on 2025-01-17). Preinstalled tools, Python versions, and GLIBC can shift, causing silent breakage ("worked last week"). For reproducibility: (1) pin workflows to a fixed version (<code>ubuntu-22.04</code>); (2) pin action majors (<code>actions/checkout@v4</code>); (3) for critical releases, pin to commit SHAs; (4) schedule an annual upgrade sprint.</p>
+  <p data-lang="zh">來源：<a href="https://github.blog/changelog/2024-09-03-actions-2025-ubuntu-24-04-image-deployment-and-ubuntu-20-04-brownout-schedule/" target="_blank" rel="noopener">GitHub Changelog · ubuntu-latest 24.04 rollout (2024-09)</a> · <a href="https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners" target="_blank" rel="noopener">About GitHub-hosted runners</a></p>
+  <p data-lang="en">Source: <a href="https://github.blog/changelog/2024-09-03-actions-2025-ubuntu-24-04-image-deployment-and-ubuntu-20-04-brownout-schedule/" target="_blank" rel="noopener">GitHub Changelog · ubuntu-latest 24.04 rollout (2024-09)</a> · <a href="https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners" target="_blank" rel="noopener">About GitHub-hosted runners</a></p>
+</div>
+
+<div class="errata">
+  <span class="errata-label" data-zh="補充說明" data-en="Notes" style="display:inline-block;background:#e0e7ff;color:#3730a3;padding:2px 10px;border-radius:4px;font-size:.72rem;font-weight:700;letter-spacing:.5px;margin-bottom:8px">補充說明 · Notes</span>
+  <h4 data-zh="git pull --rebase 預設化：避免 merge bubble 污染歷史" data-en="Default git pull to --rebase: avoid merge bubbles polluting history">git pull --rebase 預設化：避免 merge bubble 污染歷史</h4>
+  <p data-lang="zh">預設 <code>git pull</code> 是 <code>fetch + merge</code>，多人同分支開發會產生大量「Merge branch 'main' of ...」噪音 commit。建議全域設定 <code>git config --global pull.rebase true</code>，pull 時自動 rebase 本地 commit 到遠端最新；遇到衝突再 <code>git rebase --continue / --abort</code>。Git 2.27+ 對未設定者會發出 hint 提示。注意：已 push 的 commit 不要 rebase（會改寫共享歷史）。</p>
+  <p data-lang="en">Default <code>git pull</code> is <code>fetch + merge</code>, which generates noisy "Merge branch 'main' of ..." commits in shared-branch development. Set <code>git config --global pull.rebase true</code> globally to rebase local commits onto the remote tip on pull; resolve conflicts with <code>git rebase --continue / --abort</code>. Git 2.27+ warns users who haven't configured this. Caveat: never rebase commits already pushed to a shared branch (it rewrites shared history).</p>
+  <p data-lang="zh">來源：<a href="https://git-scm.com/docs/git-pull#_options" target="_blank" rel="noopener">git-pull 官方文件 (pull.rebase)</a> · <a href="https://github.blog/open-source/git/highlights-from-git-2-27/" target="_blank" rel="noopener">GitHub Blog · Highlights from Git 2.27</a></p>
+  <p data-lang="en">Source: <a href="https://git-scm.com/docs/git-pull#_options" target="_blank" rel="noopener">git-pull official docs (pull.rebase)</a> · <a href="https://github.blog/open-source/git/highlights-from-git-2-27/" target="_blank" rel="noopener">GitHub Blog · Highlights from Git 2.27</a></p>
+</div>
+
+</section>
+
+<nav class="page-nav">
+  <a href="../index.html"><span class="nav-dir" data-zh="← 教學首頁" data-en="← Tutorial home">← 教學首頁</span><span class="nav-title" data-zh="回到主教學頁" data-en="Back to tutorial hub">回到主教學頁</span></a>
+  <a href="../git-quiz/index.html" target="_blank" rel="noopener"><span class="nav-dir" data-zh="互動考題 →" data-en="Interactive quiz →">互動考題 →</span><span class="nav-title" data-zh="互動式考題" data-en="Interactive Quiz">互動式考題</span></a>
+</nav>
+
+</main>
+
+<footer class="site-footer" style="text-align:center;color:var(--c-ink-muted);padding:20px;font-size:.85rem;border-top:1px solid var(--c-border-light);margin-top:40px">
+  © Charlene · Git / GitHub for Bioinformatics — Interactive Tutorial — References<br>
+  <span data-zh="學術論文、官方文件與工具連結 · 最後更新 2026-05" data-en="Papers, official docs and tool links · Last updated 2026-05">學術論文、官方文件與工具連結 · 最後更新 2026-05</span>
+</footer>
+
+<script src="../i18n.js"></script>
+</body>
+</html>
